@@ -65,17 +65,27 @@ export default function HomeReelPage() {
   const [locationName, setLocationName] = useState('Detecting...');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 1. Geolocation Logic
+  // 1. Geolocation Logic with BigDataCloud Free API
   useEffect(() => {
     // Attempt auto-detect
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          // In a real app we would reverse-geocode pos.coords.latitude & longitude
-          // Here we mock it as "Coimbatore" once successfully fetched
-          setTimeout(() => setLocationName('📍 Coimbatore'), 600);
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+            const data = await res.json();
+            
+            // Prefer hyper-local boundaries, falling back to big cities
+            const detectedLocation = data.locality || data.city || data.principalSubdivision || 'Unknown';
+            setLocationName(`📍 ${detectedLocation}`);
+          } catch (error) {
+            console.error('Failed to deduce location:', error);
+            setLocationName('📍 Select Location');
+          }
         },
         (err) => {
+          console.warn('Geolocation denied or failed:', err);
           setLocationName('📍 Select Location');
         }
       );
