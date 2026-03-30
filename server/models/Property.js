@@ -8,7 +8,8 @@ const propertySchema = new mongoose.Schema({
     area: String,
     city: String,
     lat: Number,
-    lng: Number
+    lng: Number,
+    googleMapLink: String
   },
   rent: { type: Number, required: true },
   deposit: { type: Number, required: true },

@@ -22,8 +22,8 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
-  // Combine video and images into a single media array for the horizontal scroll
-  const mediaList = [video, ...(images || [])];
+  // Using exclusively the uploaded images array from the new property system
+  const mediaList = images && images.length > 0 ? images : ['/images/placeholder.jpg'];
 
   useEffect(() => {
     // Play video if active property slide AND the first horizontal slide (video) is active
@@ -103,22 +103,11 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
       >
           {mediaList.map((mediaSrc, idx) => (
              <div key={idx} className="relative w-full h-full shrink-0 snap-center flex items-center justify-center bg-black">
-                {idx === 0 ? (
-                    <video
-                        ref={videoRef}
-                        src={mediaSrc}
-                        className="w-full h-full object-cover pointer-events-none"
-                        loop
-                        muted
-                        playsInline
-                    />
-                ) : (
-                    <img 
-                        src={mediaSrc} 
-                        className="w-full h-full object-cover pointer-events-none" 
-                        alt="Property Exterior/Interior View"
-                    />
-                )}
+                <img 
+                    src={mediaSrc} 
+                    className="w-full h-full object-cover pointer-events-none" 
+                    alt="Property Exterior/Interior View"
+                />
              </div>
           ))}
       </div>

@@ -60,8 +60,21 @@ exports.createProperty = async (req, res) => {
       }
     }
 
+    let parsedLocation = {};
+    let parsedPreferences = {};
+    try {
+        if (req.body.location) parsedLocation = JSON.parse(req.body.location);
+        if (req.body.preferences) parsedPreferences = JSON.parse(req.body.preferences);
+    } catch(e) { console.error("Error parsing JSON body fields:", e); }
+
     const newProperty = await Property.create({
-      ...req.body,
+      title: req.body.title,
+      rent: req.body.rent,
+      deposit: req.body.deposit,
+      bhkType: req.body.bhkType,
+      moveInReady: req.body.moveInReady === 'true',
+      location: parsedLocation,
+      preferences: parsedPreferences,
       images: imageUrls,
       ownerId: req.user._id,
     });
