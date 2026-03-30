@@ -32,7 +32,7 @@ export default function Step5() {
        });
 
        const token = localStorage.getItem('token');
-       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/property/create`, {
+       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/properties/create`, {
            method: 'POST',
            headers: { 'Authorization': `Bearer ${token}` },
            body: formData // Auto multipart-formdata

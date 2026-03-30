@@ -21,16 +21,39 @@ export default function Step2() {
        <form onSubmit={handleNext} className="flex flex-col gap-5">
           <div>
              <label className="block text-sm font-bold text-gray-700 mb-2">Google Maps Link *</label>
-             <input 
-                type="url" 
-                required
-                value={location.googleMapLink}
-                onChange={(e) => updateLocation('googleMapLink', e.target.value)}
-                placeholder="https://maps.google.com/..."
-                pattern="https?://.*"
-                className="w-full border-2 border-gray-200 p-4 rounded-xl focus:border-[#FF5A1F] focus:ring-0 outline-none transition-colors"
-             />
-             <p className="text-xs text-gray-400 mt-2">Mandatory for verification routing.</p>
+             <div className="flex gap-2">
+                 <input 
+                    type="url" 
+                    required
+                    value={location.googleMapLink}
+                    onChange={(e) => updateLocation('googleMapLink', e.target.value)}
+                    placeholder="https://maps.google.com/..."
+                    pattern="https?://.*"
+                    className="flex-1 w-full border-2 border-gray-200 p-4 rounded-xl focus:border-[#FF5A1F] focus:ring-0 outline-none transition-colors"
+                 />
+                 <button 
+                    type="button" 
+                    title="Detect Current Location"
+                    onClick={() => {
+                        if ("geolocation" in navigator) {
+                            navigator.geolocation.getCurrentPosition(
+                                (position) => {
+                                    const { latitude, longitude } = position.coords;
+                                    const mapURL = `https://maps.google.com/?q=${latitude},${longitude}`;
+                                    updateLocation('googleMapLink', mapURL);
+                                },
+                                (err) => alert("Please allow Location Access in your browser settings to use this feature.")
+                            );
+                        } else {
+                            alert("Geolocation is not supported by your browser.");
+                        }
+                    }}
+                    className="p-4 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-600 hover:text-[#FF5A1F] hover:bg-orange-50 transition-colors"
+                 >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-5 10-5 10s-5-6.483-5-10a5 5 0 0110 0z"></path><circle cx="6" cy="11" r="2" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></circle></svg>
+                 </button>
+             </div>
+             <p className="text-xs text-gray-400 mt-2">Mandatory for verification routing. Tap the GPS icon to auto-fill.</p>
           </div>
 
           <div>
