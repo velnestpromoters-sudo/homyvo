@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 
 export default function OwnerDashboard() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
+  const logout = useAuthStore(state => state.logout);
   const [properties, setProperties] = useState([]);
 
   useEffect(() => {
@@ -17,10 +19,9 @@ export default function OwnerDashboard() {
     }
     
     // Fetch owner's properties logic would go here
-    // For now, using empty array or mock fetch
     const fetchProps = async () => {
       try {
-         const token = localStorage.getItem('token');
+         const token = useAuthStore.getState().token;
          const res = await fetch(`/api/properties`, {
              headers: { 'Authorization': `Bearer ${token}` }
          });
@@ -34,19 +35,45 @@ export default function OwnerDashboard() {
     fetchProps();
   }, [isAuthenticated, router, user]);
 
+  const handleLogout = () => {
+      logout();
+      router.push('/login');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white p-6 shadow-sm border-b sticky top-0 z-10 flex justify-between items-center">
-        <div>
-           <h1 className="text-2xl font-black text-gray-900">Owner Dashboard</h1>
-           <p className="text-sm text-gray-500">Welcome back, {user?.name || 'Owner'}</p>
+      <header className="bg-white p-6 shadow-sm border-b sticky top-0 z-10 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+        <div className="flex justify-between items-start w-full md:w-auto">
+           <div>
+              <h1 className="text-2xl font-black text-gray-900">Owner Dashboard</h1>
+              <p className="text-sm text-gray-500">Welcome back, {user?.name || 'Owner'}</p>
+           </div>
+           
+           {/* Mobile Logout (Hidden on Desktop) */}
+           <button 
+              onClick={handleLogout}
+              className="md:hidden text-xs text-red-500 font-bold px-3 py-1 border border-red-200 rounded-full hover:bg-red-50"
+           >
+              Logout
+           </button>
         </div>
-        <button 
-           onClick={() => router.push('/owner/add-property/step-1')}
-           className="bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold shadow hover:bg-[#E04812] transition-colors"
-        >
-          + Add Property
-        </button>
+        
+        <div className="flex gap-3 mt-4 md:mt-0 items-center">
+           <button 
+              onClick={() => router.push('/owner/add-property/step-1')}
+              className="flex-1 md:flex-none bg-[#FF5A1F] text-white px-5 py-2.5 rounded-full font-bold shadow hover:bg-[#E04812] transition-colors"
+           >
+             + Add Property
+           </button>
+           
+           {/* Desktop Logout Button */}
+           <button 
+              onClick={handleLogout}
+              className="hidden md:block bg-gray-100 text-gray-700 font-bold px-5 py-2.5 rounded-full hover:bg-gray-200 transition-colors shadow-sm border border-gray-200"
+           >
+             Logout
+           </button>
+        </div>
       </header>
 
       <div className="max-w-4xl mx-auto p-4 mt-6">

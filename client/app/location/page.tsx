@@ -218,22 +218,11 @@ export default function LocationTracker() {
 
       </header>
 
-      {/* 3. Locator FAB Button (Center Right) */}
-      <button 
-          onClick={triggerGPSLocate}
-          disabled={isLocating}
-          className="absolute right-5 bottom-[140px] z-20 w-14 h-14 bg-white text-[#FF6A3D] rounded-full shadow-2xl flex items-center justify-center border-2 border-white/50 active:scale-90 transition-transform hover:shadow-[#FF6A3D]/40 hover:shadow-lg pointer-events-auto"
-      >
-          {isLocating ? (
-              <div className="w-5 h-5 border-2 border-[#FF6A3D] border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-              <Navigation className="w-6 h-6 fill-[#FF6A3D]/20" />
-          )}
-      </button>
-
-      {/* 4. Final Bottom Confirmation Action Sheet */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 p-5 bg-gradient-to-t from-black/80 via-black/60 to-transparent pb-8 pointer-events-none">
-         <div className="max-w-md mx-auto bg-white/10 backdrop-blur-2xl border border-white/30 rounded-3xl p-5 shadow-2xl pointer-events-auto">
+      {/* 3. & 4. Unified Bottom Action UI (Side-by-Side Mobile Layout) */}
+      <div className="absolute bottom-4 left-4 right-4 z-30 flex gap-4 pointer-events-none items-end">
+         
+         {/* Left Bottom: Main Confirmation Card */}
+         <div className="flex-1 bg-white/10 backdrop-blur-2xl border border-white/30 rounded-3xl p-5 shadow-2xl pointer-events-auto max-w-sm">
             <h3 className="font-extrabold text-white text-lg tracking-tight mb-1">Confirm Specific Location</h3>
             <p className="text-white/60 text-xs font-medium mb-4 leading-relaxed line-clamp-2">Move the needle precisely to your target house or district via Search or GPS.</p>
             
@@ -242,13 +231,22 @@ export default function LocationTracker() {
                 disabled={isConfirming}
                 className="w-full flex items-center justify-center gap-3 py-4 bg-[#FF6A3D] text-white rounded-2xl font-black text-sm uppercase tracking-wide active:scale-[0.98] transition-all shadow-xl shadow-[#FF6A3D]/30"
             >
-                {isConfirming ? (
-                    'Pinpointing Block...'
-                ) : (
-                    'Confirm Location Pin'
-                )}
+                {isConfirming ? 'Pinpointing...' : 'Confirm Location Pin'}
             </button>
          </div>
+
+         {/* Right Bottom: Locator FAB (Pushed to bottom right to be accessible on all devices) */}
+         <button 
+             onClick={triggerGPSLocate}
+             disabled={isLocating}
+             className="w-16 h-16 shrink-0 bg-white text-[#FF6A3D] rounded-full shadow-2xl flex items-center justify-center border-2 border-white/50 active:scale-90 transition-transform hover:shadow-[#FF6A3D]/40 hover:shadow-lg pointer-events-auto"
+         >
+             {isLocating ? (
+                 <div className="w-6 h-6 border-2 border-[#FF6A3D] border-t-transparent rounded-full animate-spin"></div>
+             ) : (
+                 <Navigation className="w-7 h-7 fill-[#FF6A3D]/20" />
+             )}
+         </button>
       </div>
 
     </div>

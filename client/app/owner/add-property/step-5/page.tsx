@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePropertyFormStore } from '@/store/usePropertyFormStore';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Step5() {
   const router = useRouter();
@@ -31,7 +32,8 @@ export default function Step5() {
            formData.append('images', img);
        });
 
-       const token = localStorage.getItem('token');
+       // Extract persisted token actively from Zustand Store, not raw native localStorage
+       const token = useAuthStore.getState().token;
        const res = await fetch(`/api/properties/create`, {
            method: 'POST',
            headers: { 'Authorization': `Bearer ${token}` },
