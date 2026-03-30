@@ -22,10 +22,10 @@ function CenterTracker({ onCenterChange, forcePosition }: { onCenterChange: (pos
       }
   });
 
-  // Whenever forcePosition updates (e.g. from "Pick Me" button), fly exactly to it cinematically
+  // Whenever forcePosition updates (e.g. from "Pick Me" button or Search Bar), fly exactly to it cinematically
   useEffect(() => {
     if (forcePosition) {
-       map.flyTo(forcePosition, 18, { animate: true, duration: 1.5 }); // Fast cinematic 1.5s zoom to street level
+       map.flyTo(forcePosition, 18, { animate: true, duration: 0.8 }); // Ultra-Fast cinematic zoom to street level
        onCenterChange(forcePosition);
     }
   }, [forcePosition, map, onCenterChange]);

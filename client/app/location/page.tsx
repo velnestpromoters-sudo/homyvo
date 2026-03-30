@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Navigation } from 'lucide-react';
+import { ArrowLeft, Navigation, Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocationStore } from '@/store/locationStore';
 
@@ -20,13 +20,42 @@ export default function LocationTracker() {
   
   const [isConfirming, setIsConfirming] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  
+  // Search Bar
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   // Called 60 times a second when user drags the map!
   const handleMapMove = useCallback((lat: number, lng: number) => {
       setNeedlePosition([lat, lng]);
   }, []);
 
-  // Native GPS triangulation (Satellite Ping) + Cinematic Zoom Automator
+  // Text -> Coordinates (OSM Forward Geocoding)
+  const executeSearch = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!searchQuery.trim()) return;
+      setIsSearching(true);
+      
+      try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`, {
+              headers: { 'User-Agent': 'Bnest-App-Client' }
+          });
+          const data = await res.json();
+          if (data && data.length > 0) {
+              const lat = parseFloat(data[0].lat);
+              const lon = parseFloat(data[0].lon);
+              setForceFlyTo([lat, lon]); // Turbo 0.8s Cinematic Map Fly!
+          } else {
+              alert("Location not found on map! Try a nearby city or district.");
+          }
+      } catch (err) {
+          console.error("OSM Search block", err);
+      } finally {
+          setIsSearching(false);
+      }
+  };
+
+  // Native GPS triangulation (Satellite Ping)
   const triggerGPSLocate = () => {
     if (!('geolocation' in navigator)) return alert("GPS not supported on this device.");
     setIsLocating(true);
@@ -34,12 +63,8 @@ export default function LocationTracker() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
          const { latitude, longitude } = pos.coords;
-         setForceFlyTo([latitude, longitude]); // Map organically swoops to exact GPS chip location (1.5s animation)
-         
-         // Wait exactly 1.8 seconds for the fast zoom animation to finish, then auto-confirm location!
-         setTimeout(() => {
-            handleAutoConfirm([latitude, longitude]);
-         }, 1800);
+         setForceFlyTo([latitude, longitude]); // Ultra-Fast Map Fly
+         setIsLocating(false);
       },
       (err) => {
          console.warn("GPS Permission Denied:", err);
@@ -50,11 +75,13 @@ export default function LocationTracker() {
     );
   };
 
-  // Final Geocoding Step (Hits OSM Native Proxy Server automatically)
-  const handleAutoConfirm = async (coords: [number, number]) => {
-      const [lat, lng] = coords;
+  // Final Geocoding Step (Triggered only by the Confirm button)
+  const handleConfirmLocation = async () => {
+      setIsConfirming(true);
+      const [lat, lng] = needlePosition;
 
       try {
+          // Hits our Secure Proxy
           const res = await fetch(`/api/location?lat=${lat}&lng=${lng}`);
           const data = await res.json();
           
@@ -71,7 +98,7 @@ export default function LocationTracker() {
           setLocation('📍 Map Area', { lat, lng });
           router.push('/home');
       } finally {
-          setIsLocating(false);
+          setIsConfirming(false);
       }
   };
 
@@ -85,31 +112,66 @@ export default function LocationTracker() {
           onLocationUpdate={handleMapMove}
       />
 
-      {/* 2. Floating Header */}
-      <header className="absolute top-0 left-0 right-0 z-20 px-5 pt-10 pb-4 bg-gradient-to-b from-black/60 to-transparent pointer-events-none flex items-center">
-        <button onClick={() => router.back()} className="p-3 bg-white/10 backdrop-blur-md rounded-full active:scale-95 transition pointer-events-auto border border-white/20 shadow-xl">
-          <ArrowLeft className="w-6 h-6 text-white drop-shadow-lg" />
-        </button>
+      {/* 2. Floating Header & Search Engine */}
+      <header className="absolute top-0 left-0 right-0 z-20 px-4 pt-10 pb-6 bg-gradient-to-b from-black/80 to-transparent pointer-events-none flex flex-col gap-4">
+        
+        <div className="flex items-center w-full">
+            <button onClick={() => router.back()} className="p-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl text-white pointer-events-auto active:scale-95 transition-all mr-3">
+              <ArrowLeft className="w-5 h-5 drop-shadow-lg" />
+            </button>
+            
+            {/* Awesome Floating Map Search Engine */}
+            <form onSubmit={executeSearch} className="flex-1 relative group pointer-events-auto">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    {isSearching ? (
+                        <div className="w-4 h-4 border-2 border-slate-400 border-t-[#FF6A3D] rounded-full animate-spin"></div>
+                    ) : (
+                        <Search className="w-4 h-4 text-slate-400 group-focus-within:text-[#FF6A3D] transition-colors" />
+                    )}
+                </div>
+                <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search city, district..." 
+                    className="w-full pl-11 pr-4 py-3.5 rounded-full bg-white/95 backdrop-blur-3xl shadow-xl text-sm font-bold text-slate-800 outline-none border-2 border-transparent focus:border-[#FF6A3D]/50 placeholder:font-medium placeholder:text-slate-400"
+                />
+            </form>
+        </div>
+
       </header>
 
-      {/* 3. Locator FAB Button (Bottom Center) */}
-      <div className="absolute bottom-16 left-0 right-0 z-20 flex justify-center pointer-events-none">
-        <button 
-            onClick={triggerGPSLocate}
-            disabled={isLocating}
-            className="pointer-events-auto flex items-center gap-3 px-8 py-4 bg-white text-[#FF6A3D] rounded-full shadow-2xl border-2 border-white/50 active:scale-95 transition-all hover:shadow-[#FF6A3D]/40 hover:shadow-lg overflow-hidden relative"
-        >
-            {isLocating && <div className="absolute inset-0 bg-[#FF6A3D]/5 animate-pulse" />}
+      {/* 3. Locator FAB Button (Center Right) */}
+      <button 
+          onClick={triggerGPSLocate}
+          disabled={isLocating}
+          className="absolute right-5 bottom-[140px] z-20 w-14 h-14 bg-white text-[#FF6A3D] rounded-full shadow-2xl flex items-center justify-center border-2 border-white/50 active:scale-90 transition-transform hover:shadow-[#FF6A3D]/40 hover:shadow-lg pointer-events-auto"
+      >
+          {isLocating ? (
+              <div className="w-5 h-5 border-2 border-[#FF6A3D] border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+              <Navigation className="w-6 h-6 fill-[#FF6A3D]/20" />
+          )}
+      </button>
+
+      {/* 4. Final Bottom Confirmation Action Sheet */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 p-5 bg-gradient-to-t from-black/80 via-black/60 to-transparent pb-8 pointer-events-none">
+         <div className="max-w-md mx-auto bg-white/10 backdrop-blur-2xl border border-white/30 rounded-3xl p-5 shadow-2xl pointer-events-auto">
+            <h3 className="font-extrabold text-white text-lg tracking-tight mb-1">Confirm Specific Location</h3>
+            <p className="text-white/60 text-xs font-medium mb-4 leading-relaxed line-clamp-2">Move the needle precisely to your target house or district via Search or GPS.</p>
             
-            {isLocating ? (
-                <div className="w-5 h-5 border-2 border-[#FF6A3D] border-t-transparent rounded-full animate-spin shrink-0"></div>
-            ) : (
-                <Navigation className="w-6 h-6 fill-[#FF6A3D]/20 animate-bounce shrink-0" />
-            )}
-            <span className="font-extrabold text-[#FF6A3D] text-lg tracking-tight pr-1">
-                {isLocating ? 'Scanning Satellites...' : 'Pick My Location'}
-            </span>
-        </button>
+            <button 
+                onClick={handleConfirmLocation}
+                disabled={isConfirming}
+                className="w-full flex items-center justify-center gap-3 py-4 bg-[#FF6A3D] text-white rounded-2xl font-black text-sm uppercase tracking-wide active:scale-[0.98] transition-all shadow-xl shadow-[#FF6A3D]/30"
+            >
+                {isConfirming ? (
+                    'Pinpointing Block...'
+                ) : (
+                    'Confirm Location Pin'
+                )}
+            </button>
+         </div>
       </div>
 
     </div>
