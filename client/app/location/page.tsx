@@ -31,7 +31,7 @@ export default function LocationTracker() {
       setNeedlePosition([lat, lng]);
   }, []);
 
-  // Debounced Photon API fetching for spelling-tolerant POI auto-complete
+  // Debounced Proxy API fetching for spelling-tolerant POI auto-complete (Bypasses CORS!)
   useEffect(() => {
      if (!searchQuery.trim()) {
          setSearchResults([]);
@@ -42,15 +42,17 @@ export default function LocationTracker() {
      const timer = setTimeout(async () => {
          setIsSearching(true);
          try {
-             const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=5`);
+             const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
              const data = await res.json();
-             setSearchResults(data.features || []);
+             if (data.success) {
+                 setSearchResults(data.features || []);
+             }
          } catch (err) {
-             console.error("Photon POI Auto-Complete failed", err);
+             console.error("Proxy Auto-Complete failed", err);
          } finally {
              setIsSearching(false);
          }
-     }, 300); // 300ms sweet spot debounce
+     }, 300);
 
      return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -63,6 +65,33 @@ export default function LocationTracker() {
       // Clear UI
       setSearchQuery('');
       setSearchResults([]);
+  };
+
+  // If user explicitly taps the "Search" button instead of selecting a dropdown item
+  const handleManualSearchSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!searchQuery.trim()) return;
+      
+      setIsSearching(true);
+      try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+          const data = await res.json();
+          if (data.success && data.features.length > 0) {
+              // Take the absolute best matching result and fly there!
+              const bestResult = data.features[0];
+              const [lon, lat] = bestResult.geometry.coordinates;
+              setForceFlyTo([lat, lon]);
+              
+              setSearchQuery('');
+              setSearchResults([]);
+          } else {
+              alert("Location not found! Try searching a nearby neighborhood.");
+          }
+      } catch (err) {
+          console.error("Manual Search failed", err);
+      } finally {
+          setIsSearching(false);
+      }
   };
 
   // Native GPS triangulation (Satellite Ping)
@@ -131,21 +160,31 @@ export default function LocationTracker() {
             </button>
             
             {/* Awesome Floating Map Search Engine with Auto-complete */}
-            <div className="flex-1 relative group pointer-events-auto">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
+            <form onSubmit={handleManualSearchSubmit} className="flex-1 relative group pointer-events-auto flex items-center bg-white/95 backdrop-blur-3xl shadow-xl rounded-full border-2 border-transparent focus-within:border-[#FF6A3D]/50 transition-colors">
+                
+                <div className="pl-4 pr-2 py-3.5 flex items-center pointer-events-none">
                     {isSearching ? (
                         <div className="w-4 h-4 border-2 border-slate-400 border-t-[#FF6A3D] rounded-full animate-spin"></div>
                     ) : (
-                        <Search className="w-4 h-4 text-slate-400 group-focus-within:text-[#FF6A3D] transition-colors" />
+                        <Search className="w-4 h-4 text-slate-400" />
                     )}
                 </div>
+                
                 <input 
                     type="text" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search schools, malls, places..." 
-                    className="w-full relative z-0 pl-11 pr-4 py-3.5 rounded-full bg-white/95 backdrop-blur-3xl shadow-xl text-sm font-bold text-slate-800 outline-none border-2 border-transparent focus:border-[#FF6A3D]/50 placeholder:font-medium placeholder:text-slate-400"
+                    className="flex-1 w-full bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:font-medium placeholder:text-slate-400 py-3.5"
                 />
+
+                <button 
+                  type="submit" 
+                  disabled={isSearching}
+                  className="px-5 py-2 mr-1.5 bg-[#FF6A3D] hover:bg-[#ff5522] text-white text-xs font-black uppercase tracking-wider rounded-full shadow-md active:scale-95 transition-all"
+                >
+                  Search
+                </button>
 
                 {/* Auto-Complete Live Dropdown Menu */}
                 {searchResults.length > 0 && (
@@ -156,6 +195,7 @@ export default function LocationTracker() {
                             return (
                                 <button 
                                     key={idx}
+                                    type="button"
                                     onClick={() => handleSelectResult(res)}
                                     className="w-full text-left px-5 py-3.5 hover:bg-slate-50 transition-colors flex items-center gap-4 active:scale-95"
                                 >
@@ -171,7 +211,7 @@ export default function LocationTracker() {
                         })}
                     </div>
                 )}
-            </div>
+            </form>
         </div>
 
       </header>
