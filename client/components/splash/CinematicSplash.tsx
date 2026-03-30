@@ -10,12 +10,12 @@ export default function CinematicSplash({ onComplete }: { onComplete: () => void
   const controlsRoof = useAnimationControls();
   const controlsNest = useAnimationControls();
 
-  // Memoize random base sphere coordinates so they don't regenerate on re-renders
-  const spheres = useMemo(() => Array.from({ length: 8 }).map((_, i) => ({
+  // Memoize dense grid of sphere coordinates to pack the mobile screen
+  const spheres = useMemo(() => Array.from({ length: 25 }).map((_, i) => ({
     id: i,
-    x: (Math.random() - 0.5) * 800,
-    y: (Math.random() - 0.5) * 1200,
-    size: Math.random() * 200 + 100,
+    x: (Math.random() - 0.5) * 1200, // wider horizontal spread
+    y: (Math.random() - 0.5) * 2000, // taller vertical spread
+    size: Math.random() * 300 + 150, // massively increased disc sizes (150px - 450px)
     blur: Math.random() * 20 + 10,
     color: ['#FF5A1F', '#FF7A3C', '#FFB199'][i % 3]
   })), []);
