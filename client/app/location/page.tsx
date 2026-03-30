@@ -34,12 +34,12 @@ export default function LocationTracker() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
          const { latitude, longitude } = pos.coords;
-         setForceFlyTo([latitude, longitude]); // Map organically swoops to exact GPS chip location (3.5s animation)
+         setForceFlyTo([latitude, longitude]); // Map organically swoops to exact GPS chip location (1.5s animation)
          
-         // Wait exactly 4 seconds for the majestic zoom animation to finish, then auto-confirm location!
+         // Wait exactly 1.8 seconds for the fast zoom animation to finish, then auto-confirm location!
          setTimeout(() => {
             handleAutoConfirm([latitude, longitude]);
-         }, 3800);
+         }, 1800);
       },
       (err) => {
          console.warn("GPS Permission Denied:", err);

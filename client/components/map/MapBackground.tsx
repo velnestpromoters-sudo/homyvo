@@ -25,7 +25,7 @@ function CenterTracker({ onCenterChange, forcePosition }: { onCenterChange: (pos
   // Whenever forcePosition updates (e.g. from "Pick Me" button), fly exactly to it cinematically
   useEffect(() => {
     if (forcePosition) {
-       map.flyTo(forcePosition, 18, { animate: true, duration: 3.5 }); // Cinematic 3.5s zoom to street level
+       map.flyTo(forcePosition, 18, { animate: true, duration: 1.5 }); // Fast cinematic 1.5s zoom to street level
        onCenterChange(forcePosition);
     }
   }, [forcePosition, map, onCenterChange]);
@@ -43,8 +43,9 @@ export default function InteractiveMap({
     onLocationUpdate: (lat: number, lng: number) => void
 }) {
   const indiaCenter: [number, number] = [22.5937, 78.9629]; // Full India view
-  const position: [number, number] = initialCoordinates ? [initialCoordinates.lat, initialCoordinates.lng] : indiaCenter;
-  const initialZoom = initialCoordinates ? 18 : 5; // Zoom 5 shows entire India, 18 shows street
+  // Always lock initial map view to the entire country at Zoom 5
+  const position: [number, number] = indiaCenter;
+  const initialZoom = 5;
 
   const handleCenterUpdate = (pos: [number, number]) => {
       onLocationUpdate(pos[0], pos[1]);
