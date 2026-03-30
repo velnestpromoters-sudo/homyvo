@@ -65,7 +65,7 @@ export default function HomeReelPage() {
   const [locationName, setLocationName] = useState('Detecting...');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 1. Geolocation Logic with BigDataCloud Free API
+  // 1. Geolocation Logic with Mappls Enterprise API
   useEffect(() => {
     // Attempt auto-detect
     if ('geolocation' in navigator) {
@@ -73,14 +73,20 @@ export default function HomeReelPage() {
         async (pos) => {
           try {
             const { latitude, longitude } = pos.coords;
-            const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+            const mapplsKey = process.env.NEXT_PUBLIC_MAPPLS_API || '';
+            const res = await fetch(`https://apis.mappls.com/advancedmaps/v1/${mapplsKey}/rev_geocode?lat=${latitude}&lng=${longitude}`);
             const data = await res.json();
             
-            // Prefer hyper-local boundaries, falling back to big cities
-            const detectedLocation = data.locality || data.city || data.principalSubdivision || 'Unknown';
-            setLocationName(`📍 ${detectedLocation}`);
+            if (data.results && data.results.length > 0) {
+              const locationData = data.results[0];
+              // MapmyIndia returns hyper-local boundaries like subLocality, city, district
+              const detectedLocation = locationData.subLocality || locationData.city || locationData.district || 'Location Setup';
+              setLocationName(`📍 ${detectedLocation}`);
+            } else {
+              setLocationName('📍 Unknown Area');
+            }
           } catch (error) {
-            console.error('Failed to deduce location:', error);
+            console.error('Failed to deduce location from Mappls:', error);
             setLocationName('📍 Select Location');
           }
         },
