@@ -13,7 +13,7 @@ const MOCK_REELS = [
   {
     id: 'prop_101',
     video: 'https://cdn.pixabay.com/video/2019/07/26/25556-351147055_tiny.mp4',
-    images: ['https://images.unsplash.com/photo-1554995207-c18c203602cb?w=400', 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=400', 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400'],
+    images: ['/mockups/exterior.png', '/mockups/living.png', '/mockups/bed.png'],
     rent: 25000,
     area: 'RSpuram',
     district: 'Coimbatore',

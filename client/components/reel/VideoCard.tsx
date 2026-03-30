@@ -52,6 +52,31 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
       }
   };
 
+  // Mouse Drag-To-Scroll (Desktop Simulation of swiping)
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const startDragging = (e: React.MouseEvent) => {
+      setIsDragging(true);
+      if (!scrollRef.current) return;
+      setStartX(e.pageX - scrollRef.current.offsetLeft);
+      setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const stopDragging = () => {
+      setIsDragging(false);
+  };
+
+  const onDrag = (e: React.MouseEvent) => {
+      if (!isDragging || !scrollRef.current) return;
+      e.preventDefault();
+      const x = e.pageX - scrollRef.current.offsetLeft;
+      const walk = (x - startX) * 1.5; // Drag sensitivity
+      scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   // Detect horizontal swipe to update pagination dots
   const handleHorizontalScroll = (e: React.UIEvent<HTMLDivElement>) => {
       const container = e.currentTarget;
@@ -67,8 +92,13 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
       
       {/* Horizontal Full Screen Scrollable Carousel (Video + Images) */}
       <div 
+        ref={scrollRef}
         onScroll={handleHorizontalScroll}
-        className="absolute inset-0 flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar"
+        onMouseDown={startDragging}
+        onMouseLeave={stopDragging}
+        onMouseUp={stopDragging}
+        onMouseMove={onDrag}
+        className={`absolute inset-0 flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
       >
           {mediaList.map((mediaSrc, idx) => (
@@ -77,7 +107,7 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
                     <video
                         ref={videoRef}
                         src={mediaSrc}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover pointer-events-none"
                         loop
                         muted
                         playsInline
@@ -85,7 +115,7 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
                 ) : (
                     <img 
                         src={mediaSrc} 
-                        className="w-full h-full object-cover" 
+                        className="w-full h-full object-cover pointer-events-none" 
                         alt="Property Exterior/Interior View"
                     />
                 )}
