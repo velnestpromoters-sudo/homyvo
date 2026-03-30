@@ -142,36 +142,25 @@ export default function CinematicSplash({ onComplete }: { onComplete: () => void
 
       {/* 2. Logo Container */}
       <div className="relative w-[140px] h-[140px] z-10 flex items-center justify-center drop-shadow-xl">
-        <svg viewBox="0 0 100 100" className="w-[120px] h-[120px] overflow-visible">
-            {/* The Roof SVG (Chevron) */}
-            <motion.path
-                animate={controlsRoof}
-                initial={{ opacity: 0, y: -150 }}
-                d="M 20 50 L 50 20 L 80 50"
-                fill="none"
-                stroke="#FF5A1F"
-                strokeWidth="12"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            {/* The Nest (Semi-Circle Base) */}
-            <motion.path
-              animate={controlsNest}
-              initial={{ opacity: 0, scale: 0.85 }}
-              d="M 20 60 A 30 20 0 0 0 80 60 Z"
-              fill="#FFB199"
-            />
-            {/* The Dynamic "B" Handwriting Draw */}
-            <motion.path
-               animate={controlsB}
-               initial={{ pathLength: 0, opacity: 0 }}
-               d="M 40 35 L 40 85 M 40 60 C 65 60 70 85 45 85 M 40 35 C 60 35 65 60 45 60"
-               fill="none"
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="140pt" height="140pt" viewBox="0 0 140 140" preserveAspectRatio="xMidYMid meet" className="w-[120px] h-[120px] overflow-visible">
+            <motion.g 
+               transform="translate(0.000000,140.000000) scale(0.100000,-0.100000)" 
+               fill="#FF5A1F" 
                stroke="#FF5A1F"
-               strokeWidth="10"
-               strokeLinecap="round"
-               strokeLinejoin="round"
-            />
+               strokeWidth="15"
+               animate={controlsB}
+               initial={{ pathLength: 0, opacity: 0, fillOpacity: 0 }}
+               onAnimationComplete={(definition) => {
+                  // After it finishes drawing the stroke, pulse the fill opacity!
+                  controlsNest.start({ fillOpacity: 1, transition: { duration: 0.8, ease: "easeOut" } });
+               }}
+            >
+                <motion.path
+                   animate={controlsNest}
+                   initial={{ fillOpacity: 0 }}
+                   d="M344 1168 c-4 -7 -8 -57 -8 -112 l-1 -101 -62 -45 c-72 -52 -88 -84 -54 -111 24 -20 45 -16 78 14 40 36 44 18 41 -201 -3 -206 -3 -207 24 -264 154 -328 635 -278 707 74 62 299 -308 527 -571 353 -62 -41 -68 -36 -68 55 l0 79 73 54 c125 92 179 127 197 127 17 0 225 -144 378 -262 72 -55 72 -55 102 -30 36 29 20 60 -55 112 -75 51 -80 64 -71 160 7 78 -3 93 -56 88 -32 -3 -33 -5 -36 -51 -4 -67 -18 -67 -106 -3 -142 106 -180 105 -328 -10 -91 -70 -98 -70 -98 4 0 32 -5 63 -12 70 -15 15 -65 16 -74 0z m528 -501 c153 -70 148 -188 -9 -247 -270 -101 -587 94 -371 228 93 58 277 67 380 19z m93 -283 c-13 -35 -25 -49 -51 -60 -47 -20 -177 -17 -244 6 l-55 18 84 1 c100 1 181 22 236 60 50 35 52 33 30 -25z m-379 -68 c72 -34 125 -47 204 -49 78 -2 79 -16 2 -38 -138 -39 -283 17 -343 133 -34 66 -23 73 33 24 29 -25 76 -57 104 -70z"
+                />
+            </motion.g>
         </svg>
       </div>
     </motion.div>
