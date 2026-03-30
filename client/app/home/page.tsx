@@ -13,6 +13,7 @@ const MOCK_REELS = [
   {
     id: 'prop_101',
     video: 'https://cdn.pixabay.com/video/2019/07/26/25556-351147055_tiny.mp4',
+    images: ['https://images.unsplash.com/photo-1554995207-c18c203602cb?w=400', 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=400', 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400'],
     rent: 25000,
     area: 'RSpuram',
     district: 'Coimbatore',
@@ -22,6 +23,7 @@ const MOCK_REELS = [
   {
     id: 'prop_102',
     video: 'https://cdn.pixabay.com/video/2019/11/05/28807-372134591_tiny.mp4',
+    images: ['https://images.unsplash.com/photo-1560184897-ae75f418c935?w=400', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400', 'https://images.unsplash.com/photo-1620626011761-9ea018903148?w=400'],
     rent: 18000,
     area: 'Saibaba Colony',
     district: 'Coimbatore',
@@ -31,6 +33,7 @@ const MOCK_REELS = [
   {
     id: 'prop_103',
     video: 'https://cdn.pixabay.com/video/2019/10/22/28169-368595604_tiny.mp4',
+    images: ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400', 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400', 'https://images.unsplash.com/photo-1600607687931-5781ebca4205?w=400'],
     rent: 32000,
     area: 'Peelamedu',
     district: 'Coimbatore',
@@ -40,6 +43,7 @@ const MOCK_REELS = [
   {
     id: 'prop_104',
     video: 'https://cdn.pixabay.com/video/2021/08/25/86278-592659102_tiny.mp4',
+    images: ['https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?w=400', 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?w=400', 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400'],
     rent: 15000,
     area: 'Ganapathy',
     district: 'Coimbatore',
@@ -49,6 +53,7 @@ const MOCK_REELS = [
   {
     id: 'prop_105',
     video: 'https://cdn.pixabay.com/video/2020/06/17/42240-431878345_tiny.mp4',
+    images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400', 'https://images.unsplash.com/photo-1600585154526-990dced4ea0d?w=400', 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=400'],
     rent: 45000,
     area: 'Race Course',
     district: 'Coimbatore',
@@ -159,6 +164,7 @@ export default function HomeReelPage() {
             key={reel.id}
             id={reel.id}
             video={reel.video}
+            images={reel.images}
             rent={reel.rent}
             area={reel.area}
             district={reel.district}
