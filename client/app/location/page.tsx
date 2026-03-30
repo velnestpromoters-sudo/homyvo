@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Navigation, Search } from 'lucide-react';
+import { ArrowLeft, Navigation, Search, MapPin } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocationStore } from '@/store/locationStore';
 
@@ -21,38 +21,48 @@ export default function LocationTracker() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   
-  // Search Bar
+  // Auto-Complete Search
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   // Called 60 times a second when user drags the map!
   const handleMapMove = useCallback((lat: number, lng: number) => {
       setNeedlePosition([lat, lng]);
   }, []);
 
-  // Text -> Coordinates (OSM Forward Geocoding)
-  const executeSearch = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!searchQuery.trim()) return;
-      setIsSearching(true);
+  // Debounced Photon API fetching for spelling-tolerant POI auto-complete
+  useEffect(() => {
+     if (!searchQuery.trim()) {
+         setSearchResults([]);
+         setIsSearching(false);
+         return;
+     }
+
+     const timer = setTimeout(async () => {
+         setIsSearching(true);
+         try {
+             const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=5`);
+             const data = await res.json();
+             setSearchResults(data.features || []);
+         } catch (err) {
+             console.error("Photon POI Auto-Complete failed", err);
+         } finally {
+             setIsSearching(false);
+         }
+     }, 300); // 300ms sweet spot debounce
+
+     return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Handle User tapping a dropdown result 
+  const handleSelectResult = (result: any) => {
+      const [lon, lat] = result.geometry.coordinates; // GeoJSON puts Longitude first!
+      setForceFlyTo([lat, lon]); // Turbo 0.4s Cinematic Map Fly!
       
-      try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`, {
-              headers: { 'User-Agent': 'Bnest-App-Client' }
-          });
-          const data = await res.json();
-          if (data && data.length > 0) {
-              const lat = parseFloat(data[0].lat);
-              const lon = parseFloat(data[0].lon);
-              setForceFlyTo([lat, lon]); // Turbo 0.8s Cinematic Map Fly!
-          } else {
-              alert("Location not found on map! Try a nearby city or district.");
-          }
-      } catch (err) {
-          console.error("OSM Search block", err);
-      } finally {
-          setIsSearching(false);
-      }
+      // Clear UI
+      setSearchQuery('');
+      setSearchResults([]);
   };
 
   // Native GPS triangulation (Satellite Ping)
@@ -63,7 +73,7 @@ export default function LocationTracker() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
          const { latitude, longitude } = pos.coords;
-         setForceFlyTo([latitude, longitude]); // Ultra-Fast Map Fly
+         setForceFlyTo([latitude, longitude]); // Ultra-Fast 0.4s Map Fly
          setIsLocating(false);
       },
       (err) => {
@@ -120,9 +130,9 @@ export default function LocationTracker() {
               <ArrowLeft className="w-5 h-5 drop-shadow-lg" />
             </button>
             
-            {/* Awesome Floating Map Search Engine */}
-            <form onSubmit={executeSearch} className="flex-1 relative group pointer-events-auto">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+            {/* Awesome Floating Map Search Engine with Auto-complete */}
+            <div className="flex-1 relative group pointer-events-auto">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
                     {isSearching ? (
                         <div className="w-4 h-4 border-2 border-slate-400 border-t-[#FF6A3D] rounded-full animate-spin"></div>
                     ) : (
@@ -133,10 +143,35 @@ export default function LocationTracker() {
                     type="text" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search city, district..." 
-                    className="w-full pl-11 pr-4 py-3.5 rounded-full bg-white/95 backdrop-blur-3xl shadow-xl text-sm font-bold text-slate-800 outline-none border-2 border-transparent focus:border-[#FF6A3D]/50 placeholder:font-medium placeholder:text-slate-400"
+                    placeholder="Search schools, malls, places..." 
+                    className="w-full relative z-0 pl-11 pr-4 py-3.5 rounded-full bg-white/95 backdrop-blur-3xl shadow-xl text-sm font-bold text-slate-800 outline-none border-2 border-transparent focus:border-[#FF6A3D]/50 placeholder:font-medium placeholder:text-slate-400"
                 />
-            </form>
+
+                {/* Auto-Complete Live Dropdown Menu */}
+                {searchResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-3 bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl overflow-hidden py-2 z-50">
+                        {searchResults.map((res: any, idx: number) => {
+                            const name = res.properties.name || "Unknown Place";
+                            const street = res.properties.street || res.properties.city || res.properties.state || "Exact Location";
+                            return (
+                                <button 
+                                    key={idx}
+                                    onClick={() => handleSelectResult(res)}
+                                    className="w-full text-left px-5 py-3.5 hover:bg-slate-50 transition-colors flex items-center gap-4 active:scale-95"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                        <MapPin className="w-4 h-4 text-[#FF6A3D]" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-slate-900 font-extrabold text-sm line-clamp-1">{name}</span>
+                                        <span className="text-slate-500 font-medium text-xs line-clamp-1">{street}</span>
+                                    </div>
+                                </button>
+                            )
+                        })}
+                    </div>
+                )}
+            </div>
         </div>
 
       </header>

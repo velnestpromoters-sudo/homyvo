@@ -19,13 +19,17 @@ function CenterTracker({ onCenterChange, forcePosition }: { onCenterChange: (pos
       moveend: () => {
           const center = map.getCenter();
           onCenterChange([center.lat, center.lng]);
+      },
+      click: (e) => {
+          // Instantly fly tapped location exactly to center underneath the needle
+          map.flyTo(e.latlng, map.getZoom(), { animate: true, duration: 0.4 });
       }
   });
 
   // Whenever forcePosition updates (e.g. from "Pick Me" button or Search Bar), fly exactly to it cinematically
   useEffect(() => {
     if (forcePosition) {
-       map.flyTo(forcePosition, 18, { animate: true, duration: 0.8 }); // Ultra-Fast cinematic zoom to street level
+       map.flyTo(forcePosition, 18, { animate: true, duration: 0.4 }); // Ultra-Fast cinematic zoom to street level
        onCenterChange(forcePosition);
     }
   }, [forcePosition, map, onCenterChange]);
