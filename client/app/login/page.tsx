@@ -22,7 +22,7 @@ export default function LoginPage() {
       const res = await api.post('/auth/login', { mobile, role });
       if (res.data.success) {
         loginAction(res.data.data, res.data.token);
-        if (role === 'tenant') router.push('/tenant/home');
+        if (role === 'tenant') router.push('/home');
         else router.push('/owner/dashboard');
       }
     } catch (error) {

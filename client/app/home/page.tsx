@@ -6,6 +6,7 @@ import VideoCard from '@/components/reel/VideoCard';
 import SearchBar from '@/components/common/SearchBar';
 import BottomBar from '@/components/common/BottomBar';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 
 // Mock Data: 5 Vertical Video Properties
@@ -70,6 +71,8 @@ export default function HomeReelPage() {
   const [activeSlide, setActiveSlide] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const { locationName, setLocation } = useLocationStore();
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const logout = useAuthStore(state => state.logout);
 
   // 1. Dual-Fallback Geolocation Architecture (Mappls Proxy -> BigDataCloud)
   useEffect(() => {
@@ -129,26 +132,48 @@ export default function HomeReelPage() {
     }
   };
 
-  // Login click handler
-  const handleLoginClick = () => {
+  // Login/Profile click handler
+  const handleProfileClick = () => {
     if (!isAuthenticated) return router.push('/login');
-    if (user?.role === 'tenant') return router.push('/tenant/home');
     if (user?.role === 'owner') return router.push('/owner/dashboard');
-    return router.push('/login');
+    
+    // For Tenants, toggle the logout menu
+    if (user?.role === 'tenant') {
+        setShowLogoutMenu(!showLogoutMenu);
+    }
+  };
+  
+  const handleLogout = () => {
+      logout();
+      setShowLogoutMenu(false);
+      // Optional: fast reload or let Zustand auto-refresh state
   };
 
   return (
     <div className="relative w-full h-[100dvh] bg-black overflow-hidden">
       
       {/* Header overlays that sit above the snapping videos */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-5 mt-2 flex items-center gap-3">
-        <button 
-          onClick={handleLoginClick}
-          className="shrink-0 bg-black/40 backdrop-blur-xl border border-white/20 shadow-xl px-4 py-2.5 rounded-full text-white/90 font-bold text-sm active:scale-95 transition-all flex items-center gap-2"
-        >
-          <div className="w-2 h-2 rounded-full bg-[#FF6A3D] animate-pulse"></div>
-          {isAuthenticated ? 'Dash' : 'Sign In'}
-        </button>
+      <div className="absolute top-0 left-0 right-0 z-50 p-5 mt-2 flex items-center gap-3">
+        <div className="relative shrink-0">
+            <button 
+              onClick={handleProfileClick}
+              className="bg-black/40 backdrop-blur-xl border border-white/20 shadow-xl px-4 py-2.5 rounded-full text-white/90 font-bold text-sm active:scale-95 transition-all flex items-center gap-2"
+            >
+              <div className="w-2 h-2 rounded-full bg-[#FF6A3D] animate-pulse"></div>
+              {isAuthenticated ? (user?.name || 'Tenant') : 'Sign In'}
+            </button>
+            
+            {showLogoutMenu && isAuthenticated && user?.role === 'tenant' && (
+                <div className="absolute top-full left-0 mt-2 bg-white/90 backdrop-blur-3xl shadow-2xl rounded-2xl overflow-hidden py-1 w-32 border border-white/20 animate-in fade-in slide-in-from-top-2">
+                    <button 
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-3 text-red-500 font-bold text-sm hover:bg-red-50 active:bg-red-100 transition-colors"
+                    >
+                        Sign Out
+                    </button>
+                </div>
+            )}
+        </div>
         <SearchBar />
       </div>
 

@@ -3,7 +3,7 @@ import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
-import { ArrowLeft, MapPin, CheckCircle, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, CheckCircle, ShieldCheck, Lock } from 'lucide-react';
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params as any) as { id: string };
@@ -14,6 +14,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [property, setProperty] = useState<any>(null);
   const [access, setAccess] = useState<'limited' | 'full'>('limited');
   const [loading, setLoading] = useState(true);
+  const [paymentUnlocked, setPaymentUnlocked] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const simulatePayment = () => {
+      setIsProcessingPayment(true);
+      setTimeout(() => {
+          setIsProcessingPayment(false);
+          setPaymentUnlocked(true);
+      }, 1500);
+  };
 
   // We fall back to mock data if no db is linked just for demo
   const fallbackMock = {
@@ -85,31 +95,70 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {access === 'limited' ? (
-          <div className="mt-8 bg-orange-50/50 border border-orange-100 rounded-3xl p-6 text-center">
+        {!isAuthenticated ? (
+          <div className="mt-8 bg-orange-50/50 border border-orange-100 rounded-3xl p-6 text-center shadow-inner">
              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-50">
                 <ShieldCheck className="w-8 h-8 text-[#FF6A3D]" />
              </div>
              <h3 className="text-lg font-bold text-slate-900 mb-2">Login to View Full Details</h3>
              <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-               Get access to the owner's direct contact, exact location, video tours, and schedule a visit instantly.
+               Securely access the owner's direct contact, exact location, video tours, and schedule a visit instantly.
              </p>
              <button 
                onClick={() => router.push('/login')} 
-               className="w-full py-4 bg-[#FF6A3D] text-white font-bold rounded-full shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+               className="w-full py-4 bg-[#FF6A3D] text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
              >
                Login to View Details
              </button>
           </div>
+        ) : !paymentUnlocked && role === 'tenant' ? (
+          <div className="mt-8 space-y-6 animate-in fade-in slide-in-from-bottom-4">
+             <h3 className="text-lg font-bold text-slate-900 border-b pb-2 flex items-center gap-2">
+                 <Lock className="w-5 h-5 text-slate-400" /> Premium Access
+             </h3>
+             <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden text-center">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                <h4 className="text-white font-black text-xl mb-2">Unlock Owner Contact</h4>
+                <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+                  Pay a one-time fee to permanently unlock direct calling functionality and exact property coordinates for this listing.
+                </p>
+                
+                <button 
+                  onClick={simulatePayment}
+                  disabled={isProcessingPayment}
+                  className="w-full py-4 bg-gradient-to-r from-[#FF6A3D] to-[#ff4a11] text-white font-bold rounded-xl shadow-xl shadow-orange-500/30 active:scale-[0.98] transition-all flex justify-center items-center gap-2 disabled:opacity-75 disabled:active:scale-100"
+                >
+                  {isProcessingPayment ? (
+                     <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Processing Gateway...</>
+                  ) : (
+                     <>Pay ₹199 via UPI / Card</>
+                  )}
+                </button>
+                <div className="mt-4 flex items-center justify-center gap-1.5 opacity-60">
+                    <ShieldCheck className="w-4 h-4 text-white" />
+                    <span className="text-white text-xs font-semibold uppercase tracking-widest">Secure Encrypted Payment</span>
+                </div>
+             </div>
+          </div>
         ) : (
-          <div className="space-y-6">
-            <h3 className="text-lg font-bold text-slate-900 border-b pb-2">Full Details</h3>
-             <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                <p className="text-sm text-slate-500 mb-1">Owner Contact</p>
-                <p className="font-bold text-slate-800 text-lg mb-4">{property.ownerId?.name || 'Owner Name'}</p>
+          <div className="mt-8 space-y-6 animate-in slide-in-from-bottom-2 fade-in">
+            <h3 className="text-lg font-bold text-slate-900 border-b pb-2 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-green-500" /> Contact Unlocked
+            </h3>
+             <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Owner Credentials</p>
+                <p className="font-black text-slate-800 text-xl mb-1">{property.ownerId?.name || 'Verified Owner'}</p>
+                <p className="font-semibold text-[#FF6A3D] text-lg tracking-wide mb-5">
+                   {property.ownerId?.mobile || '+91 98XXX XXXXX'}
+                </p>
+                
                 <div className="flex gap-3">
-                  <button className="flex-1 py-3 border-2 border-[#FF6A3D] text-[#FF6A3D] font-bold rounded-xl text-sm">Call Now</button>
-                  <button className="flex-1 py-3 bg-[#FF6A3D] text-white font-bold rounded-xl text-sm shadow-md shadow-orange-500/20">Apply Request</button>
+                  <button onClick={() => window.open(`tel:${property.ownerId?.mobile}`, '_self')} className="flex-1 py-3 border-2 border-[#FF6A3D] bg-orange-50 text-[#FF6A3D] font-black rounded-xl text-sm shadow-sm active:scale-95 transition-all">
+                    Call Now
+                  </button>
+                  <button className="flex-1 py-3 bg-[#FF6A3D] text-white font-black rounded-xl text-sm shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
+                    Request Visit
+                  </button>
                 </div>
              </div>
           </div>
