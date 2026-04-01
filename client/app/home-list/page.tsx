@@ -49,27 +49,23 @@ export default function HomeListPage() {
          </div>
       </div>
 
+      {/* Fixed Logout Popup - Independent of Header Bounds */}
       {showLogoutMenu && isAuthenticated && user?.role === 'tenant' && (
-          <div className="fixed inset-0 z-[999999] bg-black/60 backdrop-blur-sm flex items-end justify-center pb-12 px-5 animate-in fade-in" onClick={() => setShowLogoutMenu(false)}>
-              <div className="bg-[#1A1A1A] w-full max-w-sm rounded-[32px] p-2 animate-in slide-in-from-bottom-8 border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
-                  <div className="px-5 py-6 border-b border-white/5 text-center flex flex-col items-center gap-1">
-                     <span className="text-white/40 text-[10px] font-black uppercase tracking-widest">Logged in as</span>
-                     <p className="text-white font-black text-2xl">{user?.name || 'Tenant'}</p>
+          <div className="fixed inset-0 z-[999999]" onClick={() => setShowLogoutMenu(false)}>
+              <div 
+                className="absolute top-24 right-5 bg-white/95 backdrop-blur-3xl shadow-2xl rounded-2xl overflow-hidden py-2 w-40 border border-black/5 animate-in fade-in slide-in-from-top-2"
+                onClick={e => e.stopPropagation()}
+              >
+                  <div className="px-4 py-2 border-b border-black/5 mb-1">
+                      <p className="text-black/50 text-[10px] uppercase font-black tracking-widest leading-tight">Logged in</p>
+                      <p className="text-black font-bold text-sm truncate">{user?.name || 'Tenant'}</p>
                   </div>
-                  <div className="p-2 flex flex-col gap-2">
-                     <button 
-                         onClick={handleLogout}
-                         className="w-full text-center py-4 bg-[#FF3D3D]/10 text-[#FF3D3D] font-black text-lg hover:bg-[#FF3D3D]/20 active:scale-95 transition-all rounded-[24px]"
-                     >
-                         Sign Out
-                     </button>
-                     <button 
-                         onClick={() => setShowLogoutMenu(false)}
-                         className="w-full text-center py-4 text-white/50 font-bold text-base hover:text-white active:scale-95 transition-all rounded-[24px]"
-                     >
-                         Cancel
-                     </button>
-                  </div>
+                  <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2.5 text-[#FF3D3D] font-bold text-sm hover:bg-black/5 active:bg-black/10 transition-colors"
+                  >
+                      Sign Out
+                  </button>
               </div>
           </div>
       )}
