@@ -5,9 +5,15 @@ exports.sendOTPEmail = async (to, otp) => {
     user_id: process.env.EMAILJS_PUBLIC_KEY,
     accessToken: process.env.EMAILJS_PRIVATE_KEY,
     template_params: {
-      to_email: to,      // Ensure your EmailJS template uses {{to_email}} in the "To" field
-      otp_code: otp,     // Ensure your template body uses {{otp_code}}
-      message: `Your OTP is ${otp}. It is valid for 5 minutes.` // Optional fallback variable
+      to_email: to,
+      email: to,
+      to_name: to,
+      to: to,
+      otp_code: otp.toString(),
+      otp: otp.toString(),
+      code: otp.toString(),
+      OTP: otp.toString(),
+      message: `Your OTP is ${otp}. It is valid for 5 minutes.`
     }
   };
 
