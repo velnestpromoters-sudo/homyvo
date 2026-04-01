@@ -16,7 +16,7 @@ export default function SplashPage() {
       } else if (isAuthenticated && user?.role === 'tenant') {
         router.push('/home');
       } else {
-        router.push('/login');
+        router.push('/home');
       }
     }, 3200);
 

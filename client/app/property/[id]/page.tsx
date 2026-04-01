@@ -3,14 +3,19 @@ import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
-import { ArrowLeft, MapPin, CheckCircle, ShieldCheck, Lock } from 'lucide-react';
+import { ArrowLeft, Share2, MapPin, Bed, Bath, TriangleRight, Key, ShieldCheck, CheckCircle2, ChevronRight, PlayCircle, Eye, Lock } from 'lucide-react';
+import { useAuthModalStore } from '@/store/authModalStore';
+import { useAuthStore } from '@/store/authStore';
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params as any) as { id: string };
   const id = unwrappedParams.id;
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = useAuthStore();
   const role = user?.role;
+  const { openModal } = useAuthModalStore();
+  
+  const [activeImage, setActiveImage] = useState(0);
   const [property, setProperty] = useState<any>(null);
   const [access, setAccess] = useState<'limited' | 'full'>('limited');
   const [loading, setLoading] = useState(true);
@@ -105,7 +110,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                Securely access the owner's direct contact, exact location, video tours, and schedule a visit instantly.
              </p>
              <button 
-               onClick={() => router.push('/login')} 
+               onClick={openModal} 
                className="w-full py-4 bg-[#FF6A3D] text-white font-bold rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
              >
                Login to View Details

@@ -1,41 +1,57 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const otpGenerator = require('otp-generator');
+const { sendOTPEmail } = require('../services/emailService');
+const { saveOTP, verifyOTP } = require('../utils/otpStore');
 
-exports.login = async (req, res) => {
+exports.sendOTP = async (req, res) => {
   try {
-    const { mobile, role } = req.body;
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email required' });
 
-    if (!mobile || !role) {
-      return res.status(400).json({ success: false, message: 'Mobile and role are required' });
-    }
+    const otp = otpGenerator.generate(6, {
+      upperCaseAlphabets: false,
+      specialChars: false,
+      lowerCaseAlphabets: false,
+      digits: true
+    });
 
-    if (!['tenant', 'owner'].includes(role)) {
-      return res.status(400).json({ success: false, message: 'Invalid role' });
-    }
+    await sendOTPEmail(email, otp);
+    saveOTP(email, otp);
 
-    let user = await User.findOne({ mobile });
+    res.json({ success: true, message: "OTP sent successfully" });
+  } catch (err) {
+    console.error("OTP Send Error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
-    if (user) {
-      // If user exists, optionally update role if it's currently unset or just use existing logic
-      user.role = role;
-      await user.save();
+exports.verifyOTPAndLogin = async (req, res) => {
+  try {
+    const { email, otp, name, role } = req.body;
+
+    const isValid = verifyOTP(email, otp);
+    if (!isValid) return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      if (!name || !role) return res.status(400).json({ success: false, message: 'Name and role required for user creation' });
+      user = await User.create({ email, name, role });
     } else {
-      // Create new user with selected role
-      user = await User.create({ mobile, role });
+      user.role = role || user.role;
+      user.name = name || user.name;
+      await user.save();
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET || 'fallback_secret',
+      { id: user._id, role: user.role }, 
+      process.env.JWT_SECRET || 'fallback_secret', 
       { expiresIn: '30d' }
     );
 
-    res.status(200).json({
-      success: true,
-      token,
-      data: user
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, token, data: user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };

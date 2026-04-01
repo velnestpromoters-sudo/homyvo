@@ -14,7 +14,7 @@ export default function OwnerDashboard() {
   useEffect(() => {
     // Basic auth wrap
     if (!isAuthenticated) {
-      router.push('/login');
+      router.push('/home');
       return;
     }
     
@@ -37,7 +37,7 @@ export default function OwnerDashboard() {
 
   const handleLogout = () => {
       logout();
-      router.push('/login');
+      router.push('/home');
   };
 
   return (

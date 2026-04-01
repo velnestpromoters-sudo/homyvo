@@ -8,16 +8,18 @@ import { Construction } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
+import { useAuthModalStore } from '@/store/authModalStore';
 
 export default function HomeListPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const { locationName } = useLocationStore();
+  const { openModal } = useAuthModalStore();
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const logout = useAuthStore(state => state.logout);
 
   const handleProfileClick = () => {
-    if (!isAuthenticated) return router.push('/login');
+    if (!isAuthenticated) return openModal();
     if (user?.role === 'owner') return router.push('/owner/dashboard');
     if (user?.role === 'tenant') setShowLogoutMenu(!showLogoutMenu);
   };

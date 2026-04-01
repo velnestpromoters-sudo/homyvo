@@ -4,7 +4,8 @@ import { persist } from 'zustand/middleware';
 export interface User {
   _id: string;
   name?: string;
-  mobile: string;
+  email?: string;
+  mobile?: string;
   role: 'tenant' | 'owner';
   isVerified?: boolean;
 }
