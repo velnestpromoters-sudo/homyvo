@@ -150,30 +150,9 @@ export default function HomeReelPage() {
     <div className="relative w-full h-[100dvh] bg-black overflow-hidden">
       
       {/* Header overlays that sit above the snapping videos */}
-      <div className="absolute top-0 left-0 right-0 z-[50] p-5 flex items-end justify-between gap-3 bg-gradient-to-b from-black/80 to-transparent pb-8 pointer-events-none">
-         <div className="flex-1 pointer-events-auto">
+      <div className="absolute top-0 left-0 right-0 z-[50] p-5 mt-2 flex items-center justify-center pointer-events-none">
+         <div className="w-full pointer-events-auto">
              <SearchBar />
-         </div>
-         
-         <div className="relative shrink-0 mb-1 z-[9999] pointer-events-auto">
-             <button 
-               onClick={handleProfileClick}
-               className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl px-4 py-2.5 rounded-full text-white/90 font-bold text-sm hover:bg-white/20 active:scale-95 transition-all flex items-center gap-2"
-             >
-               <div className="w-2 h-2 rounded-full bg-[#FF6A3D] animate-pulse"></div>
-               {isAuthenticated ? (user?.name || 'Tenant') : 'Sign In'}
-             </button>
-             
-             {showLogoutMenu && isAuthenticated && user?.role === 'tenant' && (
-                 <div className="absolute top-[120%] right-0 bg-[#1A1A1A] shadow-2xl rounded-2xl overflow-hidden py-1 w-32 border border-white/10 animate-in fade-in slide-in-from-top-2 z-[99999]">
-                     <button 
-                         onClick={handleLogout}
-                         className="w-full text-left px-4 py-3 text-[#FF3D3D] font-bold text-sm hover:bg-white/5 active:bg-white/10 transition-colors"
-                     >
-                         Sign Out
-                     </button>
-                 </div>
-             )}
          </div>
       </div>
 
