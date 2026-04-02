@@ -44,7 +44,7 @@ export default function HomeListPage() {
                className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl px-4 py-2.5 rounded-full text-white/90 font-bold text-sm hover:bg-white/20 active:scale-95 transition-all flex items-center gap-2"
              >
                <div className="w-2 h-2 rounded-full bg-[#FF6A3D] animate-pulse"></div>
-               {isAuthenticated ? (user?.name || 'Tenant') : 'Sign In'}
+               {isAuthenticated ? (user?.name || (user?.email ? user.email.split('@')[0] : 'Unknown')) : 'Sign In'}
              </button>
          </div>
       </div>
@@ -58,7 +58,7 @@ export default function HomeListPage() {
               >
                   <div className="px-4 py-2 border-b border-black/5 mb-1">
                       <p className="text-black/50 text-[10px] uppercase font-black tracking-widest leading-tight">Logged in</p>
-                      <p className="text-black font-bold text-sm truncate">{user?.name || 'Tenant'}</p>
+                      <p className="text-black font-bold text-sm truncate">{user?.name || user?.email || 'Unknown User'}</p>
                   </div>
                   <button 
                       onClick={handleLogout}
