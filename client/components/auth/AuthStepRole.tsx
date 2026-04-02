@@ -25,7 +25,7 @@ export default function AuthStepRole() {
       });
       
       const { token, data } = response.data;
-      login(token, data);
+      login(data, token);
       
       setLoading(false);
       reset();

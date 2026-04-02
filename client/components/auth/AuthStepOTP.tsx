@@ -23,7 +23,7 @@ export default function AuthStepOTP() {
       if (isExistingUser) {
           const response = await api.post('/auth/verify-otp', { email, otp });
           const { token, data } = response.data;
-          login(token, data);
+          login(data, token);
           setVerifying(false);
           reset();
           closeModal();
