@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, sparse: true },
   mobile: { type: String, sparse: true },
   gender: { type: String, enum: ['male', 'female', 'other'], sparse: true },
+  password: { type: String }, // Hashed password for permanent logins
   role: { type: String, enum: ['tenant', 'owner'] },
   isVerified: { type: Boolean, default: false },
   tenantProfile: {

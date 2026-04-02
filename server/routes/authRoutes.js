@@ -8,4 +8,7 @@ router.post('/send-otp', authController.sendOTP);
 // POST /auth/verify-otp - Compare store and generate JWT
 router.post('/verify-otp', authController.verifyOTPAndLogin);
 
+// POST /auth/login - Permanent password bypass
+router.post('/login', authController.loginWithPassword);
+
 module.exports = router;

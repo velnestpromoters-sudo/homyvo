@@ -5,7 +5,7 @@ import { Building2, Home, ArrowLeft, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function AuthStepRole() {
-  const { email, otp, name, mobile, gender, role, setField, prevStep, closeModal, reset } = useAuthModalStore();
+  const { email, otp, name, mobile, gender, role, password, setField, prevStep, closeModal, reset } = useAuthModalStore();
   const login = useAuthStore((state) => state.login);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +21,8 @@ export default function AuthStepRole() {
         name,
         mobile,
         gender,
-        role: selectedRole
+        role: selectedRole,
+        password
       });
       
       const { token, data } = response.data;

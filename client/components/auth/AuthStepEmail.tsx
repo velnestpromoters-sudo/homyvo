@@ -20,8 +20,14 @@ export default function AuthStepEmail() {
     try {
       const response = await api.post('/auth/send-otp', { email });
       setField('isExistingUser', response.data.isExistingUser || false);
+      setField('hasPassword', response.data.hasPassword || false);
       setLoading(false);
-      nextStep();
+      
+      if (response.data.hasPassword) {
+         setField('step', 6);
+      } else {
+         setField('step', 2);
+      }
     } catch (err: any) {
       setLoading(false);
       setError(err.response?.data?.message || 'Failed to send OTP. Check backend connection.');

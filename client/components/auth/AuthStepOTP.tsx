@@ -20,17 +20,9 @@ export default function AuthStepOTP() {
     setError('');
     
     try {
-      if (isExistingUser) {
-          const response = await api.post('/auth/verify-otp', { email, otp });
-          const { token, data } = response.data;
-          login(data, token);
-          setVerifying(false);
-          reset();
-          closeModal();
-      } else {
-          setVerifying(false);
-          nextStep();
-      }
+      // Regardless if existing or new, if they hit this, they MUST set a password
+      setVerifying(false);
+      setField('step', 3);
     } catch (err: any) {
       setVerifying(false);
       setError(err.response?.data?.message || 'Invalid code');

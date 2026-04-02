@@ -6,8 +6,10 @@ import { useAuthModalStore } from '@/store/authModalStore';
 import { X } from 'lucide-react';
 import AuthStepEmail from './AuthStepEmail';
 import AuthStepOTP from './AuthStepOTP';
+import AuthStepSetPassword from './AuthStepSetPassword';
 import AuthStepDetails from './AuthStepDetails';
 import AuthStepRole from './AuthStepRole';
+import AuthStepLogin from './AuthStepLogin';
 
 export default function AuthBottomSheet() {
   const { isOpen, step, closeModal, reset } = useAuthModalStore();
@@ -58,8 +60,10 @@ export default function AuthBottomSheet() {
                 >
                   {step === 1 && <AuthStepEmail />}
                   {step === 2 && <AuthStepOTP />}
-                  {step === 3 && <AuthStepDetails />}
-                  {step === 4 && <AuthStepRole />}
+                  {step === 3 && <AuthStepSetPassword />}
+                  {step === 4 && <AuthStepDetails />}
+                  {step === 5 && <AuthStepRole />}
+                  {step === 6 && <AuthStepLogin />}
                 </motion.div>
               </AnimatePresence>
             </div>
