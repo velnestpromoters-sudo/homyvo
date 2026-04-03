@@ -46,7 +46,7 @@ export default function Step5() {
            alert("Property published successfully!");
            router.push('/owner/dashboard');
        } else {
-           alert("Failed to create property. " + data.message);
+           alert("Failed to create property. " + (data.error || data.message || "Unknown error"));
        }
     } catch (err) {
        console.error("Submission error", err);

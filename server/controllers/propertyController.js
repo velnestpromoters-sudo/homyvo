@@ -81,6 +81,6 @@ exports.createProperty = async (req, res) => {
 
     res.status(201).json({ success: true, data: newProperty });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: err.message || err.toString() || "Unknown error", details: err });
   }
 };
