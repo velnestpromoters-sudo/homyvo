@@ -1,77 +1,84 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import { motion, useAnimationControls } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 
 export default function CinematicSplash({ onComplete }: { onComplete: () => void }) {
-  const controlsBg = useAnimationControls();
-  const controlsLogo = useAnimationControls();
-  const controlsPulse = useAnimationControls();
+  const [currentFrame, setCurrentFrame] = useState(1);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const totalFrames = 43;
 
+  // 1. Invisible Preloader to guarantee smooth playback
   useEffect(() => {
-    // 2.5 second timeline
-    const runSequence = async () => {
-      
-      // Step 1: Initial pop-in
-      controlsLogo.start({
-        scale: [0, 1.2, 1],
-        opacity: [0, 1, 1],
-        rotate: [15, -5, 0],
-        transition: { duration: 0.8, type: "spring", bounce: 0.5 }
-      });
-      
-      controlsPulse.start({
-        scale: [1, 2.5],
-        opacity: [0.8, 0],
-        transition: { duration: 1.2, ease: "easeOut" }
-      });
+    let loadedCount = 0;
+    const padding = (num: number) => num.toString().padStart(3, '0');
+    
+    for (let i = 1; i <= totalFrames; i++) {
+        const img = new Image();
+        img.src = `/splash-frames/ezgif-frame-${padding(i)}.jpg`;
+        img.onload = () => {
+            loadedCount++;
+            if (loadedCount === totalFrames) {
+                setImagesLoaded(true);
+            }
+        };
+        // Error handling in case one drops
+        img.onerror = () => {
+            loadedCount++;
+            if (loadedCount === totalFrames) {
+                setImagesLoaded(true);
+            }
+        };
+    }
+  }, []);
 
-      await new Promise(r => setTimeout(r, 1200));
+  // 2. Playback Sequence
+  useEffect(() => {
+    if (!imagesLoaded) return;
 
-      // Step 2: Background transitions to white
-      controlsBg.start({
-        backgroundColor: "#FFFFFF",
-        transition: { duration: 0.8, ease: "easeInOut" }
-      });
-      
-      // Logo pulses then explodes towards the camera
-      controlsLogo.start({
-        scale: [1, 0.9, 15],
-        opacity: [1, 1, 0],
-        transition: { duration: 0.9, ease: "easeInOut", times: [0, 0.4, 1] }
-      });
+    const interval = setInterval(() => {
+        setCurrentFrame((prev) => {
+            if (prev >= totalFrames) {
+                clearInterval(interval);
+                return totalFrames;
+            }
+            return prev + 1;
+        });
+    }, 50); // 20 FPS = 50ms per frame
 
-      await new Promise(r => setTimeout(r, 900));
-      
-      // Call router navigation
-      onComplete();
-    };
+    return () => clearInterval(interval);
+  }, [imagesLoaded]);
 
-    runSequence();
-  }, [controlsBg, controlsLogo, controlsPulse, onComplete]);
+  // 3. Routing Hook (Fires precisely when frame 43 hits)
+  useEffect(() => {
+    if (imagesLoaded && currentFrame === totalFrames) {
+      // Add a tiny 200ms buffer after the last frame so users can see it
+      const timer = setTimeout(() => {
+         onComplete();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [currentFrame, imagesLoaded, onComplete]);
+
+  const padNum = (num: number) => num.toString().padStart(3, '0');
 
   return (
-    <motion.div 
-      animate={controlsBg}
-      initial={{ backgroundColor: "#0F172A" }} // Deep slate navy to match typical purple/blue gradients
-      className="relative w-full h-[100dvh] overflow-hidden flex items-center justify-center font-sans"
-    >
+    <div className="w-full h-[100dvh] relative bg-black overflow-hidden flex items-center justify-center">
+      {/* Black background is perfect for video frame borders */}
       
-      {/* Huge blurry glowing orb behind the logo mapping to purple */}
-      <motion.div 
-         animate={controlsPulse}
-         initial={{ scale: 0, opacity: 0 }}
-         className="absolute w-64 h-64 bg-[#7e22ce] rounded-full blur-3xl z-0"
-      />
+      {!imagesLoaded && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black">
+             {/* Barebones spinner while loading the 43 frames into cache */}
+             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+          </div>
+      )}
 
-      <motion.div 
-         animate={controlsLogo}
-         initial={{ scale: 0, opacity: 0 }}
-         className="relative z-10 w-48 h-48 flex items-center justify-center drop-shadow-2xl"
-      >
-         <img src="/logo.png" alt="Homyvo Logo" className="w-[160px] object-contain drop-shadow-lg" />
-      </motion.div>
-      
-    </motion.div>
+      {imagesLoaded && (
+         <img 
+            src={`/splash-frames/ezgif-frame-${padNum(currentFrame)}.jpg`} 
+            alt="Homyvo Loading Sequence" 
+            className="w-full h-full object-cover"
+         />
+      )}
+    </div>
   );
 }
