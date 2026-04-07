@@ -9,6 +9,15 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB
 connectDB();
 
+// 14-Minute Render Free Tier Anti-Sleep Keep-Alive Ping
+const https = require('https');
+setInterval(() => {
+  https.get('https://bnest-backend-oz7c.onrender.com').on('error', (err) => {
+    console.log('Self-ping error:', err.message);
+  });
+  console.log('Fired anti-sleep heartbeat ping to Render');
+}, 14 * 60 * 1000);
+
 const server = http.createServer(app);
 
 // Setup Socket.IO
