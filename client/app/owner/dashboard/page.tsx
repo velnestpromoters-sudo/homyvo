@@ -11,6 +11,7 @@ export default function OwnerDashboard() {
   const logout = useAuthStore(state => state.logout);
   const [properties, setProperties] = useState([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
 
   useEffect(() => {
     // Basic auth wrap
@@ -118,10 +119,14 @@ export default function OwnerDashboard() {
         ) : (
           <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'thin' }}>
              {properties.map((prop: any) => (
-                <div key={prop._id} className="relative rounded-2xl overflow-hidden flex flex-col justify-end min-w-[200px] h-[340px] snap-center shrink-0 shadow-lg border border-gray-200/50 transition-transform hover:-translate-y-1">
+                <div 
+                   key={prop._id} 
+                   onClick={() => setSelectedProperty(prop)}
+                   className="relative rounded-2xl overflow-hidden flex flex-col justify-end min-w-[200px] h-[340px] snap-center shrink-0 shadow-lg border border-gray-200/50 transition-transform hover:-translate-y-1 cursor-pointer hover:shadow-xl group"
+                >
                    
                    {/* Full Background Image */}
-                   <div className="absolute inset-0 bg-gray-900 border border-black/10">
+                   <div className="absolute inset-0 bg-gray-900 border border-black/10 transition-transform duration-500 group-hover:scale-105">
                       {prop.images && prop.images[0] ? (
                          <img src={prop.images[0]} alt="Property" className="w-full h-full object-cover" />
                       ) : (
@@ -153,6 +158,48 @@ export default function OwnerDashboard() {
           </div>
         )}
       </div>
+
+      {/* Image Gallery Modal */}
+      {selectedProperty && (
+         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-4 px-6 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-10">
+               <div>
+                  <h3 className="text-white font-black text-xl drop-shadow-md">{selectedProperty.title}</h3>
+                  <p className="text-white/70 text-sm font-medium">{selectedProperty.images?.length || 0} Photos</p>
+               </div>
+               <button 
+                  onClick={() => setSelectedProperty(null)}
+                  className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-md border border-white/20 active:scale-95"
+               >
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+               </button>
+            </div>
+            
+            {/* Scrollable Images Container */}
+            <div className="flex-1 overflow-y-auto px-4 pt-24 pb-12 flex flex-col gap-6 scroll-smooth">
+               {selectedProperty.images && selectedProperty.images.length > 0 ? (
+                  selectedProperty.images.map((img: string, idx: number) => (
+                     <div key={idx} className="w-full max-w-2xl mx-auto rounded-3xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl relative">
+                        {/* Image Counter Pill */}
+                        <div className="absolute top-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-bold border border-white/10 z-10">
+                           {idx + 1} / {selectedProperty.images.length}
+                        </div>
+                        <img 
+                           src={img} 
+                           alt={`Property Image ${idx + 1}`} 
+                           className="w-full h-auto max-h-[80vh] object-contain bg-black/50" 
+                        />
+                     </div>
+                  ))
+               ) : (
+                  <div className="flex-1 flex items-center justify-center text-white/50 font-medium">
+                     No images uploaded for this property.
+                  </div>
+               )}
+            </div>
+         </div>
+      )}
     </div>
   );
 }
