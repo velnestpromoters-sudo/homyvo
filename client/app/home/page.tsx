@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import VideoCard from '@/components/reel/VideoCard';
-import SearchBar from '@/components/common/SearchBar';
 import BottomBar from '@/components/common/BottomBar';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
@@ -145,13 +144,6 @@ export default function HomeReelPage() {
   return (
     <div className="relative w-full h-[100dvh] bg-black overflow-hidden">
       
-      {/* Header overlays that sit above the snapping videos */}
-      <div className="absolute top-0 left-0 right-0 z-[50] p-5 mt-2 flex items-center justify-center pointer-events-none">
-         <div className="w-full pointer-events-auto">
-             <SearchBar />
-         </div>
-      </div>
-
       {/* Snap Container */}
       <div 
         ref={containerRef}
