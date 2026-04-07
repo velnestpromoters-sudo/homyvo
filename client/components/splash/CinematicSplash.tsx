@@ -1,84 +1,84 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 export default function CinematicSplash({ onComplete }: { onComplete: () => void }) {
-  const [currentFrame, setCurrentFrame] = useState(1);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const totalFrames = 43;
-
-  // 1. Invisible Preloader to guarantee smooth playback
   useEffect(() => {
-    let loadedCount = 0;
-    const padding = (num: number) => num.toString().padStart(3, '0');
-    
-    for (let i = 1; i <= totalFrames; i++) {
-        const img = new Image();
-        img.src = `/splash-frames/ezgif-frame-${padding(i)}.jpg`;
-        img.onload = () => {
-            loadedCount++;
-            if (loadedCount === totalFrames) {
-                setImagesLoaded(true);
-            }
-        };
-        // Error handling in case one drops
-        img.onerror = () => {
-            loadedCount++;
-            if (loadedCount === totalFrames) {
-                setImagesLoaded(true);
-            }
-        };
-    }
-  }, []);
-
-  // 2. Playback Sequence
-  useEffect(() => {
-    if (!imagesLoaded) return;
-
-    const interval = setInterval(() => {
-        setCurrentFrame((prev) => {
-            if (prev >= totalFrames) {
-                clearInterval(interval);
-                return totalFrames;
-            }
-            return prev + 1;
-        });
-    }, 50); // 20 FPS = 50ms per frame
-
-    return () => clearInterval(interval);
-  }, [imagesLoaded]);
-
-  // 3. Routing Hook (Fires precisely when frame 43 hits)
-  useEffect(() => {
-    if (imagesLoaded && currentFrame === totalFrames) {
-      // Add a tiny 200ms buffer after the last frame so users can see it
-      const timer = setTimeout(() => {
-         onComplete();
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [currentFrame, imagesLoaded, onComplete]);
-
-  const padNum = (num: number) => num.toString().padStart(3, '0');
+    // Complete the animation sequence after 2.6 seconds
+    const timer = setTimeout(() => {
+      onComplete();
+    }, 2600); 
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   return (
-    <div className="w-full h-[100dvh] relative bg-black overflow-hidden flex items-center justify-center">
-      {/* Black background is perfect for video frame borders */}
+    <div className="fixed inset-0 z-[9999] bg-white overflow-hidden flex items-center justify-center">
       
-      {!imagesLoaded && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black">
-             {/* Barebones spinner while loading the 43 frames into cache */}
-             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-          </div>
-      )}
+      {/* 1. White Background + Elegant Logo Reveal */}
+      <div className="absolute inset-0 bg-white z-0" />
+      
+      <motion.div
+        initial={{ scale: 0.4, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 1.2, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }} 
+        className="relative z-10 w-48 h-48 md:w-64 md:h-64 flex items-center justify-center"
+      >
+        <img src="/logo.png" alt="Homyvo Logo" className="w-full h-full object-contain drop-shadow-xl" />
+      </motion.div>
 
-      {imagesLoaded && (
-         <img 
-            src={`/splash-frames/ezgif-frame-${padNum(currentFrame)}.jpg`} 
-            alt="Homyvo Loading Sequence" 
-            className="w-full h-full object-cover"
-         />
-      )}
+      {/* 2. Diagonal Curtain Wrapper (Rotated -45deg) */}
+      <motion.div 
+        initial={{ x: "-50%", y: "-50%", rotate: -45 }}
+        className="absolute z-20 flex flex-col pointer-events-none w-[350vw] h-[350vh] left-[50%] top-[50%]"
+      >
+        
+        {/* Strip 1 - Top Left Pink */}
+        <motion.div
+          initial={{ y: 0 }}
+          animate={{ y: "-150vh" }}
+          transition={{ duration: 1.4, delay: 0.3, ease: [0.65, 0, 0.35, 1] }}
+          className="w-full flex-1 shadow-[0_10px_50px_rgba(0,0,0,0.5)] relative z-10"
+          style={{ backgroundColor: '#aa1e91' }}
+        />
+
+        {/* Strip 2 - Upper Middle Purple */}
+        <motion.div
+          initial={{ y: 0 }}
+          animate={{ y: "-150vh" }}
+          transition={{ duration: 1.2, delay: 0.15, ease: [0.65, 0, 0.35, 1] }}
+          className="w-full flex-1 shadow-[0_10px_50px_rgba(0,0,0,0.5)] relative z-20"
+          style={{ backgroundColor: '#871a90' }}
+        />
+
+        {/* Strip 3 - Center Velvet Dark Purple */}
+        <motion.div
+          initial={{ y: 0 }}
+          animate={{ y: "-150vh" }}
+          transition={{ duration: 1.0, delay: 0.05, ease: [0.65, 0, 0.35, 1] }}
+          className="w-full flex-1 shadow-[0_10px_50px_rgba(0,0,0,0.5)] relative z-30"
+          style={{ backgroundColor: '#621685' }}
+        />
+
+        {/* Strip 4 - Lower Middle Indigo */}
+        <motion.div
+          initial={{ y: 0 }}
+          animate={{ y: "150vh" }}
+          transition={{ duration: 1.2, delay: 0.15, ease: [0.65, 0, 0.35, 1] }}
+          className="w-full flex-1 shadow-[0_-10px_50px_rgba(0,0,0,0.5)] relative z-20"
+          style={{ backgroundColor: '#3e1d87' }}
+        />
+
+        {/* Strip 5 - Bottom Right Navy */}
+        <motion.div
+          initial={{ y: 0 }}
+          animate={{ y: "150vh" }}
+          transition={{ duration: 1.4, delay: 0.3, ease: [0.65, 0, 0.35, 1] }}
+          className="w-full flex-1 shadow-[0_-10px_50px_rgba(0,0,0,0.5)] relative z-10"
+          style={{ backgroundColor: '#211a68' }}
+        />
+
+      </motion.div>
     </div>
   );
 }
