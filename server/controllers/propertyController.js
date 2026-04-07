@@ -2,7 +2,7 @@ const Property = require('../models/Property');
 
 exports.getAllProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ isActive: true }).select('title location.area location.city rent images matchScore moveInReady isVerified ownerId');
+    const properties = await Property.find({ isActive: true }).select('title location rent images matchScore moveInReady isVerified ownerId bhkType preferences');
     res.status(200).json({ success: true, data: properties });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

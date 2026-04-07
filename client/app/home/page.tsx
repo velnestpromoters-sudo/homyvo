@@ -19,9 +19,15 @@ interface PropertyFeedData {
   location: {
     area?: string;
     city?: string;
+    lat?: number;
+    lng?: number;
   };
   matchScore?: number;
   moveInReady?: boolean;
+  bhkType?: string;
+  preferences?: {
+    bachelorAllowed?: boolean;
+  };
 }
 
 export default function HomeReelPage() {
@@ -46,7 +52,7 @@ export default function HomeReelPage() {
   // States
   const [activeSlide, setActiveSlide] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { locationName, setLocation } = useLocationStore();
+  const { locationName, setLocation, coordinates } = useLocationStore();
   const [properties, setProperties] = useState<PropertyFeedData[]>([]);
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
 
@@ -153,20 +159,38 @@ export default function HomeReelPage() {
             <p className="text-white/50 text-sm">Be the first to list a property in your city.</p>
           </div>
         ) : (
-          properties.map((reel, index) => (
-            <VideoCard 
-              key={reel._id || index.toString()}
-              id={reel._id}
-              video="" // Video disabled in favor of photo arrays
-              images={reel.images}
-              rent={reel.rent}
-              area={reel.location?.area || 'Unknown Area'}
-              district={reel.location?.city || 'Unknown City'}
-              matchScore={reel.matchScore || 0}
-              moveInReady={Boolean(reel.moveInReady)}
-              isActive={index === activeSlide}
-            />
-          ))
+          properties.map((reel, index) => {
+            // Calculate Haversine Distance if both coords exist
+            let distance = undefined;
+            if (coordinates && coordinates.lat && reel.location?.lat && reel.location?.lng) {
+               const R = 6371; // Earth radius in km
+               const dLat = (reel.location.lat - coordinates.lat) * Math.PI / 180;
+               const dLon = (reel.location.lng - coordinates.lng) * Math.PI / 180;
+               const lat1 = coordinates.lat * Math.PI / 180;
+               const lat2 = reel.location.lat * Math.PI / 180;
+               const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+               const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+               distance = R * c;
+            }
+
+            return (
+              <VideoCard 
+                key={reel._id || index.toString()}
+                id={reel._id}
+                video="" 
+                images={reel.images}
+                rent={reel.rent}
+                area={reel.location?.area || 'Unknown Area'}
+                district={reel.location?.city || 'Unknown City'}
+                matchScore={reel.matchScore || 0}
+                moveInReady={Boolean(reel.moveInReady)}
+                isActive={index === activeSlide}
+                bhkType={reel.bhkType}
+                bachelorsAllowed={Boolean(reel.preferences?.bachelorAllowed)}
+                distanceKm={distance}
+              />
+            )
+          })
         )}
       </div>
 

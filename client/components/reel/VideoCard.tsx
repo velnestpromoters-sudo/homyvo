@@ -14,9 +14,15 @@ interface VideoCardProps {
   matchScore: number;
   moveInReady: boolean;
   isActive: boolean; // Tells the component if it is currently intersecting (visible)
+  bhkType?: string;
+  bachelorsAllowed?: boolean;
+  distanceKm?: number;
 }
 
-export default function VideoCard({ id, video, images, rent, area, district, matchScore, moveInReady, isActive }: VideoCardProps) {
+export default function VideoCard({ 
+  id, video, images, rent, area, district, matchScore, moveInReady, isActive, 
+  bhkType, bachelorsAllowed, distanceKm 
+}: VideoCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -113,7 +119,7 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
       </div>
 
       {/* Dark Overlay Gradient (Better text readability for the bottom text) */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30 pointer-events-none" />
 
       {/* Top Carousel Pagination Dots (Tinder-style) */}
       {mediaList.length > 1 && (
@@ -150,14 +156,27 @@ export default function VideoCard({ id, video, images, rent, area, district, mat
           ₹{rent.toLocaleString()} <span className="text-lg text-white/80 font-semibold">/mo</span>
         </h2>
         
-        {/* Location */}
-        <div className="flex items-center gap-1.5 text-white/90 mb-3 font-medium">
+        {/* Location & Distance */}
+        <div className="flex flex-wrap items-center gap-1.5 text-white/90 mb-3 font-medium">
           <MapPin className="w-4 h-4 text-[#ec38b7]" />
           <span>{area}, {district}</span>
+          {distanceKm !== undefined && (
+            <span className="text-white/60 ml-0.5">• <strong className="text-white/90">{distanceKm.toFixed(1)} km</strong> away</span>
+          )}
         </div>
 
         {/* Tags */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {bhkType && (
+            <div className="bg-white/15 backdrop-blur-md border border-white/30 text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-lg">
+              {bhkType}
+            </div>
+          )}
+          {bachelorsAllowed && (
+            <div className="bg-[#801786]/60 backdrop-blur-md border border-[#801786] text-white font-bold px-3 py-1.5 rounded-full text-xs shadow-lg">
+              Bachelor Allowed
+            </div>
+          )}
           {moveInReady && (
             <div className="bg-emerald-500/20 backdrop-blur-md border border-emerald-500/50 text-emerald-300 font-bold px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 shadow-lg">
               <CheckCircle className="w-3.5 h-3.5" />
