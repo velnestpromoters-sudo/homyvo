@@ -216,12 +216,8 @@ function HorizontalScrollCards({ items, router }: { items: any[], router: any })
           <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-gray-100">
             <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
-          <div className="flex justify-between items-start mb-0.5">
-            <h3 className="font-semibold text-[#111827] text-sm truncate mr-2">{item.title}</h3>
-            <div className="flex items-center gap-1 shrink-0">
-              <Star className="w-3.5 h-3.5 fill-[#111827] text-[#111827]" />
-              <span className="text-xs font-semibold text-[#111827]">{item.rating}</span>
-            </div>
+          <div className="mb-0.5">
+            <h3 className="font-semibold text-[#111827] text-sm leading-tight">{item.title}</h3>
           </div>
           <p className="text-sm text-[#6B7280] mb-1">{item.type}</p>
           <p className="text-sm font-semibold text-[#111827]">
