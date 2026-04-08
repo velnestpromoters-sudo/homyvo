@@ -143,8 +143,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
       <div className="p-5 flex-1 mt-2">
         <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 leading-tight mb-1">{property.title || 'Premium Apartment'}</h1>
+          <div className="flex-1 pr-2">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+               <h1 className="text-2xl font-black text-slate-900 leading-tight">{property.title || 'Premium Apartment'}</h1>
+               {property.propertyType === 'pg' && property.pgDetails?.gender && (
+                  <span className="bg-indigo-100 text-indigo-800 text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-indigo-200 shadow-sm mt-1">
+                     {property.pgDetails.gender} PG
+                  </span>
+               )}
+            </div>
             <div className="flex items-center gap-1 text-slate-500 font-medium text-sm">
                <MapPin className="w-4 h-4" /> {property.location?.area}, {property.location?.city}
             </div>
