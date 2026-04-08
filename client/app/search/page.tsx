@@ -36,14 +36,24 @@ export default function SearchPage() {
             parsed.location = locationName.replace('📍 ', '').split(',')[0].toLowerCase();
         }
 
-        // Deep Geolocation Integration for accurate $near matching
-        if (parsed.near || parsed.radius || (!parsed.location && targetLat && targetLng)) {
+        // 1. Resolve Explicit Named Locations to Lat/Lng Anchor Point
+        if (parsed.location) {
+            try {
+                const geoRes = await fetch(`/api/search?q=${encodeURIComponent(parsed.location)}`);
+                const geoData = await geoRes.json();
+                if (geoData.success && geoData.features && geoData.features.length > 0) {
+                    const [geoLng, geoLat] = geoData.features[0].geometry.coordinates;
+                    parsed.lat = geoLat;
+                    parsed.lng = geoLng;
+                }
+            } catch(e) { console.warn("Forward geocoding failed", e); }
+        }
+
+        // 2. Hardware GPS Fallback for exact proximity if location hasn't been explicitly anchored yet
+        if ((parsed.near || parsed.radius || (!parsed.location && targetLat && targetLng)) && !parsed.lat) {
            parsed.lat = targetLat;
            parsed.lng = targetLng;
-           // If parser didn't extract a strict numerical radius, we fall back to 8
-           if (!parsed.radius) parsed.radius = 8;
            
-           // If we don't have accurate coordinates yet, fall back to grabbing hardware GPS
            if (!targetLat && 'geolocation' in navigator) {
              const getHardwarePos = () => new Promise<{lat: number, lng: number}>((res, rej) => {
                 navigator.geolocation.getCurrentPosition(
@@ -59,6 +69,11 @@ export default function SearchPage() {
                 console.warn('GPS location declined, bounding to standard text fallback');
              }
            }
+        }
+        
+        // Final sanity check for distances ensuring we have a $near fallback parameter dynamically injected
+        if (parsed.lat && parsed.lng && !parsed.radius) {
+            parsed.radius = 8;
         }
 
         // Clean out nulls and booleans before sending
