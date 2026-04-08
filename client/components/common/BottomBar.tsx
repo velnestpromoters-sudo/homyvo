@@ -39,7 +39,7 @@ export default function BottomBar({ location, viewMode }: BottomBarProps) {
           className="flex-1 max-w-[160px] mx-4 flex items-center justify-center gap-1.5 bg-black/50 backdrop-blur-md border border-white/10 rounded-full py-3 px-4 shadow-lg active:scale-95 transition-all text-white cursor-pointer min-w-0"
         >
           <Navigation className="w-4 h-4 text-[#ec38b7] fill-[#ec38b7]/20 shrink-0" />
-          <span className="font-bold text-sm truncate block">{location || 'Locating...'}</span>
+          <span className="font-bold text-sm truncate block">{location || 'Map View'}</span>
         </div>
         
         {/* Decorative Space / Future "Saved" button */}
