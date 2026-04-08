@@ -6,11 +6,11 @@ import BottomBar from '@/components/common/BottomBar';
 import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star } from 'lucide-react';
 
 const TRENDING_CITIES = [
-  { name: 'Coimbatore', count: '350+', img: 'https://images.unsplash.com/photo-1596426744007-88544bbf373a?q=80&w=400' },
+  { name: 'Coimbatore', count: '350+', img: 'https://images.unsplash.com/photo-1548013146-72479768bcaa?q=80&w=400' },
   { name: 'Chennai', count: '850+', img: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=400' },
-  { name: 'Madurai', count: '240+', img: 'https://images.unsplash.com/photo-1623194016629-873baff1213f?q=80&w=400' },
-  { name: 'Tiruppur', count: '120+', img: 'https://images.unsplash.com/photo-1605648916361-9bc12ad6a569?q=80&w=400' },
-  { name: 'Erode', count: '90+', img: 'https://images.unsplash.com/photo-1620589139150-13f5022878ce?q=80&w=400' },
+  { name: 'Madurai', count: '240+', img: 'https://images.unsplash.com/photo-1560058356-4d0365774a38?q=80&w=400' },
+  { name: 'Tiruppur', count: '120+', img: 'https://images.unsplash.com/photo-1514222788100-642154564077?q=80&w=400' },
+  { name: 'Erode', count: '90+', img: 'https://images.unsplash.com/photo-1524492412937-b65746b19a10?q=80&w=400' },
 ];
 
 const STUDENTS = [
@@ -87,23 +87,40 @@ export default function HomeListPage() {
           </div>
         </div>
 
-        {/* 5. TOP TRENDING CITIES */}
+        {/* 5. TOP TRENDING CITIES (Infinite Horizontal Marquee) */}
         <section>
           <div className="mb-3">
             <h2 className="text-lg font-bold text-[#111827]">Top Trending Cities</h2>
             <p className="text-sm text-[#6B7280]">Popular destinations for rentals</p>
           </div>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x">
-            {TRENDING_CITIES.map((city, i) => (
-              <div key={i} className="relative w-[160px] md:w-[180px] h-[120px] rounded-xl overflow-hidden shrink-0 snap-start shadow-sm cursor-pointer">
-                <img src={city.img} alt={city.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-3 left-3">
-                  <h3 className="text-white font-semibold text-sm">{city.name}</h3>
-                  <p className="text-white/80 text-[10px]">{city.count} properties</p>
+          <div className="relative w-full overflow-hidden flex pb-4 -mx-4 px-0">
+            <div className="flex gap-4 animate-marquee whitespace-nowrap w-max hover:[animation-play-state:paused]">
+              
+              {/* Set 1 */}
+              {TRENDING_CITIES.map((city, i) => (
+                <div key={`set1-${i}`} className="relative w-[160px] md:w-[180px] h-[120px] rounded-xl overflow-hidden shrink-0 shadow-sm cursor-pointer ml-4 first:ml-4">
+                  <img src={city.img} alt={city.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-3 left-3">
+                    <h3 className="text-white font-semibold text-sm">{city.name}</h3>
+                    <p className="text-white/80 text-[10px]">{city.count} properties</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+
+              {/* Set 2 (Duplicate for seamless continuous loop) */}
+              {TRENDING_CITIES.map((city, i) => (
+                <div key={`set2-${i}`} className="relative w-[160px] md:w-[180px] h-[120px] rounded-xl overflow-hidden shrink-0 shadow-sm cursor-pointer ml-4">
+                  <img src={city.img} alt={city.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-3 left-3">
+                    <h3 className="text-white font-semibold text-sm">{city.name}</h3>
+                    <p className="text-white/80 text-[10px]">{city.count} properties</p>
+                  </div>
+                </div>
+              ))}
+              
+            </div>
           </div>
         </section>
 
@@ -165,6 +182,15 @@ export default function HomeListPage() {
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
+        }
+        
+        @keyframes marquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(calc(-50% - 8px)); }
+        }
+        
+        .animate-marquee {
+          animation: marquee 25s linear infinite;
         }
       `}</style>
     </div>
