@@ -308,43 +308,53 @@ export default function OwnerDashboard() {
                      />
                   </div>
 
-                  <div className="flex gap-3 mt-2">
+                  <div className="flex flex-col gap-2 mt-3 text-center">
                      <button 
-                        disabled={isDeleting || isUpdatingAvailability}
                         type="button" 
-                        onClick={async () => {
-                           if (!window.confirm("Are you sure you want to completely delete this property? This cannot be undone.")) return;
-                           try {
-                              setIsDeleting(true);
-                              const token = useAuthStore.getState().token;
-                              const res = await fetch(`/api/properties/${availabilityModalData._id}`, {
-                                 method: 'DELETE',
-                                 headers: { 'Authorization': `Bearer ${token}` }
-                              });
-                              const data = await res.json();
-                              if (data.success) {
-                                 setProperties(prev => prev.filter((p: any) => p._id !== availabilityModalData._id));
-                                 setAvailabilityModalData(null);
-                              } else {
-                                 alert(data.message || "Failed to delete");
+                        onClick={() => router.push(`/owner/edit-property/${availabilityModalData._id}`)}
+                        className="w-full bg-slate-100 hover:bg-slate-200 text-[#801786] font-bold py-3.5 rounded-xl transition-all shadow-sm border border-slate-200 active:scale-95"
+                     >
+                        Advanced Full Edit (Amenities, Rent, Settings)
+                     </button>
+                     
+                     <div className="flex gap-2">
+                        <button 
+                           disabled={isDeleting || isUpdatingAvailability}
+                           type="button" 
+                           onClick={async () => {
+                              if (!window.confirm("Are you sure you want to completely delete this property? This cannot be undone.")) return;
+                              try {
+                                 setIsDeleting(true);
+                                 const token = useAuthStore.getState().token;
+                                 const res = await fetch(`/api/properties/${availabilityModalData._id}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                 });
+                                 const data = await res.json();
+                                 if (data.success) {
+                                    setProperties(prev => prev.filter((p: any) => p._id !== availabilityModalData._id));
+                                    setAvailabilityModalData(null);
+                                 } else {
+                                    alert(data.message || "Failed to delete");
+                                 }
+                              } catch(err) {
+                                 console.error(err);
+                              } finally {
+                                 setIsDeleting(false);
                               }
-                           } catch(err) {
-                              console.error(err);
-                           } finally {
-                              setIsDeleting(false);
-                           }
-                        }}
-                        className="w-1/3 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3.5 rounded-xl transition-all shadow-sm border border-red-100 active:scale-95 disabled:opacity-50"
-                     >
-                        {isDeleting ? 'Deleting...' : 'Delete'}
-                     </button>
-                     <button 
-                        disabled={isUpdatingAvailability || isDeleting}
-                        type="submit" 
-                        className="w-2/3 bg-[#801786] hover:bg-[#a420ac] text-white font-black py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
-                     >
-                        {isUpdatingAvailability ? 'Saving...' : 'Save Updates'}
-                     </button>
+                           }}
+                           className="w-[30%] bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3.5 rounded-xl transition-all shadow-sm border border-red-100 active:scale-95 disabled:opacity-50 text-xs"
+                        >
+                           {isDeleting ? 'Deleting...' : 'Delete Listing'}
+                        </button>
+                        <button 
+                           disabled={isUpdatingAvailability || isDeleting}
+                           type="submit" 
+                           className="w-[70%] bg-[#801786] hover:bg-[#a420ac] text-white font-black py-3.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
+                        >
+                           {isUpdatingAvailability ? 'Quick Saving...' : 'Save Quick Updates'}
+                        </button>
+                     </div>
                   </div>
                </form>
             </div>

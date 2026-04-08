@@ -38,9 +38,13 @@ interface PropertyFormState {
   // Step 2: Location
   location: LocationData;
   
-  // Step 3: Preferences
+  // Step 3: Preferences & Details
   preferences: PreferencesData;
   moveInReady: boolean;
+  amenities: string[];
+  furnishing: string;
+  availability: string;
+  availableFrom: string;
   
   // Step 4: Media
   images: File[];
@@ -66,6 +70,10 @@ const initialState = {
   location: { address: '', area: '', city: '', googleMapLink: '' },
   preferences: { bachelorAllowed: true, maxOccupants: '1' },
   moveInReady: false,
+  amenities: [],
+  furnishing: 'none',
+  availability: 'immediate',
+  availableFrom: '',
   images: []
 };
 

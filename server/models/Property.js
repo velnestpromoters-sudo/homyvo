@@ -19,6 +19,8 @@ const propertySchema = new mongoose.Schema({
   images: [{ type: String }],
   isVerified: { type: Boolean, default: false },
   isActive: { type: Boolean, default: false },
+  availability: { type: String, enum: ['immediate', 'next_month', 'specific_date'], default: 'immediate' },
+  availableFrom: { type: Date },
   listingPaymentStatus: {
     type: String,
     enum: ["pending", "paid"],

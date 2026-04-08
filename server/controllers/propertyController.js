@@ -121,6 +121,10 @@ exports.createProperty = async (req, res) => {
       bhkType: req.body.bhkType,
       moveInReady: req.body.moveInReady === 'true',
       propertyType: req.body.propertyType || 'apartment',
+      amenities: req.body.amenities ? JSON.parse(req.body.amenities) : [],
+      furnishing: req.body.furnishing || 'none',
+      availability: req.body.availability || 'immediate',
+      availableFrom: req.body.availableFrom ? new Date(req.body.availableFrom) : undefined,
       location: parsedLocation,
       preferences: parsedPreferences,
       pgDetails: req.body.propertyType === 'pg' ? parsedPgDetails : undefined,
@@ -204,6 +208,42 @@ exports.deleteProperty = async (req, res) => {
       res.status(200).json({ success: true, message: "Property deleted successfully" });
   } catch(error) {
       console.error("Delete property error:", error);
+      res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateProperty = async (req, res) => {
+  try {
+      const propertyId = req.params.id;
+      const property = await Property.findById(propertyId);
+
+      if (!property) {
+          return res.status(404).json({ success: false, message: "Property not found" });
+      }
+      
+      if (property.ownerId.toString() !== req.user._id.toString()) {
+          return res.status(403).json({ success: false, message: "Unauthorized to update this property." });
+      }
+
+      // Merge native updates securely avoiding ownerId or coordinate overwrites directly unless isolated
+      const allowedUpdates = ['title', 'rent', 'deposit', 'bhkType', 'tenantNotes', 'amenities', 'furnishing', 'availability', 'availableFrom'];
+      
+      allowedUpdates.forEach(field => {
+         if (req.body[field] !== undefined) {
+             property[field] = req.body[field];
+         }
+      });
+      
+      // Handle nested structures softly
+      if (req.body.preferences) {
+          property.preferences = { ...property.preferences, ...req.body.preferences };
+          property.markModified('preferences');
+      }
+
+      await property.save();
+      res.status(200).json({ success: true, data: property });
+  } catch(error) {
+      console.error("Update property error:", error);
       res.status(500).json({ success: false, message: error.message });
   }
 };

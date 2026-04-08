@@ -25,6 +25,12 @@ export default function Step5() {
        formData.append('tenantNotes', formState.tenantNotes || '');
        formData.append('moveInReady', formState.moveInReady.toString());
        
+       // Core Phase 4 Tracking
+       formData.append('amenities', JSON.stringify(formState.amenities));
+       formData.append('furnishing', formState.furnishing);
+       formData.append('availability', formState.availability);
+       if (formState.availableFrom) formData.append('availableFrom', formState.availableFrom);
+       
        // PG Updates
        formData.append('propertyType', formState.propertyType);
        if (formState.propertyType === 'pg') {

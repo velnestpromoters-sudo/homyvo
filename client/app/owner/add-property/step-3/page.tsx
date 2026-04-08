@@ -6,7 +6,7 @@ import { usePropertyFormStore } from '@/store/usePropertyFormStore';
 
 export default function Step3() {
   const router = useRouter();
-  const { propertyType, pgDetails, preferences, moveInReady, tenantNotes, updateField, updatePreference, updatePgDetails } = usePropertyFormStore();
+  const { propertyType, pgDetails, preferences, updateField, updatePreference, updatePgDetails, amenities, furnishing, availability, availableFrom } = usePropertyFormStore();
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,11 +17,9 @@ export default function Step3() {
      const current = [...pgDetails.sharingTypes];
      if (current.includes(num)) {
         updatePgDetails('sharingTypes', current.filter(n => n !== num));
-        // Remove room config if sharing type untoggled
         updatePgDetails('rooms', pgDetails.rooms.filter(r => r.sharing !== num));
      } else {
         updatePgDetails('sharingTypes', [...current, num]);
-        // Add default room config
         updatePgDetails('rooms', [...pgDetails.rooms, { sharing: num, totalBeds: '', availableBeds: '' }]);
      }
   };
@@ -34,17 +32,93 @@ export default function Step3() {
      updatePgDetails('rooms', newRooms);
   };
 
+  const handleAmenityToggle = (amenity: string) => {
+      const isSelected = amenities.includes(amenity);
+      if (isSelected) {
+          updateField('amenities', amenities.filter(a => a !== amenity));
+      } else {
+          updateField('amenities', [...amenities, amenity]);
+      }
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-       <h2 className="text-2xl font-black text-gray-900 mb-1">Preferences</h2>
-       <p className="text-sm text-gray-500 mb-8">{propertyType === 'pg' ? "Configure your PG rules and bed inventory." : "What are your rules for tenants?"}</p>
+       <h2 className="text-2xl font-black text-gray-900 mb-1">Details & Preferences</h2>
+       <p className="text-sm text-gray-500 mb-8">Configure your property features and tenant rules.</p>
 
        <form onSubmit={handleNext} className="flex flex-col gap-6">
 
+          {/* AMENITIES */}
+          <div className="bg-white p-5 border-2 rounded-xl flex flex-col shadow-sm gap-3">
+             <label className="block text-sm font-bold text-gray-800">Amenities Provided</label>
+             <div className="grid grid-cols-2 gap-3">
+                {['WiFi', 'Parking', 'AC', 'Attached Bathroom', 'Power Backup', 'Washing Machine', 'Fridge', 'TV'].map(amenity => (
+                   <label key={amenity} className="flex items-center gap-2 cursor-pointer bg-slate-50 p-3 rounded-lg border border-slate-100 transition-colors hover:border-slate-300">
+                      <input 
+                         type="checkbox" 
+                         className="accent-[#801786] w-4 h-4 cursor-pointer"
+                         checked={amenities.includes(amenity.toLowerCase())}
+                         onChange={() => handleAmenityToggle(amenity.toLowerCase())}
+                      />
+                      <span className="font-semibold text-sm text-gray-700">{amenity}</span>
+                   </label>
+                ))}
+             </div>
+          </div>
+
+          {/* FURNISHING */}
+          <div className="bg-white p-5 border-2 rounded-xl flex flex-col shadow-sm gap-3">
+             <label className="block text-sm font-bold text-gray-800">Furnishing Status *</label>
+             <div className="flex gap-3">
+                {['full', 'semi', 'none'].map(status => (
+                   <button
+                      key={status} type="button"
+                      onClick={() => updateField('furnishing', status)}
+                      className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-wider border transition-colors ${furnishing === status ? 'border-[#801786] bg-[#801786] text-white shadow-md' : 'border-gray-200 bg-white text-gray-500 hover:bg-slate-50'}`}
+                   >
+                      {status === 'none' ? 'Unfurnished' : `${status} Furnished`}
+                   </button>
+                ))}
+             </div>
+          </div>
+
+          {/* AVAILABILITY */}
+          <div className="bg-white p-5 border-2 rounded-xl flex flex-col shadow-sm gap-3">
+             <label className="block text-sm font-bold text-gray-800">Availability *</label>
+             <div className="flex gap-3">
+                {[{id: 'immediate', label: 'Immediate'}, {id: 'next_month', label: 'Next Month'}, {id: 'specific_date', label: 'Select Date'}].map(opt => (
+                   <button
+                      key={opt.id} type="button"
+                      onClick={() => {
+                         updateField('availability', opt.id);
+                         if (opt.id === 'immediate') updateField('moveInReady', true);
+                         else updateField('moveInReady', false);
+                      }}
+                      className={`flex-1 py-3 px-2 text-center rounded-xl font-bold text-xs uppercase tracking-wider border transition-colors ${availability === opt.id ? 'border-[#801786] bg-[#801786] text-white shadow-md' : 'border-gray-200 bg-white text-gray-500 hover:bg-slate-50'}`}
+                   >
+                      {opt.label}
+                   </button>
+                ))}
+             </div>
+             {availability === 'specific_date' && (
+                <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                   <label className="block text-xs font-bold text-gray-500 mb-1">Available From</label>
+                   <input 
+                      type="date"
+                      required
+                      value={availableFrom}
+                      onChange={(e) => updateField('availableFrom', e.target.value)}
+                      className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-[#801786] outline-none"
+                   />
+                </div>
+             )}
+          </div>
+
+          {/* PG DETAILS */}
           {propertyType === 'pg' && (
-             <div className="bg-purple-50 p-5 rounded-2xl border border-purple-200 flex flex-col gap-5 mb-2">
+             <div className="bg-purple-50 p-5 rounded-2xl border border-purple-200 flex flex-col gap-5 mt-2">
                 <div>
-                   <label className="block text-sm font-bold text-gray-700 mb-2">PG Type *</label>
+                   <label className="block text-sm font-bold text-gray-700 mb-2">PG Target Audience *</label>
                    <div className="grid grid-cols-3 gap-2">
                       {['boys', 'girls', 'co-living'].map(g => (
                          <button 
@@ -59,13 +133,13 @@ export default function Step3() {
                 </div>
 
                 <div>
-                   <label className="block text-sm font-bold text-gray-700 mb-2">Total Rooms *</label>
+                   <label className="block text-sm font-bold text-gray-700 mb-2">Total Rooms in PG *</label>
                    <input 
                       type="number" required
                       value={pgDetails.totalRooms}
                       onChange={e => updatePgDetails('totalRooms', e.target.value)}
                       placeholder="e.g. 10"
-                      className="w-full border-2 border-gray-200 p-4 rounded-xl focus:border-[#801786] outline-none"
+                      className="w-full border-2 border-white p-4 rounded-xl focus:border-[#801786] outline-none"
                    />
                 </div>
 
@@ -73,7 +147,7 @@ export default function Step3() {
                    <label className="block text-sm font-bold text-gray-700 mb-2">Sharing Types Available *</label>
                    <div className="grid grid-cols-3 gap-2">
                       {[1,2,3,4,5,6].map(num => (
-                         <label key={num} className={`p-3 border-2 rounded-xl flex items-center gap-2 cursor-pointer transition-colors ${pgDetails.sharingTypes.includes(num) ? 'border-[#801786] bg-white text-[#801786]' : 'border-gray-200 bg-white text-gray-500'}`}>
+                         <label key={num} className={`p-3 border-2 rounded-xl flex items-center gap-2 cursor-pointer transition-colors ${pgDetails.sharingTypes.includes(num) ? 'border-[#801786] bg-white text-[#801786]' : 'border-white bg-white text-gray-500 hover:border-gray-200'}`}>
                             <input 
                                type="checkbox" 
                                className="accent-[#801786] w-4 h-4 cursor-pointer"
@@ -92,7 +166,7 @@ export default function Step3() {
                       {pgDetails.sharingTypes.sort().map(num => {
                          const room = pgDetails.rooms.find(r => r.sharing === num) || { totalBeds: '', availableBeds: '' };
                          return (
-                            <div key={num} className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                            <div key={num} className="p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
                                <div className="font-black text-[#801786] mb-3">{num} Sharing Rooms</div>
                                <div className="grid grid-cols-2 gap-4">
                                   <div>
@@ -112,6 +186,7 @@ export default function Step3() {
              </div>
           )}
 
+          {/* APARTMENT DETAILS */}
           {propertyType === 'apartment' && (
              <>
                 <div className="bg-white p-5 border-2 rounded-xl flex justify-between items-center shadow-sm">
@@ -125,22 +200,6 @@ export default function Step3() {
                          className="sr-only peer" 
                          checked={preferences.bachelorAllowed}
                          onChange={(e) => updatePreference('bachelorAllowed', e.target.checked)}
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#801786]"></div>
-                   </label>
-                </div>
-
-                <div className="bg-white p-5 border-2 rounded-xl flex justify-between items-center shadow-sm">
-                   <div>
-                      <p className="font-bold text-gray-800">Move-in Ready?</p>
-                      <p className="text-xs text-gray-500 mt-1">Available to occupy immediately.</p>
-                   </div>
-                   <label className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                         type="checkbox" 
-                         className="sr-only peer" 
-                         checked={moveInReady}
-                         onChange={(e) => updateField('moveInReady', e.target.checked)}
                       />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#801786]"></div>
                    </label>
@@ -163,15 +222,15 @@ export default function Step3() {
              </>
           )}
 
-          <div className="bg-white p-5 border-2 rounded-xl flex flex-col shadow-sm gap-2">
+          <div className="bg-white p-5 border-2 rounded-xl flex flex-col shadow-sm gap-2 mb-[80px]">
              <label className="block text-sm font-bold text-gray-800">Special Notes for Tenants (Optional)</label>
              <p className="text-xs text-gray-500 mb-1">E.g., "Veg only", "Gate closes at 10 PM", "Quiet hours after 11 PM"</p>
              <textarea 
                 rows={3}
-                value={tenantNotes}
+                value={usePropertyFormStore(state => state.tenantNotes)}
                 onChange={(e) => updateField('tenantNotes', e.target.value)}
                 placeholder="Write any special instructions here..."
-                className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-[#801786] focus:ring-0 outline-none bg-slate-50 transition-colors"
+                className="w-full border border-gray-200 p-3 rounded-xl focus:border-[#801786] focus:ring-1 focus:ring-[#801786] outline-none bg-slate-50 transition-colors"
                 style={{ resize: 'none' }}
              />
           </div>

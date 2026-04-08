@@ -22,6 +22,12 @@ router.put(
   propertyController.updateAvailability
 );
 
+router.patch(
+  '/:id',
+  protect,
+  propertyController.updateProperty
+);
+
 router.delete(
   '/:id',
   protect,
