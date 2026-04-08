@@ -90,7 +90,16 @@ exports.createProperty = async (req, res) => {
     let parsedPreferences = {};
     let parsedPgDetails = undefined;
     try {
-        if (req.body.location) parsedLocation = JSON.parse(req.body.location);
+        if (req.body.location) {
+            parsedLocation = JSON.parse(req.body.location);
+            // Native Map to GeoJSON Schema
+            if (parsedLocation.lat && parsedLocation.lng) {
+                parsedLocation.coordinates = {
+                   type: "Point",
+                   coordinates: [Number(parsedLocation.lng), Number(parsedLocation.lat)]
+                };
+            }
+        }
         if (req.body.preferences) parsedPreferences = JSON.parse(req.body.preferences);
         if (req.body.pgDetails) parsedPgDetails = JSON.parse(req.body.pgDetails);
     } catch(e) { console.error("Error parsing JSON body fields:", e); }

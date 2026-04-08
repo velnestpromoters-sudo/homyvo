@@ -7,9 +7,11 @@ const propertySchema = new mongoose.Schema({
     address: String,
     area: String,
     city: String,
-    lat: Number,
-    lng: Number,
-    googleMapLink: String
+    googleMapLink: String,
+    coordinates: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number] }
+    }
   },
   rent: { type: Number, required: true },
   deposit: { type: Number, required: true },
@@ -41,5 +43,7 @@ const propertySchema = new mongoose.Schema({
     maxOccupants: Number
   }
 }, { timestamps: true });
+
+propertySchema.index({ "location.coordinates": "2dsphere" });
 
 module.exports = mongoose.model('Property', propertySchema);

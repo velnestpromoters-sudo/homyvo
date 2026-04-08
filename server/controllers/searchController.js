@@ -3,7 +3,9 @@ const Property = require("../models/Property");
 exports.searchProperties = async (req, res) => {
   try {
     const {
-      location,
+      lat,
+      lng,
+      radius = 10, // Default 10km radius if not specified
       maxPrice,
       minPrice,
       propertyType,
@@ -11,7 +13,6 @@ exports.searchProperties = async (req, res) => {
       sharing,
       bhkType,
       bachelorAllowed,
-      amenities,
       sort
     } = req.query;
 
@@ -19,8 +20,17 @@ exports.searchProperties = async (req, res) => {
       isActive: true
     };
 
-    if (location) {
-      query["location.area"] = new RegExp(location, "i");
+    // GEO SEARCH: The Root Fix overriding volatile String regexing
+    if (lat && lng) {
+      query["location.coordinates"] = {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [Number(lng), Number(lat)], // Order matters: Longitude, Latitude
+          },
+          $maxDistance: Number(radius) * 1000, // Converts Kilometers out to raw Meters
+        },
+      };
     }
 
     if (propertyType) {
@@ -37,8 +47,12 @@ exports.searchProperties = async (req, res) => {
       if (gender) query["pgDetails.gender"] = gender;
 
       if (sharing) {
-        query["pgDetails.rooms.sharing"] = Number(sharing);
-        query["pgDetails.rooms.availableBeds"] = { $gt: 0 };
+        query["pgDetails.rooms"] = {
+          $elemMatch: {
+            sharing: Number(sharing),
+            availableBeds: { $gt: 0 },
+          },
+        };
       }
     }
 
@@ -53,13 +67,19 @@ exports.searchProperties = async (req, res) => {
     if (sort === "price_low") sortObj.rent = 1;
     else if (sort === "price_high") sortObj.rent = -1;
     else if (sort === "latest") sortObj.createdAt = -1;
-    else sortObj.matchScore = -1; // Default to best match config
+    
+    // Note: If using $near, MongoDB inherently sorts by distance inherently!
+    // Appending other sort keys can conflict with the $near natural sorting if not handled.
+    if (!lat || !lng) {
+       // Only apply match score if not doing a strict distance sort
+       if (!Object.keys(sortObj).length) sortObj.matchScore = -1; 
+    }
 
-    const results = await Property.find(query).sort(sortObj).limit(20);
+    const results = await Property.find(query).sort(sortObj).limit(30);
 
     res.status(200).json({ success: true, count: results.length, data: results });
   } catch (error) {
-    console.error("Search API Error:", error);
+    console.error("Geo-Search API Error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

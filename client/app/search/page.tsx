@@ -9,7 +9,7 @@ import { PropertyCard } from '@/components/property/PropertyCard';
 
 export default function SearchPage() {
   const router = useRouter();
-  const { setLocation, locationName } = useLocationStore();
+  const { setLocation, locationName, location } = useLocationStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -26,15 +26,41 @@ export default function SearchPage() {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const parsed = parseSearch(searchQuery);
+        const parsed = parseSearch(searchQuery) as any;
         
+        let targetLat = location?.lat || null;
+        let targetLng = location?.lng || null;
+
         // Smart Default: If no location explicitly found in text, use current context if available
         if (!parsed.location && locationName && locationName !== 'Detecting...') {
-            // Very naive approach: extract first word
             parsed.location = locationName.replace('📍 ', '').split(',')[0].toLowerCase();
         }
 
-        // Clean out nulls before sending
+        // Deep Geolocation Integration for accurate $near matching
+        if (parsed.near || (!parsed.location && targetLat && targetLng)) {
+           parsed.lat = targetLat;
+           parsed.lng = targetLng;
+           parsed.radius = 8; // kilometers fallback radius
+           
+           // If we don't have accurate coordinates yet, fall back to grabbing hardware GPS
+           if (!targetLat && 'geolocation' in navigator) {
+             const getHardwarePos = () => new Promise<{lat: number, lng: number}>((res, rej) => {
+                navigator.geolocation.getCurrentPosition(
+                  pos => res({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                  err => rej(err)
+                );
+             });
+             try {
+                const livePos = await getHardwarePos();
+                parsed.lat = livePos.lat;
+                parsed.lng = livePos.lng;
+             } catch(e) {
+                console.warn('GPS location declined, bounding to standard text fallback');
+             }
+           }
+        }
+
+        // Clean out nulls and booleans before sending
         const cleanParams = Object.fromEntries(
             Object.entries(parsed).filter(([_, v]) => v != null && v !== false)
         ) as Record<string, string>;

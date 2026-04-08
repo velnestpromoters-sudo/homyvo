@@ -64,6 +64,7 @@ export const parseSearch = (query: string) => {
     maxPrice: extractMaxPrice(q),
     minPrice: extractMinPrice(q),
     
+    near: q.includes("near") || q.includes("around") || q.includes("nearby"),
     location: extractLocation(q),
     
     bhkType: extractBHK(q),
