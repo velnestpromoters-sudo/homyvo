@@ -4,15 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BottomBar from '@/components/common/BottomBar';
-import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocationStore } from '@/store/locationStore';
+import { useAuthModalStore } from '@/store/authModalStore';
 import api from '@/lib/api';
 
 export default function HomeListPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const { locationName } = useLocationStore();
+  const { openModal } = useAuthModalStore();
   
   const [studentProperties, setStudentProperties] = useState<any[]>([]);
   const [familyProperties, setFamilyProperties] = useState<any[]>([]);
@@ -76,13 +78,26 @@ export default function HomeListPage() {
             <h1 className="text-[20px] font-bold text-[#111827] tracking-tight">Homyvo</h1>
           </div>
 
-          {/* Conditional Owner Dashboard Button on the Right/Top-Left */}
-          {isAuthenticated && user?.role === 'owner' && (
-            <Link href="/owner/dashboard" className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95">
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="text-xs font-bold">Owner Dashboard</span>
-            </Link>
-          )}
+          {/* Top Right Controls */}
+          <div className="flex items-center gap-2">
+            {!isAuthenticated && (
+              <button 
+                onClick={openModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#801786]/10 border border-[#801786]/20 rounded-full text-[#801786] hover:bg-[#801786]/20 transition-colors shadow-sm active:scale-95"
+              >
+                <UserCircle className="w-4 h-4" />
+                <span className="text-sm font-bold">Sign In</span>
+              </button>
+            )}
+
+            {/* Conditional Owner Dashboard Button */}
+            {isAuthenticated && user?.role === 'owner' && (
+              <Link href="/owner/dashboard" className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95">
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="text-xs font-bold">Owner Dashboard</span>
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="mt-5">
