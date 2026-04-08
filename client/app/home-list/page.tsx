@@ -132,7 +132,7 @@ export default function HomeListPage() {
         </div>
 
         <div className="mt-5">
-          <div className="flex items-center bg-white border border-[#E5E7EB] rounded-full h-[56px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+          <div onClick={() => router.push('/search')} className="flex items-center bg-white border border-[#E5E7EB] rounded-full h-[56px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]">
             <Search className="w-5 h-5 text-[#111827] shrink-0" />
             <div className="flex-1 px-3 flex flex-col justify-center">
               <span className="text-sm font-semibold text-[#111827] leading-tight">Search on Homyvo</span>
