@@ -1,16 +1,18 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BottomBar from '@/components/common/BottomBar';
-import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const TRENDING_CITIES = [
-  { name: 'Coimbatore', count: '350+', img: 'https://images.unsplash.com/photo-1548013146-72479768bcaa?q=80&w=400' },
-  { name: 'Chennai', count: '850+', img: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=400' },
-  { name: 'Madurai', count: '240+', img: 'https://images.unsplash.com/photo-1560058356-4d0365774a38?q=80&w=400' },
-  { name: 'Tiruppur', count: '120+', img: 'https://images.unsplash.com/photo-1514222788100-642154564077?q=80&w=400' },
-  { name: 'Erode', count: '90+', img: 'https://images.unsplash.com/photo-1524492412937-b65746b19a10?q=80&w=400' },
+  { name: 'Coimbatore', count: '350+', img: 'https://picsum.photos/id/1018/400/300' },
+  { name: 'Chennai', count: '850+', img: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=400' }, // Leaving Chennai since it works perfectly
+  { name: 'Madurai', count: '240+', img: 'https://picsum.photos/id/1047/400/300' },
+  { name: 'Tiruppur', count: '120+', img: 'https://picsum.photos/id/1033/400/300' },
+  { name: 'Erode', count: '90+', img: 'https://picsum.photos/id/1065/400/300' },
 ];
 
 const STUDENTS = [
@@ -30,20 +32,31 @@ const TRENDING_NOW = [
 
 export default function HomeListPage() {
   const router = useRouter();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <div className="relative w-full min-h-screen bg-white pb-24 overflow-x-hidden font-sans text-[#111827]">
       
       {/* 1. TOP NAVBAR & 2. SEARCH BAR */}
       <div className="sticky top-0 z-50 bg-white px-4 pt-6 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-[36px] h-[36px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
-            <img src="/logo.svg" alt="Homyvo" className="w-full h-full object-contain" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-[48px] h-[48px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shrink-0 overflow-hidden shadow-sm border border-gray-200">
+              <img src="/logo.svg" alt="Homyvo" className="w-full h-full object-contain" />
+            </div>
+            <h1 className="text-[20px] md:text-[22px] font-bold text-[#111827] tracking-tight">Homyvo</h1>
           </div>
-          <h1 className="text-[18px] md:text-[20px] font-semibold text-[#111827] tracking-tight">Homyvo</h1>
+
+          {/* Conditional Owner Dashboard Button on the Right/Top-Left */}
+          {isAuthenticated && user?.role === 'owner' && (
+            <Link href="/owner/dashboard" className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95">
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="text-xs font-bold">Owner Dashboard</span>
+            </Link>
+          )}
         </div>
 
-        <div className="mt-4">
+        <div className="mt-5">
           <div className="flex items-center bg-white border border-[#E5E7EB] rounded-full h-[56px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
             <Search className="w-5 h-5 text-[#111827] shrink-0" />
             <div className="flex-1 px-3 flex flex-col justify-center">
@@ -72,7 +85,7 @@ export default function HomeListPage() {
               <GraduationCap className="w-5 h-5 text-[#7C3AED]" />
             </div>
             <div>
-              <h3 className="font-semibold text-[#111827] text-sm">Student</h3>
+              <h3 className="font-semibold text-[#111827] text-sm">Student / Bachelor</h3>
               <p className="text-xs text-[#6B7280] mt-0.5">250+ Affordable stays</p>
             </div>
           </div>
