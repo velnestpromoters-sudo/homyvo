@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, CheckCircle, Percent, Share2 } from 'lucide-react';
+import { MapPin, CheckCircle, Percent, Share2, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useWishlistStore } from '@/store/wishlistStore';
 
 interface VideoCardProps {
   id: string | number;
@@ -29,9 +30,29 @@ export default function VideoCard({
   const router = useRouter();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistStore();
 
   // Using exclusively the uploaded images array from the new property system
   const mediaList = images && images.length > 0 ? images : ['/images/placeholder.jpg'];
+
+  const isSaved = isInWishlist(id.toString());
+
+  const toggleWishlist = () => {
+    const isPgLocal = propertyType === 'pg';
+    const typeStr = isPgLocal ? 'PG' : (bhkType || 'Apartment');
+
+    if (isSaved) {
+      removeFromWishlist(id.toString());
+    } else {
+      addToWishlist({
+        _id: id.toString(),
+        title: `${area}, ${district}`,
+        price: rent,
+        img: mediaList[0],
+        typeStr: typeStr
+      });
+    }
+  };
 
   useEffect(() => {
     // Play video if active property slide AND the first horizontal slide (video) is active
@@ -172,6 +193,16 @@ export default function VideoCard({
           </div>
           <span className="text-white font-bold text-xs drop-shadow-md">Share</span>
         </button>  
+
+        <button 
+          onClick={toggleWishlist}
+          className="flex flex-col items-center pointer-events-auto active:scale-90 transition-transform mt-1"
+        >
+          <div className="bg-white/10 backdrop-blur-md text-white rounded-full p-3.5 mb-1 border border-white/20 shadow-xl">
+             <Heart className={`w-6 h-6 transition-colors ${isSaved ? 'fill-[#ec38b7] text-[#ec38b7]' : 'fill-white/10 text-white'}`} />
+          </div>
+          <span className={`font-bold text-xs drop-shadow-md ${isSaved ? 'text-[#ec38b7]' : 'text-white'}`}>{isSaved ? 'Saved' : 'Save'}</span>
+        </button>
       </div>
 
       {/* Bottom overlay: Property details */}

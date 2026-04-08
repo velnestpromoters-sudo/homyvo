@@ -1,12 +1,12 @@
 "use client";
 
 import React from 'react';
-import { Navigation, List, PlaySquare } from 'lucide-react';
+import { Navigation, List, PlaySquare, Bookmark } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface BottomBarProps {
   location: string;
-  viewMode: 'reel' | 'list';
+  viewMode: 'reel' | 'list' | 'wishlist';
 }
 
 export default function BottomBar({ location, viewMode }: BottomBarProps) {
@@ -46,9 +46,13 @@ export default function BottomBar({ location, viewMode }: BottomBarProps) {
           <span className="font-bold text-sm truncate block">{location || 'Map View'}</span>
         </div>
         
-        {/* Decorative Space / Future "Saved" button */}
-        <button className="flex flex-col items-center justify-center p-2 rounded-2xl transition hover:bg-white/10 active:scale-95 text-white/50 opacity-0 pointer-events-none">
-          <List className="w-6 h-6 mb-1 text-white" /><span className="text-[10px] font-bold text-white uppercase tracking-wider">Saved</span>
+        {/* Wishlist/Saved Button */}
+        <button 
+          onClick={() => router.push('/wishlist')}
+          className="flex flex-col items-center justify-center p-2 rounded-2xl transition hover:bg-white/10 active:scale-95"
+        >
+          <Bookmark className={`w-6 h-6 mb-1 ${viewMode === 'wishlist' ? 'text-white fill-white' : 'text-white/50'}`} />
+          <span className={`text-[10px] font-bold uppercase tracking-wider ${viewMode === 'wishlist' ? 'text-white' : 'text-white/50'}`}>Saved</span>
         </button>
 
       </div>
