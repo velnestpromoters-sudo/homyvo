@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BottomBar from '@/components/common/BottomBar';
-import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import api from '@/lib/api';
@@ -13,9 +14,11 @@ import api from '@/lib/api';
 export default function HomeListPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
+  const logout = useAuthStore(state => state.logout);
   const { locationName } = useLocationStore();
   const { openModal } = useAuthModalStore();
   
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [studentProperties, setStudentProperties] = useState<any[]>([]);
   const [familyProperties, setFamilyProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +91,34 @@ export default function HomeListPage() {
                 <UserCircle className="w-4 h-4" />
                 <span className="text-sm font-bold">Sign In</span>
               </button>
+            )}
+
+            {/* Conditional Tenant Profile Dropdown */}
+            {isAuthenticated && user?.role === 'tenant' && (
+              <div className="relative">
+                 <button 
+                   onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                   className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-full text-gray-800 hover:bg-gray-200 transition-colors shadow-sm active:scale-95"
+                 >
+                   <UserCircle className="w-4 h-4 text-[#801786]" />
+                   <span className="text-sm font-bold tracking-tight truncate max-w-[80px]">{user?.name || 'Tenant'}</span>
+                 </button>
+                 
+                 {showLogoutMenu && (
+                   <div className="absolute top-10 right-0 z-50 bg-white border border-gray-100 shadow-xl rounded-xl w-32 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <button 
+                         onClick={() => {
+                            logout();
+                            setShowLogoutMenu(false);
+                         }}
+                         className="flex items-center w-full px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors gap-2"
+                      >
+                         <LogOut className="w-4 h-4" />
+                         <span>Logout</span>
+                      </button>
+                   </div>
+                 )}
+              </div>
             )}
 
             {/* Conditional Owner Dashboard Button */}
