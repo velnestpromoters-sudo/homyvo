@@ -7,14 +7,6 @@ import BottomBar from '@/components/common/BottomBar';
 import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
-const TRENDING_CITIES = [
-  { name: 'Coimbatore', count: '350+', img: 'https://picsum.photos/id/1018/400/300' },
-  { name: 'Chennai', count: '850+', img: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=400' }, // Leaving Chennai since it works perfectly
-  { name: 'Madurai', count: '240+', img: 'https://picsum.photos/id/1047/400/300' },
-  { name: 'Tiruppur', count: '120+', img: 'https://picsum.photos/id/1033/400/300' },
-  { name: 'Erode', count: '90+', img: 'https://picsum.photos/id/1065/400/300' },
-];
-
 const STUDENTS = [
   { title: 'Peelamedu, Coimbatore', type: 'PG • 4 Sharing', price: '₹6,500', rating: 4.5, img: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=400' },
   { title: 'Saravanampatti, Coimbatore', type: 'Room • 2 Sharing', price: '₹5,000', rating: 4.2, img: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=400' },
@@ -40,11 +32,11 @@ export default function HomeListPage() {
       {/* 1. TOP NAVBAR & 2. SEARCH BAR */}
       <div className="sticky top-0 z-50 bg-white px-4 pt-6 pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-[48px] h-[48px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-2 shrink-0 overflow-hidden shadow-sm border border-gray-200">
-              <img src="/logo.svg" alt="Homyvo" className="w-full h-full object-contain" />
+          <div className="flex items-center gap-2">
+            <div className="w-[56px] h-[56px] rounded-full bg-[#F3F4F6] flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-sm border border-gray-200">
+              <img src="/logo.svg" alt="Homyvo" className="w-[85%] h-[85%] object-contain" />
             </div>
-            <h1 className="text-[20px] md:text-[22px] font-bold text-[#111827] tracking-tight">Homyvo</h1>
+            <h1 className="text-[20px] font-bold text-[#111827] tracking-tight">Homyvo</h1>
           </div>
 
           {/* Conditional Owner Dashboard Button on the Right/Top-Left */}
@@ -100,40 +92,14 @@ export default function HomeListPage() {
           </div>
         </div>
 
-        {/* 5. TOP TRENDING CITIES (Infinite Horizontal Marquee) */}
+        {/* 5. TRENDING NOW (Moved up to replace Trending Cities) */}
         <section>
           <div className="mb-3">
-            <h2 className="text-lg font-bold text-[#111827]">Top Trending Cities</h2>
-            <p className="text-sm text-[#6B7280]">Popular destinations for rentals</p>
+            <h2 className="text-lg font-bold text-[#111827]">Trending Now</h2>
+            <p className="text-sm text-[#6B7280]">Popular places in Tamil Nadu</p>
           </div>
-          <div className="relative w-full overflow-hidden flex pb-4 -mx-4 px-0">
-            <div className="flex gap-4 animate-marquee whitespace-nowrap w-max hover:[animation-play-state:paused]">
-              
-              {/* Set 1 */}
-              {TRENDING_CITIES.map((city, i) => (
-                <div key={`set1-${i}`} className="relative w-[160px] md:w-[180px] h-[120px] rounded-xl overflow-hidden shrink-0 shadow-sm cursor-pointer ml-4 first:ml-4">
-                  <img src={city.img} alt={city.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3">
-                    <h3 className="text-white font-semibold text-sm">{city.name}</h3>
-                    <p className="text-white/80 text-[10px]">{city.count} properties</p>
-                  </div>
-                </div>
-              ))}
-
-              {/* Set 2 (Duplicate for seamless continuous loop) */}
-              {TRENDING_CITIES.map((city, i) => (
-                <div key={`set2-${i}`} className="relative w-[160px] md:w-[180px] h-[120px] rounded-xl overflow-hidden shrink-0 shadow-sm cursor-pointer ml-4">
-                  <img src={city.img} alt={city.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <div className="absolute bottom-3 left-3">
-                    <h3 className="text-white font-semibold text-sm">{city.name}</h3>
-                    <p className="text-white/80 text-[10px]">{city.count} properties</p>
-                  </div>
-                </div>
-              ))}
-              
-            </div>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x">
+            <HorizontalScrollCards items={TRENDING_NOW} />
           </div>
         </section>
 
@@ -159,18 +125,7 @@ export default function HomeListPage() {
           </div>
         </section>
 
-        {/* 8. TRENDING NOW */}
-        <section>
-          <div className="mb-3">
-            <h2 className="text-lg font-bold text-[#111827]">Trending Now</h2>
-            <p className="text-sm text-[#6B7280]">Popular places in Tamil Nadu</p>
-          </div>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x">
-            <HorizontalScrollCards items={TRENDING_NOW} />
-          </div>
-        </section>
-
-        {/* 9. POPULAR LOCATIONS */}
+        {/* 8. POPULAR LOCATIONS */}
         <section className="mb-4">
            <div className="bg-[#F3F4F6] rounded-2xl p-2">
              {['Coimbatore, Tamil Nadu', 'Chennai, Tamil Nadu', 'Madurai, Tamil Nadu'].map((loc, i) => (
@@ -189,21 +144,12 @@ export default function HomeListPage() {
 
       </div>
 
-      {/* 10. BOTTOM NAVIGATION */}
+      {/* BOTTOM NAVIGATION */}
       <BottomBar location="" viewMode="list" />
 
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
-        }
-        
-        @keyframes marquee {
-          0% { transform: translateX(0%); }
-          100% { transform: translateX(calc(-50% - 8px)); }
-        }
-        
-        .animate-marquee {
-          animation: marquee 25s linear infinite;
         }
       `}</style>
     </div>
