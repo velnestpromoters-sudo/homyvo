@@ -9,7 +9,7 @@ import { PropertyCard } from '@/components/property/PropertyCard';
 
 export default function SearchPage() {
   const router = useRouter();
-  const { setLocation, locationName, location } = useLocationStore();
+  const { setLocation, locationName, coordinates } = useLocationStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -28,8 +28,8 @@ export default function SearchPage() {
       try {
         const parsed = parseSearch(searchQuery) as any;
         
-        let targetLat = location?.lat || null;
-        let targetLng = location?.lng || null;
+        let targetLat = coordinates?.lat || null;
+        let targetLng = coordinates?.lng || null;
 
         // Smart Default: If no location explicitly found in text, use current context if available
         if (!parsed.location && locationName && locationName !== 'Detecting...') {
