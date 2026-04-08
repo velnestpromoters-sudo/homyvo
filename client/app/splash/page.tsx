@@ -59,9 +59,9 @@ export default function SplashPage() {
       // Add a tiny 200ms buffer after the last frame so users can see it
       const timer = setTimeout(() => {
          if (isAuthenticated && user?.role === 'owner') {
-             router.push('/owner/dashboard');
+             router.push('/home-list');
          } else {
-             router.push('/home'); // Both tenant and guests go to Home
+             router.push('/home-list'); // Both tenant and guests go to Home
          }
       }, 200);
       return () => clearTimeout(timer);

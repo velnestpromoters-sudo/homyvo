@@ -11,15 +11,15 @@ export default function Root() {
   
   const handleSplashComplete = () => {
       if (!isAuthenticated) {
-        router.push('/home');
+        router.push('/home-list');
       } else {
         const role = user?.role;
         if (role === 'tenant') {
-           router.push('/home');
+           router.push('/home-list');
         } else if (role === 'owner') {
-           router.push('/owner/dashboard');
+           router.push('/home-list');
         } else {
-           router.push('/home');
+           router.push('/home-list');
         }
       }
   };
