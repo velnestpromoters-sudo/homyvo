@@ -92,6 +92,16 @@ exports.createProperty = async (req, res) => {
     try {
         if (req.body.location) {
             parsedLocation = JSON.parse(req.body.location);
+            
+            // Failsafe: If no frontend latitude, extract securely from Map link natively
+            if ((!parsedLocation.lat || !parsedLocation.lng) && parsedLocation.googleMapLink) {
+                 const match = parsedLocation.googleMapLink.match(/q=([\d.-]+),([\d.-]+)/);
+                 if (match) {
+                     parsedLocation.lat = Number(match[1]);
+                     parsedLocation.lng = Number(match[2]);
+                 }
+            }
+
             // Native Map to GeoJSON Schema
             if (parsedLocation.lat && parsedLocation.lng) {
                 parsedLocation.coordinates = {
