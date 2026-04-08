@@ -202,9 +202,11 @@ export default function OwnerDashboard() {
                            }));
                            payload.rooms = mappedRooms;
                         } else {
-                           // Apartment Boolean
-                           const checkbox = e.currentTarget.querySelector('input[type="checkbox"]') as HTMLInputElement;
-                           payload.moveInReady = checkbox.checked;
+                           // Apartment Booleans
+                           const moveInReadyCheckbox = e.currentTarget.querySelector('input[name="moveInReady"]') as HTMLInputElement;
+                           const bachelorAllowedCheckbox = e.currentTarget.querySelector('input[name="bachelorAllowed"]') as HTMLInputElement;
+                           if (moveInReadyCheckbox) payload.moveInReady = moveInReadyCheckbox.checked;
+                           if (bachelorAllowedCheckbox) payload.bachelorAllowed = bachelorAllowedCheckbox.checked;
                         }
 
                         // Attach Tenant Notes safely
@@ -259,19 +261,38 @@ export default function OwnerDashboard() {
                         ))}
                      </div>
                   ) : (
-                     <div className="flex justify-between items-center p-4 border rounded-xl bg-slate-50">
-                        <div>
-                           <p className="font-bold text-gray-800">Move-in Ready?</p>
-                           <p className="text-xs text-slate-500">Available to occupy.</p>
+                     <div className="flex flex-col gap-3">
+                        <div className="flex justify-between items-center p-4 border rounded-xl bg-slate-50">
+                           <div>
+                              <p className="font-bold text-gray-800">Move-in Ready?</p>
+                              <p className="text-xs text-slate-500">Available to occupy.</p>
+                           </div>
+                           <label className="relative inline-flex items-center cursor-pointer">
+                              <input 
+                                 type="checkbox" 
+                                 name="moveInReady"
+                                 defaultChecked={availabilityModalData.moveInReady}
+                                 className="sr-only peer" 
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#801786]"></div>
+                           </label>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                           <input 
-                              type="checkbox" 
-                              defaultChecked={availabilityModalData.moveInReady}
-                              className="sr-only peer" 
-                           />
-                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#801786]"></div>
-                        </label>
+                        
+                        <div className="flex justify-between items-center p-4 border rounded-xl bg-slate-50">
+                           <div>
+                              <p className="font-bold text-gray-800">Allow Bachelors?</p>
+                              <p className="text-xs text-slate-500">Enable for student visibility.</p>
+                           </div>
+                           <label className="relative inline-flex items-center cursor-pointer">
+                              <input 
+                                 type="checkbox" 
+                                 name="bachelorAllowed"
+                                 defaultChecked={availabilityModalData.preferences?.bachelorAllowed}
+                                 className="sr-only peer" 
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#801786]"></div>
+                           </label>
+                        </div>
                      </div>
                   )}
 

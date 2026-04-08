@@ -120,10 +120,14 @@ exports.updateAvailability = async (req, res) => {
           
           property.pgDetails.rooms = updatedRooms;
       } else {
-          if (req.body.moveInReady === undefined) {
-             return res.status(400).json({ success: false, message: "moveInReady boolean payload is missing for apartment update." });
+          if (req.body.moveInReady !== undefined) {
+             property.moveInReady = req.body.moveInReady;
           }
-          property.moveInReady = req.body.moveInReady;
+          if (req.body.bachelorAllowed !== undefined) {
+             if (!property.preferences) property.preferences = {};
+             property.preferences.bachelorAllowed = req.body.bachelorAllowed;
+             property.markModified('preferences');
+          }
       }
       
       // Handle unconditional Notes Updates if provided
