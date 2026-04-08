@@ -63,7 +63,7 @@ export default function Step5() {
              description: 'One-time ₹500 publishing fee',
              order_id: orderData.id,
              handler: async function (response: any) {
-               await fetch('/api/payment/verify-listing', {
+               const verifyRes = await fetch('/api/payment/verify-listing', {
                  method: 'POST',
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify({
@@ -73,9 +73,17 @@ export default function Step5() {
                     propertyId
                  })
                });
-               formState.resetForm();
-               alert("Property published and activated successfully!");
-               router.push('/owner/dashboard');
+               
+               const verifyData = await verifyRes.json();
+               
+               if (verifyData.success) {
+                 formState.resetForm();
+                 alert("Property published and activated successfully!");
+                 router.push('/owner/dashboard');
+               } else {
+                 alert("Payment Verification Failed in Backend! " + (verifyData.message || "Invalid signature."));
+                 setIsSubmitting(false);
+               }
              },
              prefill: {
                name: 'Owner',
