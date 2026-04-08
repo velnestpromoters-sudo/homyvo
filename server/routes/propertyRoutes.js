@@ -20,4 +20,10 @@ router.put(
   propertyController.updateAvailability
 );
 
+router.delete(
+  '/:id',
+  protect,
+  propertyController.deleteProperty
+);
+
 module.exports = router;

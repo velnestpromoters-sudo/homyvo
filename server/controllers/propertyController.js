@@ -142,3 +142,24 @@ exports.updateAvailability = async (req, res) => {
       res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.deleteProperty = async (req, res) => {
+  try {
+      const propertyId = req.params.id;
+      const property = await Property.findById(propertyId);
+
+      if (!property) {
+          return res.status(404).json({ success: false, message: "Property not found" });
+      }
+      
+      if (property.ownerId.toString() !== req.user._id.toString()) {
+          return res.status(403).json({ success: false, message: "Unauthorized to delete this property." });
+      }
+
+      await property.deleteOne();
+      res.status(200).json({ success: true, message: "Property deleted successfully" });
+  } catch(error) {
+      console.error("Delete property error:", error);
+      res.status(500).json({ success: false, message: error.message });
+  }
+};
