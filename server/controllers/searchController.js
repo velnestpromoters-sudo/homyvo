@@ -16,30 +16,33 @@ exports.searchProperties = async (req, res) => {
       amenities,
       furnishing,
       availability,
-      bachelorAllowed
+      bachelorAllowed,
+      sort
     } = req.query;
 
     const pipeline = [];
-
-    // ATLAS SEARCH STAGE
     const searchStage = {
       $search: {
         index: "property_search",
         compound: {
-          must: [],
-          filter: []
+          filter: [
+             { equals: { path: "isActive", value: true } }
+          ]
         }
       }
     };
 
-    if (queryText) {
-      searchStage.$search.compound.must.push({
-        text: {
-          query: queryText,
-          path: ["title", "description", "location.area", "location.address"],
-          fuzzy: { maxEdits: 2 }
+    // FUZZY TEXT SEARCH (Only injected if queryText has actual text)
+    if (queryText && queryText.trim().length > 0) {
+      searchStage.$search.compound.must = [
+        {
+          text: {
+            query: queryText.trim(),
+            path: ["title", "description", "location.area", "location.address"],
+            fuzzy: { maxEdits: 2 }
+          }
         }
-      });
+      ];
     }
 
     // GEO FILTER
@@ -51,41 +54,38 @@ exports.searchProperties = async (req, res) => {
               type: "Point",
               coordinates: [Number(lng), Number(lat)]
             },
-            radius: Number(radius)
+            radius: Number(radius) * (radius < 1000 ? 1000 : 1) // Ensure it's in meters natively!
           },
           path: "location.coordinates"
         }
       });
     }
 
-    // PRICE FILTER
+    // PRICE (RENT) FILTER
     if (minPrice || maxPrice) {
-      searchStage.$search.compound.filter.push({
-        range: {
-          path: "rent",
-          gte: minPrice ? Number(minPrice) : 0,
-          lte: maxPrice ? Number(maxPrice) : 1000000
-        }
-      });
+      const rangeOp = { path: "rent" };
+      if (minPrice) rangeOp.gte = Number(minPrice);
+      if (maxPrice) rangeOp.lte = Number(maxPrice);
+      searchStage.$search.compound.filter.push({ range: rangeOp });
     }
 
     // PROPERTY TYPE
     if (propertyType) {
       searchStage.$search.compound.filter.push({
-        text: {
+        equals: {
           path: "propertyType",
-          query: propertyType
+          value: propertyType
         }
       });
     }
 
     // PG FILTERS
-    if (propertyType === "pg" || propertyType?.includes("pg")) {
+    if (propertyType === "pg") {
       if (gender) {
         searchStage.$search.compound.filter.push({
-          text: {
+          equals: {
             path: "pgDetails.gender",
-            query: gender
+            value: gender
           }
         });
       }
@@ -102,19 +102,21 @@ exports.searchProperties = async (req, res) => {
 
     // BHK
     if (bhkType) {
+      // Provide regex-equivalent by ignoring exact case if fuzzy is handled or map correctly
       searchStage.$search.compound.filter.push({
         text: {
-          path: "bhkType",
-          query: bhkType
+          query: bhkType,
+          path: "bhkType"
         }
       });
     }
 
     // AMENITIES
     if (amenities) {
+      const amensArray = amenities.split(",");
       searchStage.$search.compound.filter.push({
         text: {
-          query: amenities.split(","),
+          query: amensArray,
           path: "amenities"
         }
       });
@@ -123,9 +125,9 @@ exports.searchProperties = async (req, res) => {
     // FURNISHING
     if (furnishing) {
       searchStage.$search.compound.filter.push({
-        text: {
+        equals: {
           path: "furnishing",
-          query: furnishing
+          value: furnishing
         }
       });
     }
@@ -133,42 +135,33 @@ exports.searchProperties = async (req, res) => {
     // AVAILABILITY
     if (availability) {
       searchStage.$search.compound.filter.push({
-        text: {
+        equals: {
           path: "availability",
-          query: availability
+          value: availability
         }
       });
     }
-    
-    // BACHELORS
-    if (bachelorAllowed !== undefined && bachelorAllowed !== "false") {
-      searchStage.$search.compound.filter.push({
-          equals: {
-              path: "preferences.bachelorAllowed",
-              value: true
-          }
-      });
+
+    pipeline.push(searchStage);
+
+    // SORTING (If not relevance)
+    if (sort === "price_low") {
+       pipeline.push({ $sort: { rent: 1 } });
+    } else if (sort === "price_high") {
+       pipeline.push({ $sort: { rent: -1 } });
+    } else if (sort === "latest") {
+       pipeline.push({ $sort: { createdAt: -1 } });
     }
 
-    if (searchStage.$search.compound.must.length === 0) {
-      delete searchStage.$search.compound.must;
-    }
-    if (searchStage.$search.compound.filter.length === 0) {
-      delete searchStage.$search.compound.filter;
-    }
+    // PAGINATION LIMIT
+    pipeline.push({ $limit: 40 });
 
-    if (searchStage.$search.compound.must || searchStage.$search.compound.filter) {
-      pipeline.push(searchStage);
-    }
-    
-    pipeline.push({ $match: { isActive: true } });
-    pipeline.push({ $limit: 30 });
-
+    // EXECUTE
     const results = await Property.aggregate(pipeline);
 
     res.status(200).json({ success: true, count: results.length, data: results });
   } catch (error) {
-    console.error("Advanced Engine Query Syntax Error:", error);
+    console.error("Advanced Atlas Engine Error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

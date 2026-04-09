@@ -61,7 +61,7 @@ export default function SearchPage() {
         }
 
         // Clean out nulls and booleans before sending, and safely serialize Objects/Arrays!
-        const cleanParams: Record<string, any> = { queryText: searchQuery };
+        const cleanParams: Record<string, any> = { queryText: searchQuery.trim() };
         Object.entries(parsed).forEach(([key, value]) => {
              if (value !== null && value !== false && value !== undefined) {
                  if (typeof value === 'object' && !Array.isArray(value)) {
