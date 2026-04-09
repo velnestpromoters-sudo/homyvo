@@ -6,7 +6,7 @@ exports.searchProperties = async (req, res) => {
       queryText = "",
       lat,
       lng,
-      radius = 5000,
+      radius = 5,
       minPrice,
       maxPrice,
       propertyType,
@@ -20,161 +20,86 @@ exports.searchProperties = async (req, res) => {
       sort
     } = req.query;
 
-    const pipeline = [];
-    const searchStage = {
-      $search: {
-        index: "property_search",
-        compound: {
-          should: [
-            {
-              text: {
-                query: queryText || "home",
-                path: ["title", "description", "location.area", "location.address"],
-                fuzzy: { maxEdits: 2 }
-              }
-            }
-          ],
-          minimumShouldMatch: 0,
-          filter: [
-             { equals: { path: "isActive", value: true } }
-          ]
-        }
-      }
+    let query = {
+      isActive: true
     };
 
-    // GEO FILTER
+    // LOCATION TEXT SEARCH (ALWAYS WORKS)
+    if (queryText && queryText.trim().length > 0) {
+      const q = queryText.trim();
+      query.$or = [
+        { "location.area": new RegExp(q, "i") },
+        { "location.city": new RegExp(q, "i") },
+        { "location.address": new RegExp(q, "i") },
+        { title: new RegExp(q, "i") }
+      ];
+    }
+
+    // GEO SEARCH (ONLY IF LAT LNG EXISTS)
     if (lat && lng) {
-      searchStage.$search.compound.filter.push({
-        geoWithin: {
-          circle: {
-            center: {
-              type: "Point",
-              coordinates: [Number(lng), Number(lat)]
-            },
-            radius: Number(radius) * (radius < 1000 ? 1000 : 1) // Ensure it's in meters natively!
+      query["location.coordinates"] = {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [Number(lng), Number(lat)]
           },
-          path: "location.coordinates"
+          $maxDistance: Number(radius) * 1000
         }
-      });
+      };
     }
 
     // PRICE (RENT) FILTER
     if (minPrice || maxPrice) {
-      const rangeOp = { path: "rent" };
-      if (minPrice) rangeOp.gte = Number(minPrice);
-      if (maxPrice) rangeOp.lte = Number(maxPrice);
-      searchStage.$search.compound.filter.push({ range: rangeOp });
+      query.rent = {};
+      if (minPrice) query.rent.$gte = Number(minPrice);
+      if (maxPrice) query.rent.$lte = Number(maxPrice);
     }
 
     // PROPERTY TYPE
-    if (propertyType) {
-      searchStage.$search.compound.filter.push({
-        equals: {
-          path: "propertyType",
-          value: propertyType
-        }
-      });
-    }
+    if (propertyType) query.propertyType = propertyType;
 
-    // PG FILTERS
+    // PG FILTER
     if (propertyType === "pg") {
-      if (gender) {
-        searchStage.$search.compound.filter.push({
-          equals: {
-            path: "pgDetails.gender",
-            value: gender
-          }
-        });
-      }
+      if (gender) query["pgDetails.gender"] = gender;
 
       if (sharing) {
-        searchStage.$search.compound.filter.push({
-          equals: {
-            path: "pgDetails.rooms.sharing",
-            value: Number(sharing)
+        query["pgDetails.rooms"] = {
+          $elemMatch: {
+            sharing: Number(sharing),
+            availableBeds: { $gt: 0 }
           }
-        });
+        };
       }
     }
 
     // BHK
-    if (bhkType) {
-      // Provide regex-equivalent by ignoring exact case if fuzzy is handled or map correctly
-      searchStage.$search.compound.filter.push({
-        text: {
-          query: bhkType,
-          path: "bhkType"
-        }
-      });
-    }
+    if (bhkType) query.bhkType = new RegExp(bhkType, "i");
 
-    // AMENITIES
+    // PHASE 4 ADVANCED ATTRIBUTES (Kept as strict equals for reliability)
+    if (furnishing) query.furnishing = furnishing;
+    if (availability) query.availability = availability;
+    
+    if (bachelorAllowed !== undefined && bachelorAllowed !== "false") {
+       query["preferences.bachelorAllowed"] = true;
+    }
+    
     if (amenities) {
-      const amensArray = amenities.split(",");
-      searchStage.$search.compound.filter.push({
-        text: {
-          query: amensArray,
-          path: "amenities"
-        }
-      });
+       const amensArray = amenities.split(",");
+       query.amenities = { $all: amensArray };
     }
 
-    // FURNISHING
-    if (furnishing) {
-      searchStage.$search.compound.filter.push({
-        equals: {
-          path: "furnishing",
-          value: furnishing
-        }
-      });
-    }
+    // SORTING EXPLICIT
+    let sortObj = {};
+    if (sort === "price_low") sortObj.rent = 1;
+    else if (sort === "price_high") sortObj.rent = -1;
+    else if (sort === "latest") sortObj.createdAt = -1;
 
-    // AVAILABILITY
-    if (availability) {
-      searchStage.$search.compound.filter.push({
-        equals: {
-          path: "availability",
-          value: availability
-        }
-      });
-    }
+    const results = await Property.find(query).sort(sortObj).limit(50);
 
-    pipeline.push(searchStage);
-
-    // SORTING (If not relevance)
-    if (sort === "price_low") {
-       pipeline.push({ $sort: { rent: 1 } });
-    } else if (sort === "price_high") {
-       pipeline.push({ $sort: { rent: -1 } });
-    } else if (sort === "latest") {
-       pipeline.push({ $sort: { createdAt: -1 } });
-    }
-
-    // PAGINATION LIMIT
-    pipeline.push({ $limit: 40 });
-
-    // EXECUTE
-    let results = await Property.aggregate(pipeline);
-
-    // MONGODB NATIVE FALLBACK (If Atlas Search is building index or completely failed)
-    if (results.length === 0) {
-       const fallbackQuery = { isActive: true };
-       if (queryText) {
-          fallbackQuery["$or"] = [
-             { "location.area": new RegExp(queryText, "i") },
-             { "location.city": new RegExp(queryText, "i") },
-             { title: new RegExp(queryText, "i") }
-          ];
-       }
-       if (propertyType) fallbackQuery.propertyType = propertyType;
-       if (bhkType) fallbackQuery.bhkType = new RegExp(bhkType, "i");
-       
-       results = await Property.find(fallbackQuery).limit(30);
-    }
-
+    // EXACT FRONTEND EXPECTED RETURN SCHEMA
     res.status(200).json({ success: true, count: results.length, data: results });
   } catch (error) {
-    console.error("Advanced Atlas Engine Error:", error);
+    console.error("Mongoose Fallback Engine Error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
