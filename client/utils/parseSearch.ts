@@ -55,6 +55,16 @@ export const parseSearch = (query: string): any => {
       delete intent.locationText; // Favor raw HW coords over random matches elsewhere
   }
 
+  // 1a. Hidden Intent: Pasting a Google Maps Link Directly
+  const gmapMatch = q.match(/q=([\d.-]+),([\d.-]+)/) || q.match(/@([\d.-]+),([\d.-]+)/);
+  if (gmapMatch) {
+      intent.useGeo = true;
+      intent.lat = Number(gmapMatch[1]);
+      intent.lng = Number(gmapMatch[2]);
+      intent.radius = 1; // 1km clamp strictly for finding the specific pinned properties natively
+      delete intent.locationText;
+  }
+
   // 27. Landmark Search
   const landmarkMatch = q.match(/near (\w+ (college|hospital|park|airport))/i);
   if (landmarkMatch && !intent.locationText) {
