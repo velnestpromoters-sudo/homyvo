@@ -50,7 +50,7 @@ export default function SearchPage() {
         }
 
         // 2. Hardware GPS Fallback for exact proximity if location hasn't been explicitly anchored yet
-        if ((parsed.useGeo || parsed.radius || (!parsed.locationText && targetLat && targetLng)) && !parsed.lat) {
+        if (!parsed.locationText && (parsed.useGeo || parsed.radius || (targetLat && targetLng)) && !parsed.lat) {
            parsed.lat = targetLat;
            parsed.lng = targetLng;
         }
