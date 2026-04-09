@@ -60,8 +60,13 @@ export default function SearchPage() {
             parsed.radius = 8;
         }
 
+        let fallBackParamStr = searchQuery.trim();
+        if (parsed.useGeo && !parsed.locationText) {
+             fallBackParamStr = ""; // Strip "near me" noise entirely
+        }
+        
         // Clean out nulls and booleans before sending, map parsed location isolating tanglish noise explicitly
-        const cleanParams: Record<string, any> = { queryText: parsed.locationText || searchQuery.trim() };
+        const cleanParams: Record<string, any> = { queryText: parsed.locationText || fallBackParamStr };
         Object.entries(parsed).forEach(([key, value]) => {
              if (value !== null && value !== false && value !== undefined) {
                  if (typeof value === 'object' && !Array.isArray(value)) {
