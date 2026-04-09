@@ -31,8 +31,8 @@ export default function SearchPage() {
         let targetLat = coordinates?.lat || null;
         let targetLng = coordinates?.lng || null;
 
-        // Smart Default: If no location explicitly found in text, use current context if available
-        if (!parsed.locationText && locationName && locationName !== 'Detecting...') {
+        // Smart Default: If no location explicitly found in text AND user isn't asking for GPS native coordinates via 'near me', use map header text
+        if (!parsed.locationText && !parsed.useGeo && locationName && locationName !== 'Detecting...' && locationName !== '📍 Select Location') {
             parsed.locationText = locationName.replace('📍 ', '').split(',')[0].toLowerCase();
         }
 
