@@ -132,6 +132,7 @@ export default function SearchPage() {
                  <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">
                     {searchResults.length} Results Found
                  </h2>
+                 <p className="text-xs text-red-500 font-mono">DEBUG: {searchQuery}</p>
                  <button className="flex items-center gap-1.5 text-xs font-bold text-[#801786] bg-[#801786]/10 px-3 py-1.5 rounded-full">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
                  </button>

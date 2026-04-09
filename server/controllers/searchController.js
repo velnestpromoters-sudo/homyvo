@@ -2,23 +2,28 @@ const Property = require("../models/Property");
 
 exports.searchProperties = async (req, res) => {
   try {
-    console.log("---- DEBUG START ----");
+    const { queryText = "" } = req.query;
 
-    const all = await Property.find();
+    let query = { isActive: true };
 
-    console.log("TOTAL PROPERTIES:", all.length);
+    // LOGIC TEST LAYER: Log what backend receives
+    console.log("== UNIQUE SEARCH MAPPED ==");
+    console.log("queryText:", queryText);
+    console.log("LOGIC LEVEL 1: Raw string received:", queryText);
 
-    if (all.length > 0) {
-      console.log("SAMPLE PROPERTY:", JSON.stringify(all[0], null, 2));
+    if (queryText) {
+      query.$or = [
+        { "location.area": new RegExp(queryText, "i") },
+        { title: new RegExp(queryText, "i") }
+      ];
     }
 
-    return res.json({
-      total: all.length,
-      sample: all[0] || null
-    });
+    const results = await Property.find(query).limit(20);
+    console.log("RESULTS FOUND NATIVELY:", results.length);
+    console.log("UI LOG: Displaying", results.length, "results for query:", queryText);
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(200).json({ success: true, count: results.length, data: results });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
