@@ -91,10 +91,10 @@ export const parseSearch = (query: string): any => {
   if (q.match(/\bcheap\b|\bbudget\b|\blow budget\b/)) intent.priceCategory = 'low';
   if (q.match(/\bluxury\b|\bpremium\b|\bhigh end\b/)) intent.priceCategory = 'high';
 
-  // 3 & 17. Property Type
+  // 3 & 17. Property Type (Tanglish injected)
   let pTypes = [];
   if (q.includes('pg') || q.includes('hostel')) pTypes.push('pg');
-  if (q.includes('apartment') || q.includes('flat')) pTypes.push('apartment');
+  if (q.includes('apartment') || q.includes('flat') || q.includes('veedu') || q.includes('voodu')) pTypes.push('apartment');
   if (q.includes('house') || q.includes('villa')) pTypes.push('apartment'); // Default to apartment for residential block
   if (q.includes('room') && pTypes.length === 0) pTypes.push('pg'); 
   if (pTypes.length > 0) intent.propertyType = pTypes.length === 1 ? pTypes[0] : pTypes;
@@ -102,9 +102,9 @@ export const parseSearch = (query: string): any => {
   const bhkMatch = q.match(/(\d)\s*bhk/i);
   if (bhkMatch) intent.bhkType = `${bhkMatch[1]}BHK`;
 
-  // 4. Gender
-  if (q.match(/\bboys\b|\bmens\b|\bmen\b/)) intent.gender = 'boys';
-  if (q.match(/\bgirls\b|\bladies\b|\bwomens\b|\bwomen\b/)) intent.gender = 'girls';
+  // 4. Gender (Tanglish injected)
+  if (q.match(/\bboys\b|\bmens\b|\bmen\b|\bpasanga\b|\baambala\b|\bgents\b/)) intent.gender = 'boys';
+  if (q.match(/\bgirls\b|\bladies\b|\bwomens\b|\bwomen\b|\bponnunga\b|\bpengal\b/)) intent.gender = 'girls';
 
   // 5 & 18. Sharing Options
   const shareMatches = [...q.matchAll(/(\d)\s*(?:or)?\s*(\d)?\s*sharing/gi)];

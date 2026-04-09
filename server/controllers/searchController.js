@@ -2,7 +2,7 @@ const Property = require("../models/Property");
 
 exports.searchProperties = async (req, res) => {
   try {
-    const { queryText = "" } = req.query;
+    const { queryText = "", propertyType, gender } = req.query;
 
     let query = { isActive: true };
 
@@ -16,6 +16,13 @@ exports.searchProperties = async (req, res) => {
         { "location.area": new RegExp(queryText, "i") },
         { title: new RegExp(queryText, "i") }
       ];
+    }
+
+    if (propertyType) query.propertyType = propertyType;
+
+    if (gender) {
+      // Cross-context mapping for gender (mainly applies to PGs natively)
+      query["pgDetails.gender"] = gender;
     }
 
     const results = await Property.find(query).limit(20);
