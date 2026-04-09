@@ -2,7 +2,7 @@ const Property = require("../models/Property");
 
 exports.searchProperties = async (req, res) => {
   try {
-    const { queryText = "", propertyType, gender } = req.query;
+    const { queryText = "", propertyType, gender, lat, lng, radius = 5 } = req.query;
 
     let query = { isActive: true };
 
@@ -16,6 +16,18 @@ exports.searchProperties = async (req, res) => {
         { "location.area": new RegExp(queryText, "i") },
         { title: new RegExp(queryText, "i") }
       ];
+    }
+
+    if (lat && lng) {
+      query["location.coordinates"] = {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: [Number(lng), Number(lat)]
+          },
+          $maxDistance: Number(radius) * 1000 // Convert km to meters
+        }
+      };
     }
 
     if (propertyType) query.propertyType = propertyType;
