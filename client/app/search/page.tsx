@@ -77,7 +77,7 @@ export default function SearchPage() {
         });
         
         const params = new URLSearchParams(cleanParams).toString();
-        const res = await fetch(`/api/properties/search?${params}`);
+        const res = await fetch(`/api/properties/search?${params}&_t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         
         if (data.success) {
