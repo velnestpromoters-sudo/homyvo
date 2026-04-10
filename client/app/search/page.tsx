@@ -65,8 +65,16 @@ export default function SearchPage() {
              fallBackParamStr = ""; // Strip "near me" noise entirely
         }
         
+        // Safely determine queryText without falling victim to falsy empty-string fallbacks resurrecting noise
+        let finalQueryText = fallBackParamStr;
+        if (parsed.locationText) {
+            finalQueryText = parsed.locationText;
+        } else if (typeof parsed.cleanText === 'string') {
+            finalQueryText = parsed.cleanText;
+        }
+
         // Clean out nulls and booleans before sending, map parsed location isolating tanglish noise explicitly
-        const cleanParams: Record<string, any> = { queryText: parsed.locationText || parsed.cleanText || fallBackParamStr };
+        const cleanParams: Record<string, any> = { queryText: finalQueryText };
         Object.entries(parsed).forEach(([key, value]) => {
              if (value !== null && value !== false && value !== undefined) {
                  if (typeof value === 'object' && !Array.isArray(value)) {

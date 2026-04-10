@@ -198,11 +198,8 @@ export const parseSearch = (query: string): any => {
       intent.sort = 'relevance';
   }
 
-  // Assign stripped noise string back to intent for clean API parsing
-  const cleanNoiseStr = shadowStr.replace(/\s+/g, ' ').trim();
-  if (cleanNoiseStr) {
-      intent.cleanText = cleanNoiseStr;
-  }
+  // Assign stripped noise string back to intent for clean API parsing, even if empty string
+  intent.cleanText = shadowStr.replace(/\s+/g, ' ').trim();
 
   return intent;
 };
