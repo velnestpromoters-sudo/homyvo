@@ -25,6 +25,11 @@ export const parseSearch = (query: string): any => {
   q = resolveTypo(q);
   
   const intent: any = {};
+  if (!q) return intent;
+
+  // Initialize a tracked shadow string to strip noise from
+  let shadowStr = q;
+  const stripRegex = (regex: RegExp) => { shadowStr = shadowStr.replace(regex, ' '); };
 
   // 28. Negation Search
   const exclude: any = {};
