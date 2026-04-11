@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, TrendingUp, MapPin } from 'lucide-react';
 import { useLocationStore } from '@/store/locationStore';
+import { PropertyCard } from '@/components/property/PropertyCard';
+
 export default function SearchPage() {
   const router = useRouter();
   const { setLocation, locationName, coordinates } = useLocationStore();
