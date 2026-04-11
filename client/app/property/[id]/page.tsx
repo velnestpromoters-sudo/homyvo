@@ -17,6 +17,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   
   const [activeImage, setActiveImage] = useState(0);
   const [showGallery, setShowGallery] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [property, setProperty] = useState<any>(null);
   const [access, setAccess] = useState<'limited' | 'full'>('limited');
   const [loading, setLoading] = useState(true);
@@ -285,13 +286,35 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               </div>
               <div className="flex-1 overflow-y-auto px-4 pb-10 pt-4 flex flex-col gap-10 items-center">
                   {property.images.map((img: string, idx: number) => (
-                      <div key={idx} className="relative w-full max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-slate-900/40 flex items-center justify-center border border-white/5">
+                      <div 
+                          key={idx} 
+                          className="relative w-full max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-slate-900/40 flex items-center justify-center border border-white/5 cursor-zoom-in active:scale-[0.99] transition-transform"
+                          onClick={() => setEnlargedImage(img)}
+                      >
                           <img src={img} alt={`Gallery ${idx + 1}`} className="max-w-full max-h-[75vh] w-auto h-auto object-contain" />
                           <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-white/90 font-mono text-[11px] uppercase font-bold">
                               {idx + 1} / {property.images.length}
                           </div>
                       </div>
                   ))}
+              </div>
+          </div>
+      )}
+
+      {/* Extreme Full Screen Immersive Lightbox Modal */}
+      {enlargedImage && (
+          <div className="fixed inset-0 z-[110] bg-black flex flex-col animate-in fade-in zoom-in-95 duration-200">
+              <button 
+                  onClick={() => setEnlargedImage(null)}
+                  className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md border border-white/20 transition-colors z-20 shadow-2xl"
+              >
+                  <X className="w-6 h-6 drop-shadow-md" />
+              </button>
+              <div 
+                  className="flex-1 w-full h-full flex justify-center items-center p-2 cursor-zoom-out" 
+                  onClick={() => setEnlargedImage(null)}
+              >
+                  <img src={enlargedImage} alt="Immersive Expanded Screen" className="max-w-full max-h-[100dvh] object-contain shadow-[0_0_80px_rgba(0,0,0,0.8)]" />
               </div>
           </div>
       )}
