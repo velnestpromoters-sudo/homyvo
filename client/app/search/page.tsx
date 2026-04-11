@@ -77,9 +77,9 @@ export default function SearchPage() {
             try {
                 let osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetGeo)}&limit=10`;
                 
-                // If user activated their hardware tracker, inject soft bounding bias correcting duplicate town names spanning multiple cities
+                // If user activated their hardware tracker, inject strict physical boundaries isolating the predictive mapping explicitly within a 33km radius of their origin natively
                 if (coordinates?.lat && coordinates?.lng) {
-                    osmUrl += `&viewbox=${coordinates.lng-0.5},${coordinates.lat+0.5},${coordinates.lng+0.5},${coordinates.lat-0.5}`;
+                    osmUrl += `&viewbox=${coordinates.lng-0.3},${coordinates.lat+0.3},${coordinates.lng+0.3},${coordinates.lat-0.3}&bounded=1`;
                 }
 
                 const geoRes = await fetch(osmUrl, {
@@ -90,8 +90,11 @@ export default function SearchPage() {
                     lat = geoData[0].lat;
                     lng = geoData[0].lon;
                     
-                    // Generate predictive suggestions natively extracting localized string names mapped against user prefix intent
-                    const places = geoData.map((g: any) => g.display_name.split(',')[0]).filter(Boolean);
+                    // Generate predictive suggestions mapping exact area, district, and state names natively
+                    const places = geoData.map((g: any) => {
+                        const chunks = g.display_name.split(',');
+                        return chunks.slice(0, 3).join(',').trim();
+                    }).filter(Boolean);
                     const lowerText = rawText.toLowerCase();
                     const lowerTarget = targetGeo.toLowerCase();
                     let prefix = "";
