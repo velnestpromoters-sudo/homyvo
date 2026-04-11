@@ -34,7 +34,7 @@ function CenterTracker({ onCenterChange, forcePosition }: { onCenterChange: (pos
        const strPos = `${forcePosition[0]},${forcePosition[1]}`;
        if (lastFlown.current !== strPos) {
            lastFlown.current = strPos;
-           map.flyTo(forcePosition, 18, { animate: true, duration: 0.15 }); // Ultra-Fast cinematic zoom to street level
+           map.flyTo(forcePosition, 18, { animate: true, duration: 0.10 }); // Ultra-Fast precision zoom
            onCenterChange(forcePosition);
        }
     }
