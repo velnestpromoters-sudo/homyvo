@@ -55,19 +55,22 @@ export default function SearchPage() {
       try {
         const rawText = searchQuery.toLowerCase();
         
-        // Lightweight geographic stripper (removes nouns so Nominatim doesn't fail)
+        // Lightweight geographic stripper (removes nouns and distance parameters so Nominatim doesn't fail)
         const cleanForGeo = rawText
             .replace(/\b(pg|boys|girls|rent|house|apartment|bhk|room|flat|villa|mens|womens|in|near|around|for)\b/gi, '')
+            .replace(/\b(within|under|max)\s*\d+\s*(km|m|kilometers|meters|k)\b/gi, '') // NLP Distance Purger
             .replace(/\s+/g, ' ')
             .trim();
-
-        const targetGeo = cleanForGeo || rawText.trim();
         
+        let targetGeo = cleanForGeo;
+
         let lat = null;
         let lng = null;
 
         // 1. Hardware Bypass OR Forward Geocode
-        if (targetGeo.toLowerCase() === "properties me" || targetGeo.toLowerCase() === "properties near me") {
+        // Instantly switch to device GPS if explicitly requested, protecting queries like "near me within 3 km"
+        const rawLower = rawText.toLowerCase();
+        if (rawLower.includes("near me") || rawLower.includes("around me") || targetGeo === "me") {
             // Bypass OSM mapping entirely if the user manually activated the hardware tracker securely
             if (coordinates) {
                 lat = coordinates.lat;
@@ -75,7 +78,7 @@ export default function SearchPage() {
             }
         } else {
             try {
-                let osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetGeo)}&limit=10`;
+                let osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetGeo)}&limit=10&countrycodes=in`;
                 
                 // If user activated their hardware tracker, inject soft bounding bias correcting duplicate town names spanning multiple cities
                 if (coordinates?.lat && coordinates?.lng) {
