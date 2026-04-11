@@ -7,10 +7,39 @@ exports.searchProperties = async (req, res) => {
     let query = { isActive: true };
     const qStr = queryText.toLowerCase();
 
-    // 1. Basic Parameter Filters (Since NLP hook is erased, we apply static checks)
-    if (qStr.match(/\bpg\b|\bhostel\b|\bboys\b|\bgirls\b/)) { query.propertyType = 'pg'; }
-    if (qStr.match(/\bboys\b/)) { query["pgDetails.gender"] = 'boys'; }
-    if (qStr.match(/\bgirls\b/)) { query["pgDetails.gender"] = 'girls'; }
+    // 1. Intelligent Schema Matching for Bachelors/Families crossing PG and Apartment boundary states
+    let customFilters = [];
+    
+    if (qStr.match(/\bboys\b/)) {
+        customFilters.push({ 
+           $or: [ 
+             { "preferences.bachelorAllowed": true }, 
+             { propertyType: 'pg', "pgDetails.gender": { $in: ['boys', 'co-living'] } } 
+           ] 
+        });
+    } else if (qStr.match(/\bgirls\b/)) {
+        customFilters.push({ 
+           $or: [ 
+             { "preferences.bachelorAllowed": true }, 
+             { propertyType: 'pg', "pgDetails.gender": { $in: ['girls', 'co-living'] } } 
+           ] 
+        });
+    } else if (qStr.match(/\bbachelor\b|\bpg\b/)) {
+        customFilters.push({ 
+           $or: [ 
+             { "preferences.bachelorAllowed": true }, 
+             { propertyType: 'pg' } 
+           ] 
+        });
+    }
+
+    if (qStr.match(/\bfamily\b/)) {
+        query.propertyType = 'apartment'; // Families require standard apartments, bachelorAllowed flag is intentionally bypassed allowing both states natively
+    }
+
+    if (customFilters.length > 0) {
+        query.$and = customFilters;
+    }
 
     let results = [];
 

@@ -75,7 +75,7 @@ export default function SearchPage() {
             }
         } else {
             try {
-                let osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetGeo)}&limit=1`;
+                let osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetGeo)}&limit=10`;
                 
                 // If user activated their hardware tracker, inject soft bounding bias correcting duplicate town names spanning multiple cities
                 if (coordinates?.lat && coordinates?.lng) {
@@ -99,9 +99,9 @@ export default function SearchPage() {
                        prefix = rawText.substring(0, lowerText.lastIndexOf(lowerTarget));
                     }
                     
-                    // Build prediction list eliminating duplicates
+                    // Build prediction list eliminating duplicates maximizing tolerance resolution natively
                     const uniquePlaces = Array.from(new Set(places)) as string[];
-                    const newSuggestions = uniquePlaces.slice(0, 3).map((place: string) => `${prefix}${place}`.trim());
+                    const newSuggestions = uniquePlaces.slice(0, 10).map((place: string) => `${prefix}${place}`.trim());
                     setSuggestions(newSuggestions);
                 } else {
                     setSuggestions([]);
