@@ -4,9 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, TrendingUp, MapPin } from 'lucide-react';
 import { useLocationStore } from '@/store/locationStore';
-import { parseSearch } from '@/utils/parseSearch';
-import { PropertyCard } from '@/components/property/PropertyCard';
-
 export default function SearchPage() {
   const router = useRouter();
   const { setLocation, locationName, coordinates } = useLocationStore();
@@ -15,7 +12,7 @@ export default function SearchPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  // Debounced Intent Engine
+  // Simple Debounce Search
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -26,71 +23,8 @@ export default function SearchPage() {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const parsed = parseSearch(searchQuery) as any;
-        
-        let targetLat = coordinates?.lat || null;
-        let targetLng = coordinates?.lng || null;
-
-        // Smart Default: If no location explicitly found in text AND user isn't asking for GPS native coordinates via 'near me', use map header text
-        if (!parsed.locationText && !parsed.useGeo && locationName && locationName !== 'Detecting...' && locationName !== '📍 Select Location') {
-            parsed.locationText = locationName.replace('📍 ', '').split(',')[0].toLowerCase();
-        }
-
-        // 1. Resolve Explicit Named Locations to Lat/Lng Anchor Point
-        if (parsed.locationText && typeof parsed.locationText === 'string') {
-            try {
-                const geoRes = await fetch(`/api/search?q=${encodeURIComponent(parsed.locationText)}`);
-                const geoData = await geoRes.json();
-                if (geoData.success && geoData.features && geoData.features.length > 0) {
-                    const [geoLng, geoLat] = geoData.features[0].geometry.coordinates;
-                    parsed.lat = geoLat;
-                    parsed.lng = geoLng;
-                }
-            } catch(e) { console.warn("Forward geocoding failed", e); }
-        }
-
-        // 2. Hardware GPS Fallback for exact proximity if location hasn't been explicitly anchored yet
-        if (!parsed.locationText && (parsed.useGeo || parsed.radius || (targetLat && targetLng)) && !parsed.lat) {
-           parsed.lat = targetLat;
-           parsed.lng = targetLng;
-        }
-        
-        // Final sanity check for distances ensuring we have a $near fallback parameter dynamically injected
-        if (parsed.lat && parsed.lng && !parsed.radius) {
-            parsed.radius = 8;
-        }
-
-        let fallBackParamStr = searchQuery.trim();
-        if (parsed.useGeo && !parsed.locationText) {
-             fallBackParamStr = ""; // Strip "near me" noise entirely
-        }
-        
-        // Safely determine queryText without falling victim to falsy empty-string fallbacks resurrecting noise
-        let finalQueryText = fallBackParamStr;
-        if (parsed.locationText) {
-            finalQueryText = parsed.locationText;
-        } else if (typeof parsed.cleanText === 'string') {
-            finalQueryText = parsed.cleanText;
-        }
-
-        // Clean out nulls and booleans before sending, map parsed location isolating tanglish noise explicitly
-        const cleanParams: Record<string, any> = { queryText: finalQueryText };
-        Object.entries(parsed).forEach(([key, value]) => {
-             if (value !== null && value !== false && value !== undefined) {
-                 if (typeof value === 'object' && !Array.isArray(value)) {
-                     // Exclude maps
-                     cleanParams[key] = JSON.stringify(value);
-                 } else if (Array.isArray(value)) {
-                     // Arrays -> Comma strings
-                     cleanParams[key] = value.join(',');
-                 } else {
-                     cleanParams[key] = String(value);
-                 }
-             }
-        });
-        
-        const params = new URLSearchParams(cleanParams).toString();
-        const res = await fetch(`/api/properties/search?${params}&_t=${Date.now()}`, { cache: 'no-store' });
+        const query = encodeURIComponent(searchQuery.trim());
+        const res = await fetch(`/api/properties/search?queryText=${query}&_t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         
         if (data.success) {
@@ -104,7 +38,8 @@ export default function SearchPage() {
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timer);
-  }, [searchQuery, locationName]);
+  }, [searchQuery]);
+
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-slate-50">
@@ -180,21 +115,9 @@ export default function SearchPage() {
               )}
            </div>
         ) : (
-           <div className="p-5">
-              <h2 className="text-[11px] font-black uppercase tracking-widest text-[#801786] mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" /> Recommended Searches
-              </h2>
-              <div className="flex flex-wrap gap-2.5">
-                 {['Boys PG under 6000', '1BHK near Peelamedu', 'Family house below 15000', 'Girls Hostel with Wifi'].map((suggestion, idx) => (
-                    <button 
-                       key={idx}
-                       onClick={() => setSearchQuery(suggestion)}
-                       className="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-full hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-sm active:scale-95 text-left"
-                    >
-                       {suggestion}
-                    </button>
-                 ))}
-              </div>
+           <div className="p-5 flex flex-col items-center justify-center h-full opacity-50">
+              <SearchLucide className="w-12 h-12 text-slate-300 mb-2" />
+              <p className="text-slate-400 text-sm font-semibold">Start typing to search properties</p>
            </div>
         )}
       </main>
