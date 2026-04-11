@@ -70,7 +70,7 @@ exports.getProperty = async (req, res) => {
   }
 };
 
-const { uploadToCloudinary } = require('../services/cloudinaryService');
+const { uploadToCloudinary, deleteFromCloudinary } = require('../services/cloudinaryService');
 
 exports.createProperty = async (req, res) => {
   try {
@@ -204,8 +204,24 @@ exports.deleteProperty = async (req, res) => {
           return res.status(403).json({ success: false, message: "Unauthorized to delete this property." });
       }
 
+      // Pre-deletion hook: Scrub physical Cloudinary artifacts using extracted public_id slices natively
+      if (property.images && property.images.length > 0) {
+          for (let imgUrl of property.images) {
+              try {
+                  const parts = imgUrl.split('/upload/');
+                  if (parts.length === 2) {
+                      let path = parts[1].split('/').slice(1).join('/'); 
+                      let publicId = path.split('.')[0]; 
+                      if (publicId) await deleteFromCloudinary(publicId);
+                  }
+              } catch (e) {
+                  console.warn("Failed to extract Cloudinary slice for cleanup:", imgUrl);
+              }
+          }
+      }
+
       await property.deleteOne();
-      res.status(200).json({ success: true, message: "Property deleted successfully" });
+      res.status(200).json({ success: true, message: "Property and Cloudinary assets deleted successfully" });
   } catch(error) {
       console.error("Delete property error:", error);
       res.status(500).json({ success: false, message: error.message });

@@ -10,3 +10,11 @@ exports.uploadToCloudinary = async (filePath) => {
   fs.unlinkSync(filePath); // Cleanup local temp file
   return result.secure_url;
 };
+
+exports.deleteFromCloudinary = async (publicId) => {
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.error("Cloudinary deletion failed for:", publicId, err);
+  }
+};
