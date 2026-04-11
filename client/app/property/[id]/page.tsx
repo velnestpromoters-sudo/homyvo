@@ -283,11 +283,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       <X className="w-5 h-5" />
                   </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-20 flex flex-col gap-6">
+              <div className="flex-1 overflow-y-auto px-4 pb-10 pt-4 flex flex-col gap-10 items-center">
                   {property.images.map((img: string, idx: number) => (
-                      <div key={idx} className="relative w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900">
-                          <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-auto object-contain" />
-                          <div className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-lg text-white/80 font-mono text-[10px] uppercase font-bold">
+                      <div key={idx} className="relative w-full max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-slate-900/40 flex items-center justify-center border border-white/5">
+                          <img src={img} alt={`Gallery ${idx + 1}`} className="max-w-full max-h-[75vh] w-auto h-auto object-contain" />
+                          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-white/90 font-mono text-[11px] uppercase font-bold">
                               {idx + 1} / {property.images.length}
                           </div>
                       </div>
