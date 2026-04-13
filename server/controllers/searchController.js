@@ -48,34 +48,18 @@ exports.searchProperties = async (req, res) => {
       const numericLat = Number(lat);
       const numericLng = Number(lng);
 
-      // NLP Dynamic Radius Extractor
-      let maxDist = 3000; // Default 3KM
-      const distanceMatch = qStr.match(/(?:within|in|under)\s+(\d+)\s*(km|m|kilometers|meters)\b/i) || qStr.match(/\b(\d+)\s*(km|k|m|meters)\b/i);
-      
-      if (distanceMatch) {
-         const val = parseInt(distanceMatch[1], 10);
-         const unit = distanceMatch[2].toLowerCase();
-         if (unit === 'km' || unit === 'kilometers' || unit === 'k') {
-            maxDist = val * 1000;
-         } else if (unit === 'm' || unit === 'meters') {
-            maxDist = val;
-         }
-         // Secure max boundary natively preserving stability (max 50km)
-         if (maxDist > 50000) maxDist = 50000; 
-      }
-
-      // Attempt cutoff per spatial architecture context
+      // Attempt exactly 3 KM cutoff per Architecture rule
       query["location.coordinates"] = {
         $near: {
           $geometry: { type: "Point", coordinates: [numericLng, numericLat] },
-          $maxDistance: maxDist
+          $maxDistance: 3000 // 3KM
         }
       };
 
       results = await Property.find(query).limit(20);
 
-      // 3. Fallback: Check 5KM if yielding 0 outcomes naturally (only bypass if no stringent custom limits were enforced)
-      if (results.length === 0 && !distanceMatch) {
+      // 3. Fallback: Check 5KM if 3KM yields 0 outcomes
+      if (results.length === 0) {
         query["location.coordinates"].$near.$maxDistance = 5000; // 5KM
         results = await Property.find(query).limit(20);
       }

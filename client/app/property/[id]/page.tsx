@@ -262,7 +262,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                          disabled={isProcessingPayment} 
                          className="px-8 py-3 bg-[#801786] text-white font-black tracking-wide rounded-xl text-sm shadow-lg active:scale-95 transition-all w-full flex justify-center items-center gap-2"
                       >
-                         {isProcessingPayment ? "Processing..." : "Unlock for ₹99"}
+                         {isProcessingPayment ? "Processing..." : "Unlock for ₹49"}
                       </button>
                     </div>
                   </div>

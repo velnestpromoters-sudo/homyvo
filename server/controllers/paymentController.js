@@ -7,7 +7,7 @@ const Access = require("../models/Access");
 exports.createListingOrder = async (req, res) => {
   try {
     const options = {
-      amount: 500 * 100, // Rs 500
+      amount: 199 * 100, // Rs 199
       currency: "INR",
     };
     const order = await razorpay.orders.create(options);
@@ -53,7 +53,7 @@ exports.verifyListingPayment = async (req, res) => {
 exports.createAccessOrder = async (req, res) => {
   try {
     const options = {
-      amount: 99 * 100, // Rs 99
+      amount: 49 * 100, // Rs 49
       currency: "INR",
     };
     const order = await razorpay.orders.create(options);

@@ -57,7 +57,7 @@ export default function Step5() {
        if (data.success) {
            const propertyId = data.data._id;
            
-           // RAZORPAY ₹500 FLOW
+           // RAZORPAY ₹199 FLOW
            const orderRes = await fetch('/api/payment/create-listing', { method: 'POST' });
            const orderData = await orderRes.json();
            
@@ -66,7 +66,7 @@ export default function Step5() {
              amount: orderData.amount,
              currency: 'INR',
              name: 'Homyvo Property Listing',
-             description: 'One-time ₹500 publishing fee',
+             description: 'One-time ₹199 publishing fee',
              order_id: orderData.id,
              handler: async function (response: any) {
                const verifyRes = await fetch('/api/payment/verify-listing', {
