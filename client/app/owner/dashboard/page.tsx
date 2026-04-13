@@ -10,6 +10,7 @@ export default function OwnerDashboard() {
   const { user, isAuthenticated } = useAuth();
   const logout = useAuthStore(state => state.logout);
   const [properties, setProperties] = useState([]);
+  const [analytics, setAnalytics] = useState<any[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<any>(null);
   const [availabilityModalData, setAvailabilityModalData] = useState<any>(null);
@@ -37,7 +38,20 @@ export default function OwnerDashboard() {
          }
       } catch (err) { console.error(err); }
     };
+    const fetchAnalytics = async () => {
+      try {
+         const token = useAuthStore.getState().token;
+         const res = await fetch(`/api/properties/owner-analytics`, {
+             headers: { 'Authorization': `Bearer ${token}` }
+         });
+         const data = await res.json();
+         if (data.success) {
+            setAnalytics(data.data);
+         }
+      } catch (err) { console.error(err); }
+    };
     fetchProps();
+    fetchAnalytics();
   }, [isAuthenticated, router, user]);
 
   const handleLogout = () => {
@@ -171,6 +185,34 @@ export default function OwnerDashboard() {
              ))}
           </div>
         )}
+      </div>
+
+      {/* Property Growth Metrics Overlay */}
+      <div className="max-w-4xl mx-auto p-4 mb-4">
+         <h3 className="text-lg font-bold text-gray-800 mb-4">My Property Growth</h3>
+         {analytics.length === 0 ? (
+           <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-300">
+             <p className="text-gray-500 text-sm">Waiting for metric aggregations. Properties haven't gathered organic views yet.</p>
+           </div>
+         ) : (
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               {analytics.map((metric: any) => (
+                  <div key={metric._id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4 transition-transform hover:-translate-y-1 hover:shadow-md">
+                      <h4 className="font-bold text-gray-900 line-clamp-1">{metric.title}</h4>
+                      <div className="flex gap-4">
+                          <div className="flex-1 bg-purple-50 rounded-xl p-3 flex flex-col items-center justify-center border border-purple-100/50">
+                              <span className="text-[10px] font-extrabold text-purple-700 uppercase tracking-widest mb-1 shrink-0 text-center">Reel & Search Views</span>
+                              <span className="text-3xl font-black text-purple-900">{metric.views}</span>
+                          </div>
+                          <div className="flex-1 bg-green-50 rounded-xl p-3 flex flex-col items-center justify-center border border-green-100/50">
+                              <span className="text-[10px] font-extrabold text-green-700 uppercase tracking-widest mb-1 shrink-0 text-center">Paid Unlocks</span>
+                              <span className="text-3xl font-black text-green-900">{metric.unlocks}</span>
+                          </div>
+                      </div>
+                  </div>
+               ))}
+           </div>
+         )}
       </div>
 
       {/* QUICK AVAILABILITY EDITOR MODAL */}

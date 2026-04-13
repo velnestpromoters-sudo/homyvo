@@ -45,7 +45,8 @@ const propertySchema = new mongoose.Schema({
   preferences: {
     bachelorAllowed: Boolean,
     maxOccupants: Number
-  }
+  },
+  uniqueViewers: [{ type: String }]
 }, { timestamps: true });
 
 propertySchema.index({ "location.coordinates": "2dsphere" });

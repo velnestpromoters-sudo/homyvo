@@ -83,6 +83,24 @@ export default function HomeReelPage() {
     loadFeed();
   }, []);
 
+  // 1a. Tracking Organic Reel Interactions tightly bridging Property Growth Metrics natively
+  useEffect(() => {
+      if (properties.length > 0 && properties[activeSlide]) {
+          const propId = properties[activeSlide]._id;
+          const trackView = async () => {
+              try {
+                  const token = useAuthStore.getState().token;
+                  await api.post(`/properties/${propId}/view`, {}, {
+                      headers: token ? { Authorization: `Bearer ${token}` } : {}
+                  });
+              } catch (e) { /* Drop silently */ }
+          };
+          // 1.5 second throttle ensuring it's an actual physical 'view' not just an accidental fast-swipe
+          const timer = setTimeout(trackView, 1500);
+          return () => clearTimeout(timer);
+      }
+  }, [activeSlide, properties]);
+
   // 1. Dual-Fallback Geolocation Architecture (Mappls Proxy -> BigDataCloud)
   useEffect(() => {
     // Only detect if user hasn't physically set their location manually yet

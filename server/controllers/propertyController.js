@@ -70,6 +70,44 @@ exports.getProperty = async (req, res) => {
   }
 };
 
+exports.registerView = async (req, res) => {
+  try {
+    const propertyId = req.params.id;
+    // Extract registered account or fallback cleanly capturing organic traffic metrics securely via headers natively
+    const viewerHash = req.user ? req.user._id.toString() : (req.headers['x-forwarded-for'] || req.socket.remoteAddress || "anonymous_ip");
+
+    await Property.findByIdAndUpdate(propertyId, {
+        $addToSet: { uniqueViewers: viewerHash }
+    });
+    
+    res.status(200).json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getOwnerAnalytics = async (req, res) => {
+  try {
+     const ownerProps = await Property.find({ ownerId: req.user._id }).select('title uniqueViewers');
+     
+     // Parallel aggregate execution efficiently matching transaction maps completely natively 
+     let compiledData = [];
+     for (const prop of ownerProps) {
+         const unlockCount = await Access.countDocuments({ property: prop._id, paymentStatus: 'paid' });
+         compiledData.push({
+             _id: prop._id,
+             title: prop.title,
+             views: prop.uniqueViewers ? prop.uniqueViewers.length : 0,
+             unlocks: unlockCount
+         });
+     }
+     
+     res.status(200).json({ success: true, data: compiledData });
+  } catch (error) {
+     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const { uploadToCloudinary, deleteFromCloudinary } = require('../services/cloudinaryService');
 
 exports.createProperty = async (req, res) => {
