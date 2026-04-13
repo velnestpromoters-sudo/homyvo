@@ -145,9 +145,9 @@ export default function HomeListPage() {
       <div className="px-4 flex flex-col gap-8 mt-2">
         
         {/* 3. HERO SECTION */}
-        <div className="w-full rounded-2xl p-6 bg-gradient-to-r from-[#801786] to-[#a61c92] flex flex-col justify-center h-[120px] md:h-[150px] shadow-sm relative overflow-hidden">
+        <div className="w-full rounded-2xl p-6 bg-gradient-to-b from-[#b22394] to-[#1819a8] flex flex-col justify-center min-h-[140px] md:min-h-[160px] shadow-sm relative overflow-hidden">
           {/* Subtle fade backdrop shape */}
-          <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+          <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-white/10 to-transparent blur-md"></div>
           <h2 className="text-xl md:text-2xl font-bold text-white mb-1.5">Find your perfect stay</h2>
           <p className="text-white/90 text-sm leading-snug lg:max-w-xs">Discover student-friendly apartments and family homes</p>
         </div>
