@@ -102,7 +102,18 @@ export default function HomeListPage() {
                  </button>
                  
                  {showLogoutMenu && (
-                   <div className="absolute top-10 right-0 z-50 bg-white border border-gray-100 shadow-xl rounded-xl w-32 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                   <div className="absolute top-10 right-0 z-50 bg-white border border-gray-100 shadow-xl rounded-xl w-36 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <button 
+                         onClick={() => {
+                            router.push('/tenant/profile');
+                            setShowLogoutMenu(false);
+                         }}
+                         className="flex items-center w-full px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors gap-2"
+                      >
+                         <UserCircle className="w-4 h-4 text-slate-500" />
+                         <span>Profile</span>
+                      </button>
+                      <div className="h-px bg-slate-100 w-full" />
                       <button 
                          onClick={() => {
                             logout();
