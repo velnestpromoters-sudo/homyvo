@@ -302,3 +302,49 @@ exports.updateProperty = async (req, res) => {
       res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Toggle Property Active Status
+exports.togglePropertyStatus = async (req, res) => {
+  try {
+    const property = await Property.findOne({ _id: req.params.id, ownerId: req.user._id });
+    if (!property) return res.status(404).json({ success: false, message: "Property not found or unauthorized." });
+    
+    property.isActive = !property.isActive;
+    await property.save();
+    
+    res.json({ success: true, isActive: property.isActive });
+  } catch (error) {
+    console.error("Toggle Status Error:", error);
+    res.status(500).json({ success: false, message: "Failed to toggle status." });
+  }
+};
+
+// Validate Wishlist Array against active DB
+exports.validateWishlist = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+       return res.status(400).json({ success: false, message: "Invalid IDs array format" });
+    }
+    
+    // Aggregate strictly the active IDs natively mapped against the user's local array
+    const activeProperties = await Property.find({ _id: { $in: ids }, isActive: true }).select('_id');
+    const activeIds = activeProperties.map(p => p._id.toString());
+    
+    res.json({ success: true, activeIds });
+  } catch (error) {
+    console.error("Wishlist Validation Error:", error);
+    res.status(500).json({ success: false, message: "Failed to validate wishlist." });
+  }
+};
+
+// Get All Owner Listings (Active & Inactive)
+exports.getMyListings = async (req, res) => {
+  try {
+    const properties = await Property.find({ ownerId: req.user._id });
+    res.json({ success: true, data: properties });
+  } catch (error) {
+    console.error("Get My Listings Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch listings." });
+  }
+};

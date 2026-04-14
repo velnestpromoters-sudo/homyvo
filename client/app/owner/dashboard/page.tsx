@@ -28,13 +28,12 @@ export default function OwnerDashboard() {
     const fetchProps = async () => {
       try {
          const token = useAuthStore.getState().token;
-         const res = await fetch(`/api/properties`, {
+         const res = await fetch(`/api/properties/my-listings`, {
              headers: { 'Authorization': `Bearer ${token}` }
          });
          const data = await res.json();
-         // Filter to only this owner's if the backend doesn't automatically
          if (data.success) {
-            setProperties(data.data.filter((p: any) => p.ownerId === user?._id || p.ownerId?._id === user?._id));
+            setProperties(data.data);
          }
       } catch (err) { console.error(err); }
     };
@@ -57,6 +56,23 @@ export default function OwnerDashboard() {
   const handleLogout = () => {
       logout();
       router.push('/home');
+  };
+
+  const handleToggleStatus = async (e: React.MouseEvent, propId: string) => {
+      e.stopPropagation();
+      try {
+         const token = useAuthStore.getState().token;
+         const res = await fetch(`/api/properties/${propId}/toggle-status`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+         });
+         const data = await res.json();
+         if (data.success) {
+            setProperties((prev: any) => prev.map((p: any) => p._id === propId ? { ...p, isActive: data.isActive } : p));
+         }
+      } catch (err) {
+         console.error("Toggle error:", err);
+      }
   };
 
   return (
@@ -166,9 +182,12 @@ export default function OwnerDashboard() {
                    </button>
 
                    {/* Floating Top Right Tag */}
-                   <div className="absolute top-3 right-3 z-10 px-2.5 py-1 bg-green-500/30 backdrop-blur-md text-green-300 text-[10px] uppercase tracking-wider font-black rounded-full shadow-lg border border-green-500/40">
-                      Active
-                   </div>
+                   <button 
+                      onClick={(e) => handleToggleStatus(e, prop._id)}
+                      className={`absolute top-3 right-3 z-30 px-2.5 py-1 backdrop-blur-md text-[10px] uppercase tracking-wider font-black rounded-full shadow-lg border transition-all active:scale-95 ${prop.isActive ? 'bg-green-500/30 text-green-300 border-green-500/40 hover:bg-green-500/50' : 'bg-slate-500/30 text-slate-300 border-slate-500/40 hover:bg-slate-500/50'}`}
+                   >
+                      {prop.isActive ? 'Active' : 'Deactivated'}
+                   </button>
 
                    {/* Bottom Overlaid Text Block */}
                    <div className="relative z-10 p-4 flex flex-col pb-5">

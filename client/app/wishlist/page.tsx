@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Heart, Search } from 'lucide-react';
 import { useWishlistStore } from '@/store/wishlistStore';
@@ -8,6 +8,33 @@ import { useWishlistStore } from '@/store/wishlistStore';
 export default function WishlistPage() {
   const router = useRouter();
   const { wishlist, removeFromWishlist } = useWishlistStore();
+
+  useEffect(() => {
+    const validateWishlistItems = async () => {
+       if (wishlist.length === 0) return;
+       
+       const ids = wishlist.map(w => w._id);
+       try {
+          const res = await fetch('/api/properties/validate-wishlist', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ ids })
+          });
+          const data = await res.json();
+          if (data.success) {
+             const activeIds = data.activeIds;
+             ids.forEach(id => {
+                if (!activeIds.includes(id)) {
+                   removeFromWishlist(id);
+                }
+             });
+          }
+       } catch (err) { console.error("Wishlist sync error:", err); }
+    };
+    
+    validateWishlistItems();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="w-full min-h-screen bg-[#F9FAFB] pb-24 font-sans text-gray-900 overflow-x-hidden">
