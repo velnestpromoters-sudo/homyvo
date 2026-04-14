@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Heart, Search } from 'lucide-react';
 import { useWishlistStore } from '@/store/wishlistStore';
+import { useAuthStore } from '@/store/authStore';
 
 export default function WishlistPage() {
   const router = useRouter();
