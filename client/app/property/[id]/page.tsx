@@ -171,16 +171,35 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           )}
         </div>
 
-        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between mb-6">
-          <div>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Rent</p>
-            <p className="text-2xl font-black text-[#ec38b7]">₹{property.rent?.toLocaleString()}</p>
-          </div>
-          <div className="h-10 w-[1px] bg-slate-200"></div>
-          <div>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Deposit</p>
-            <p className="text-xl font-bold text-slate-800">₹{property.deposit?.toLocaleString()}</p>
-          </div>
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col mb-6 gap-4 relative overflow-hidden">
+           {/* Abstract Decorative Element */}
+           <div className="absolute top-0 right-0 w-32 h-32 bg-pink-50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+           
+           <div className="flex justify-between items-center relative z-10 w-full">
+              <div className="flex-1">
+                 <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Rent</p>
+                 <p className="text-2xl font-black text-[#ec38b7]">₹{property.rent?.toLocaleString()}</p>
+              </div>
+              <div className="h-10 w-[1px] bg-slate-200 mx-4"></div>
+              <div className="flex-1 text-right">
+                 <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Deposit</p>
+                 <p className="text-xl font-bold text-slate-800">₹{property.deposit?.toLocaleString()}</p>
+              </div>
+           </div>
+           
+           {/* Dynamic Amenities Injector */}
+           {property.amenities && property.amenities.length > 0 && (
+              <div className="relative z-10 pt-4 border-t border-slate-100/60 mt-1">
+                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Key Highlights & Amenities</p>
+                 <div className="flex flex-wrap gap-2">
+                    {property.amenities.map((amenity: string, idx: number) => (
+                       <span key={idx} className="bg-slate-50 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200/60 flex items-center gap-1.5 shadow-sm">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#801786]" /> {amenity}
+                       </span>
+                    ))}
+                 </div>
+              </div>
+           )}
         </div>
 
         {!isAuthenticated ? (
