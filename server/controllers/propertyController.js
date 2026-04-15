@@ -355,3 +355,69 @@ exports.getMyListings = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to fetch listings." });
   }
 };
+
+// AI Recommendation Engine
+exports.getRecommendations = async (req, res) => {
+  try {
+     const { wishlistIds = [], filter = 'best_match', lat, lng } = req.body;
+     
+     let query = { isActive: true, isVerified: true, _id: { $nin: wishlistIds } };
+     
+     // Spatial overrides
+     if (filter === 'nearest' && lat && lng) {
+        query["location.coordinates"] = {
+           $near: {
+              $geometry: { type: "Point", coordinates: [Number(lng), Number(lat)] },
+              $maxDistance: 15000 // 15km cutoff
+           }
+        };
+     }
+     if (filter === 'furnished') query.furnishing = 'full';
+     if (filter === 'checkin') query.availability = 'immediate';
+     
+     let dbQuery = Property.find(query).limit(10);
+     if (filter === 'price_low') dbQuery = dbQuery.sort({ rent: 1 });
+     else if (filter === 'price_high') dbQuery = dbQuery.sort({ rent: -1 });
+     else if (filter === 'best_match' || filter === 'amenities') {
+        dbQuery = Property.find(query).limit(50); // Broad context for heuristic mapping
+     }
+
+     let rawProperties = await dbQuery.lean();
+     
+     // Intelligence AI Heuristic Sequence
+     if (filter === 'best_match' && wishlistIds.length > 0) {
+        const savedNodes = await Property.find({ _id: { $in: wishlistIds } }).lean();
+        if (savedNodes.length > 0) {
+           const avgRent = savedNodes.reduce((acc, curr) => acc + curr.rent, 0) / savedNodes.length;
+           
+           const bhkFreq = {};
+           savedNodes.forEach(p => { if (p.bhkType) bhkFreq[p.bhkType] = (bhkFreq[p.bhkType] || 0) + 1; });
+           const dominantBhk = Object.keys(bhkFreq).reduce((a, b) => bhkFreq[a] > bhkFreq[b] ? a : b, null);
+           
+           const dTypes = {};
+           savedNodes.forEach(p => { if (p.propertyType) dTypes[p.propertyType] = (dTypes[p.propertyType] || 0) + 1; });
+           const dominantType = Object.keys(dTypes).reduce((a, b) => dTypes[a] > dTypes[b] ? a : b, null);
+
+           const popularAmenities = [...new Set(savedNodes.flatMap(p => p.amenities || []))];
+           
+           rawProperties.forEach(prop => {
+              prop.score = 0;
+              if (prop.rent >= avgRent * 0.8 && prop.rent <= avgRent * 1.2) prop.score += 15;
+              if (dominantBhk && prop.bhkType === dominantBhk) prop.score += 20;
+              if (dominantType && prop.propertyType === dominantType) prop.score += 10;
+              
+              const crossMap = (prop.amenities || []).filter(a => popularAmenities.includes(a));
+              prop.score += (crossMap.length * 3);
+           });
+           
+           rawProperties = rawProperties.sort((a,b) => b.score - a.score).slice(0, 10);
+        }
+     } else if (filter === 'amenities') {
+        rawProperties = rawProperties.sort((a, b) => (b.amenities?.length || 0) - (a.amenities?.length || 0)).slice(0, 10);
+     }
+
+     res.status(200).json({ success: true, count: rawProperties.length, data: rawProperties });
+  } catch (error) {
+     res.status(500).json({ success: false, message: error.message });
+  }
+};

@@ -1,16 +1,23 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Heart, Search } from 'lucide-react';
+import { ChevronLeft, Heart, Search, Sparkles, MapPin, DollarSign, Key, BedDouble } from 'lucide-react';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthStore } from '@/store/authStore';
+import { useLocationStore } from '@/store/locationStore';
 
 export default function WishlistPage() {
   const router = useRouter();
   const { wishlist, removeFromWishlist } = useWishlistStore();
+  const { coordinates } = useLocationStore();
 
-  const [interactions, setInteractions] = React.useState<any[]>([]);
+  const [interactions, setInteractions] = useState<any[]>([]);
+  
+  // AI Engine States
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [recLoading, setRecLoading] = useState(false);
+  const [recFilter, setRecFilter] = useState('best_match');
 
   useEffect(() => {
     const validateWishlistItems = async () => {
@@ -55,6 +62,36 @@ export default function WishlistPage() {
     validateWishlistItems();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // AI Recommendation Fetcher
+  useEffect(() => {
+     const fetchAIRecommendations = async () => {
+        setRecLoading(true);
+        try {
+           const payload = {
+              wishlistIds: wishlist.map(w => w._id),
+              filter: recFilter,
+              lat: coordinates?.lat,
+              lng: coordinates?.lng
+           };
+           const res = await fetch('/api/properties/recommend', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+           });
+           const json = await res.json();
+           if (json.success) {
+              setRecommendations(json.data);
+           }
+        } catch (e) { console.error("AI Recommendation Engine failed:", e); }
+        finally { setRecLoading(false); }
+     };
+     
+     // Only run if they actually have wishlist items, otherwise recommendations are purely local.
+     // Actually AI Engine returns global matches even with empty wishlist, so let it run!
+     fetchAIRecommendations();
+     
+  }, [recFilter, wishlist.length, coordinates]);
 
   return (
     <div className="w-full min-h-screen bg-[#F9FAFB] pb-24 font-sans text-gray-900 overflow-x-hidden">
@@ -165,6 +202,84 @@ export default function WishlistPage() {
           ))
         )}
       </div>
+
+      {/* AI Recommendation Engine Block */}
+      <div className="mt-8 pb-10">
+         <div className="px-4 mb-4">
+            <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2 mb-3">
+               <Sparkles className="w-5 h-5 text-purple-600" />
+               AI Curated For You
+            </h2>
+            
+            {/* Dynamic Heuristic Filters */}
+            <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar scroll-smooth snap-x">
+               {[
+                  { id: 'best_match', label: 'Best Match', icon: Sparkles },
+                  { id: 'price_low', label: 'Price: Low to High', icon: DollarSign },
+                  { id: 'nearest', label: 'Nearest to Me', icon: MapPin },
+                  { id: 'amenities', label: 'Most Amenities', icon: CheckCircle2 },
+                  { id: 'furnished', label: 'Fully Furnished', icon: BedDouble },
+                  { id: 'checkin', label: 'Fast Check-in', icon: Key }
+               ].map(filter => {
+                  const Icon = filter.icon;
+                  const isActive = recFilter === filter.id;
+                  return (
+                     <button 
+                        key={filter.id}
+                        onClick={() => setRecFilter(filter.id)}
+                        className={`flex items-center gap-1.5 px-4 py-2 shrink-0 rounded-xl font-bold text-xs tracking-wide transition-all border snap-start ${
+                           isActive ? 'bg-[#801786] text-white border-[#801786] shadow-md shadow-purple-500/20' 
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                     >
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                        {filter.label}
+                     </button>
+                  )
+               })}
+            </div>
+         </div>
+
+         {recLoading ? (
+            <div className="flex flex-col items-center justify-center p-10">
+               <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+               <p className="text-sm font-bold text-slate-500 animate-pulse">Running AI heuristic matching...</p>
+            </div>
+         ) : recommendations.length === 0 ? (
+            <div className="mx-4 bg-white rounded-3xl p-6 text-center shadow-sm border border-slate-100">
+               <p className="text-sm font-bold text-slate-500">No explicit recommendations found right now.</p>
+            </div>
+         ) : (
+            <div className="flex overflow-x-auto gap-4 px-4 pb-4 no-scrollbar snap-x snap-mandatory">
+               {recommendations.map(prop => (
+                  <div 
+                     key={prop._id}
+                     onClick={() => router.push(`/property/${prop._id}`)}
+                     className="bg-white rounded-3xl shadow-sm border border-slate-100/80 p-3 min-w-[280px] shrink-0 snap-center cursor-pointer active:scale-[0.98] transition-transform"
+                  >
+                     <div className="w-full h-40 rounded-2xl overflow-hidden bg-slate-100 relative mb-3">
+                        <img src={prop.images?.[0] || 'https://via.placeholder.com/300'} alt="prop" className="w-full h-full object-cover" />
+                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-black text-purple-700 shadow-sm border border-white/50">
+                           {prop.score && recFilter === 'best_match' ? `${prop.score} Match Score` : 'Recommended'}
+                        </div>
+                     </div>
+                     <h3 className="font-extrabold text-slate-800 text-base leading-tight mb-1 truncate">{prop.title}</h3>
+                     <p className="text-[11px] font-bold text-slate-400 mb-3 truncate flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {prop.location?.area || prop.location?.city}
+                     </p>
+                     <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <p className="font-black text-[#801786]">₹{prop.rent?.toLocaleString()}</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500">{prop.bhkType}</p>
+                     </div>
+                  </div>
+               ))}
+            </div>
+         )}
+      </div>
+      
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
   );
 }

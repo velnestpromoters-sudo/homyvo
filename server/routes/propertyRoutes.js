@@ -13,6 +13,7 @@ router.get('/', propertyController.getAllProperties); // general list
 router.post('/:id/view', checkTenantAuth, propertyController.registerView); // Registers global traffic gracefully bypassing explicit blocks for guests
 
 router.post('/validate-wishlist', propertyController.validateWishlist);
+router.post('/recommend', propertyController.getRecommendations);
 router.put('/:id/toggle-status', protect, propertyController.togglePropertyStatus);
 
 router.post(
