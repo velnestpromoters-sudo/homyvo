@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Heart, Search, Sparkles, MapPin, DollarSign, Key, BedDouble, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Heart, Search, Sparkles, MapPin, DollarSign, Key, BedDouble, CheckCircle2, TrendingUp, X } from 'lucide-react';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
@@ -18,6 +18,7 @@ export default function WishlistPage() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [recLoading, setRecLoading] = useState(false);
   const [recFilter, setRecFilter] = useState('best_match');
+  const [selectedInsight, setSelectedInsight] = useState<any | null>(null);
 
   const [savedSortMode, setSavedSortMode] = useState<string>('none');
   const [detailedWishlist, setDetailedWishlist] = useState<any[]>([]);
@@ -339,9 +340,18 @@ export default function WishlistPage() {
                   >
                      <div className="w-full h-40 rounded-2xl overflow-hidden bg-slate-100 relative mb-3">
                         <img src={prop.images?.[0] || 'https://via.placeholder.com/300'} alt="prop" className="w-full h-full object-cover" />
-                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-black text-purple-700 shadow-sm border border-white/50">
-                           {prop.score && recFilter === 'best_match' ? `${prop.score} Match Score` : 'Recommended'}
-                        </div>
+                        {prop.score && recFilter === 'best_match' ? (
+                           <button 
+                              onClick={(e) => { e.stopPropagation(); if(prop.scoreBreakdown) setSelectedInsight(prop); }}
+                              className="absolute top-2 right-2 bg-white/95 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-black text-purple-700 shadow-sm border border-purple-100 uppercase tracking-wider flex items-center gap-1 hover:scale-105 active:scale-95 transition-transform"
+                           >
+                              <TrendingUp className="w-3 h-3 text-purple-500" /> {prop.score} Match Score
+                           </button>
+                        ) : (
+                           <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-black text-purple-700 shadow-sm border border-white/50">
+                              Recommended
+                           </div>
+                        )}
                      </div>
                      <h3 className="font-extrabold text-slate-800 text-base leading-tight mb-1 truncate">{prop.title}</h3>
                      <p className="text-[11px] font-bold text-slate-400 mb-3 truncate flex items-center gap-1">
@@ -357,6 +367,92 @@ export default function WishlistPage() {
          )}
       </div>
       
+      {/* Deep AI Insight Modal */}
+      {selectedInsight && selectedInsight.scoreBreakdown && (
+         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity">
+            <div 
+               className="bg-white w-full sm:max-w-md rounded-t-[30px] sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 relative z-50"
+            >
+               <div className="flex justify-between items-start mb-6">
+                  <div>
+                     <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-600" /> AI Insights Matrix
+                     </h3>
+                     <p className="text-xs font-bold text-slate-500 mt-1 line-clamp-1">{selectedInsight.title}</p>
+                  </div>
+                  <button 
+                     onClick={() => setSelectedInsight(null)}
+                     className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 active:scale-95 transition-colors"
+                  >
+                     <X className="w-4 h-4" />
+                  </button>
+               </div>
+
+               <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-100">
+                  <div className="flex flex-col">
+                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Aggregate Rating</span>
+                     <span className="text-4xl font-black text-purple-600 tracking-tighter">{selectedInsight.score}<span className="text-lg text-slate-300 font-bold ml-1">pts</span></span>
+                  </div>
+                  <div className="w-14 h-14 rounded-full bg-purple-50 border-4 border-purple-100 flex items-center justify-center">
+                     <TrendingUp className="w-6 h-6 text-purple-500" />
+                  </div>
+               </div>
+
+               <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Geometric Allocation</h4>
+               
+               <div className="space-y-5 mb-4">
+                  {/* Budget */}
+                  <div>
+                     <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-600 flex items-center gap-1"><DollarSign className="w-3.5 h-3.5 text-slate-400"/> Pricing Geometry</span>
+                        <span className="text-slate-900">{selectedInsight.scoreBreakdown.budget} <span className="text-slate-400">/ 15</span></span>
+                     </div>
+                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${(selectedInsight.scoreBreakdown.budget / 15) * 100}%` }}></div>
+                     </div>
+                  </div>
+
+                  {/* Layout */}
+                  <div>
+                     <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-600 flex items-center gap-1"><BedDouble className="w-3.5 h-3.5 text-slate-400"/> Layout Dominance</span>
+                        <span className="text-slate-900">{selectedInsight.scoreBreakdown.layout} <span className="text-slate-400">/ 20</span></span>
+                     </div>
+                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${(selectedInsight.scoreBreakdown.layout / 20) * 100}%` }}></div>
+                     </div>
+                  </div>
+
+                  {/* Architecture */}
+                  <div>
+                     <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-600 flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-slate-400"/> Asset Type Match</span>
+                        <span className="text-slate-900">{selectedInsight.scoreBreakdown.architecture} <span className="text-slate-400">/ 10</span></span>
+                     </div>
+                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${(selectedInsight.scoreBreakdown.architecture / 10) * 100}%` }}></div>
+                     </div>
+                  </div>
+
+                  {/* Amenities */}
+                  <div>
+                     <div className="flex justify-between text-xs font-bold mb-1.5">
+                        <span className="text-slate-600 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5 text-slate-400"/> Common Cross-Attributes</span>
+                        <span className="text-slate-900">+{selectedInsight.scoreBreakdown.amenities} <span className="text-slate-400">pts</span></span>
+                     </div>
+                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-purple-500 rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min((selectedInsight.scoreBreakdown.amenities / 15) * 100, 100)}%` }}></div>
+                     </div>
+                  </div>
+               </div>
+               
+               <button onClick={() => setSelectedInsight(null)} className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-black transition-colors mt-6">
+                  Close Visualization
+               </button>
+            </div>
+         </div>
+      )}
+
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>

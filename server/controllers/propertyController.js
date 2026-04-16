@@ -431,12 +431,25 @@ exports.getRecommendations = async (req, res) => {
            
            rawProperties.forEach(prop => {
               prop.score = 0;
-              if (prop.rent >= avgRent * 0.8 && prop.rent <= avgRent * 1.2) prop.score += 15;
-              if (dominantBhk && prop.bhkType === dominantBhk) prop.score += 20;
-              if (dominantType && prop.propertyType === dominantType) prop.score += 10;
+              prop.scoreBreakdown = { budget: 0, layout: 0, architecture: 0, amenities: 0, maxLayout: 20, maxBudget: 15, maxArch: 10 };
+              
+              if (prop.rent >= avgRent * 0.8 && prop.rent <= avgRent * 1.2) {
+                  prop.score += 15;
+                  prop.scoreBreakdown.budget = 15;
+              }
+              if (dominantBhk && prop.bhkType === dominantBhk) {
+                  prop.score += 20;
+                  prop.scoreBreakdown.layout = 20;
+              }
+              if (dominantType && prop.propertyType === dominantType) {
+                  prop.score += 10;
+                  prop.scoreBreakdown.architecture = 10;
+              }
               
               const crossMap = (prop.amenities || []).filter(a => popularAmenities.includes(a));
-              prop.score += (crossMap.length * 3);
+              const amenityScore = crossMap.length * 3;
+              prop.score += amenityScore;
+              prop.scoreBreakdown.amenities = amenityScore;
            });
            
            rawProperties = rawProperties.sort((a,b) => b.score - a.score).slice(0, 10);
