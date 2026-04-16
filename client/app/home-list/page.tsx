@@ -4,11 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BottomBar from '@/components/common/BottomBar';
-import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle, LogOut } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useAuthModalStore } from '@/store/authModalStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 import api from '@/lib/api';
 
 export default function HomeListPage() {
@@ -268,12 +269,35 @@ export default function HomeListPage() {
 
 // Reusable card for property horizontal scrolls
 function HorizontalScrollCards({ items, router }: { items: any[], router: any }) {
+  const { wishlist, removeFromWishlist, addToWishlist } = useWishlistStore();
+
   return (
     <>
       {items.map((item, i) => (
         <div key={i} onClick={() => router.push(`/property/${item._id}`)} className="w-[240px] shrink-0 snap-start group cursor-pointer hover:opacity-90 active:scale-95 transition-all">
-          <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-gray-100">
+          <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-gray-100 relative">
             <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            
+            <button 
+               onClick={(e) => {
+                  e.stopPropagation();
+                  const isSaved = wishlist.some(w => w._id === item._id);
+                  if (isSaved) {
+                     removeFromWishlist(item._id);
+                  } else {
+                     addToWishlist({
+                         _id: item._id,
+                         title: item.title,
+                         price: parseInt(item.price.replace(/\D/g, '')),
+                         typeStr: item.type,
+                         img: item.img
+                     });
+                  }
+               }}
+               className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-gray-100 flex items-center justify-center hover:bg-white active:scale-90 transition-transform z-10"
+            >
+               <Heart className={`w-4 h-4 ${wishlist.some(w => w._id === item._id) ? 'fill-[#ec38b7] text-[#ec38b7]' : 'text-slate-400'}`} />
+            </button>
           </div>
           <div className="mb-0.5">
             <h3 className="font-semibold text-[#111827] text-sm leading-tight">{item.title}</h3>
