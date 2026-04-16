@@ -134,10 +134,38 @@ exports.createProperty = async (req, res) => {
             
             // Failsafe: If no frontend latitude, extract securely from Map link natively
             if ((!parsedLocation.lat || !parsedLocation.lng) && parsedLocation.googleMapLink) {
-                 const match = parsedLocation.googleMapLink.match(/q=([\d.-]+),([\d.-]+)/);
-                 if (match) {
-                     parsedLocation.lat = Number(match[1]);
-                     parsedLocation.lng = Number(match[2]);
+                 let finalUrl = parsedLocation.googleMapLink;
+                 
+                 // Intercept short links natively bypassing structural failures
+                 if (finalUrl.includes('goo.gl')) {
+                     try {
+                        const resp = await fetch(finalUrl, { method: 'GET', redirect: 'follow' });
+                        if (resp.url) finalUrl = resp.url;
+                     } catch(e) { console.error("URL redirect fetch failed:", e); }
+                 }
+
+                 const regStandard = finalUrl.match(/q=([\d.-]+),([\d.-]+)/);
+                 const searchMatch = finalUrl.match(/search\/(-?\d+\.\d+)(?:,|%2C)[+ ]*(-?\d+\.\d+)/);
+                 const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                 const placeMatch = finalUrl.match(/place\/.*?\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+
+                 if (regStandard) {
+                     parsedLocation.lat = Number(regStandard[1]);
+                     parsedLocation.lng = Number(regStandard[2]);
+                 } else if (searchMatch) {
+                     parsedLocation.lat = Number(searchMatch[1]);
+                     parsedLocation.lng = Number(searchMatch[2]);
+                 } else if (placeMatch) {
+                     parsedLocation.lat = Number(placeMatch[1]);
+                     parsedLocation.lng = Number(placeMatch[2]);
+                 } else if (atMatch) {
+                     parsedLocation.lat = Number(atMatch[1]);
+                     parsedLocation.lng = Number(atMatch[2]);
+                 }
+                 
+                 // Standardize the link format to the exact explicit coordinate tracking mapping
+                 if (parsedLocation.lat && parsedLocation.lng) {
+                     parsedLocation.googleMapLink = `https://maps.google.com/?q=${parsedLocation.lat},${parsedLocation.lng}`;
                  }
             }
 
