@@ -184,9 +184,10 @@ exports.createProperty = async (req, res) => {
                  if (parsedLocation.lat && parsedLocation.lng) {
                      parsedLocation.googleMapLink = `https://maps.google.com/?q=${parsedLocation.lat},${parsedLocation.lng}`;
                  }
-             }
+             } // closes secondary evaluation
+         } // closes main map link extraction block
 
-            // Native Map to GeoJSON Schema
+        // Native Map to GeoJSON Schema
             if (parsedLocation.lat && parsedLocation.lng) {
                 parsedLocation.coordinates = {
                    type: "Point",
