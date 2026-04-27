@@ -12,23 +12,7 @@ connectDB();
 
 app.use('/api/payment', paymentRoutes);
 
-// 3-Minute Render Free Tier Anti-Sleep Keep-Alive Ping (Dual Mode)
-const https = require('https');
-
-// Keep references to URLs to ping
-const PING_URLS = [
-  'https://bnest-backend-oz7c.onrender.com', // Backend
-  'https://homyvo.onrender.com',             // Frontend
-];
-
-setInterval(() => {
-  PING_URLS.forEach(url => {
-    https.get(url).on('error', (err) => {
-      console.log(`Ping error for ${url}:`, err.message);
-    });
-  });
-  console.log(`Fired anti-sleep heartbeat ping to ${PING_URLS.length} services`);
-}, 3 * 60 * 1000);
+// Health scripts aggressively decoupled from core architecture
 
 const server = http.createServer(app);
 
