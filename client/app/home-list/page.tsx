@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import BottomBar from '@/components/common/BottomBar';
 import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle, LogOut, Heart } from 'lucide-react';
@@ -78,7 +79,7 @@ export default function HomeListPage() {
              onClick={() => router.push('/about')}
              className="flex items-center gap-0 cursor-pointer active:scale-95 transition-transform"
           >
-            <img src="/logo.svg" alt="Homyvo" className="w-[84px] h-[84px] shrink-0 object-contain drop-shadow-md" />
+            <Image src="/logo.svg" alt="Homyvo" width={84} height={84} className="shrink-0 object-contain drop-shadow-md" />
             <h1 className="text-[24px] font-black text-[#111827] tracking-tighter -ml-4">Homyvo</h1>
           </div>
 
@@ -256,6 +257,11 @@ export default function HomeListPage() {
            </div>
         </section>
 
+        {/* SEO BRAND SIGNAL */}
+        <div className="py-6 flex justify-center text-center">
+            <span className="text-xs font-medium text-gray-400">Homyvo – Trusted Rental Platform in Tamil Nadu</span>
+        </div>
+
       </div>
 
       {/* BOTTOM NAVIGATION */}
@@ -279,7 +285,7 @@ function HorizontalScrollCards({ items, router }: { items: any[], router: any })
       {items.map((item, i) => (
         <div key={i} onClick={() => router.push(`/property/${item._id}`)} className="w-[240px] shrink-0 snap-start group cursor-pointer hover:opacity-90 active:scale-95 transition-all">
           <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-gray-100 relative">
-            <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <Image src={item.img} alt={item.title} fill sizes="240px" className="object-cover group-hover:scale-105 transition-transform duration-500" />
             
             <button 
                onClick={(e) => {
