@@ -28,6 +28,16 @@ const slides = [
     title: "Zero Brokerage platform",
     subtitle: "Direct access between owners and verified tenants",
     bgClass: "from-emerald-500 to-teal-700"
+  },
+  {
+    title: "Verified Hostels & PGs",
+    subtitle: "Find safe and affordable accommodations for students",
+    bgClass: "from-orange-500 to-rose-600"
+  },
+  {
+    title: "Premium Family Homes",
+    subtitle: "Spacious apartments in prime locations across Tamil Nadu",
+    bgClass: "from-blue-600 to-purple-700"
   }
 ];
 
@@ -198,16 +208,6 @@ export default function HomeListPage() {
                <p className="text-white/90 text-sm leading-snug lg:max-w-xs relative z-20">{slide.subtitle}</p>
              </div>
            ))}
-           {/* Navigation Dots */}
-           <div className="absolute bottom-3 left-0 w-full flex justify-center gap-1.5 z-30">
-              {slides.map((_, index) => (
-                 <button 
-                   key={index} 
-                   onClick={() => setCurrentSlide(index)}
-                   className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${currentSlide === index ? 'bg-white w-4' : 'bg-white/50'}`}
-                 />
-              ))}
-           </div>
         </div>
 
         {/* 4. CATEGORY CARDS */}
