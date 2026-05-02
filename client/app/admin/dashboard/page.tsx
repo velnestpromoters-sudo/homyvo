@@ -149,10 +149,8 @@ export default function AdminDashboard() {
       <nav className="border-b border-white/5 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center p-1">
-                 <Image src="/logo.svg" alt="Homyvo" width={28} height={28} className="object-contain drop-shadow-lg" />
-              </div>
+            <div className="flex items-center gap-2">
+              <Image src="/logo.svg" alt="Homyvo" width={48} height={48} className="object-contain drop-shadow-lg" />
               <span className="text-white font-bold text-lg tracking-tight">Homyvo Admin</span>
             </div>
             <button 
