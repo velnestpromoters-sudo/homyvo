@@ -193,9 +193,6 @@ export default function AdminDashboard() {
               <div className="text-4xl font-bold text-white tracking-tight">
                  {card.value.toLocaleString()}
               </div>
-              {card.subtitle && (
-                 <div className="text-xs text-slate-500 mt-2 font-medium">{card.subtitle}</div>
-              )}
             </motion.div>
           ))}
         </div>
