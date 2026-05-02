@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
+import Image from 'next/image';
 import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2 } from 'lucide-react';
 
 interface AdminUser {
@@ -149,8 +150,8 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center">
-                 <ShieldCheck className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center p-1">
+                 <Image src="/logo.svg" alt="Homyvo" width={28} height={28} className="object-contain drop-shadow-lg" />
               </div>
               <span className="text-white font-bold text-lg tracking-tight">Homyvo Admin</span>
             </div>
