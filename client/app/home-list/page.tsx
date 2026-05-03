@@ -180,46 +180,38 @@ export default function HomeListPage() {
           </div>
         </div>
 
-        {/* 3. HERO SECTION (Unified Housing.com Style) */}
-        <div className="w-full rounded-[2rem] shadow-2xl relative overflow-hidden group min-h-[340px] flex flex-col justify-between bg-[url('/hero-bg.png')] bg-cover bg-center">
-           {/* Dark overlay for text readability */}
-           <div className="absolute inset-0 bg-[#801786]/20 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-0"></div>
-           
-           {/* Fading Slideshow Text */}
-           <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center text-center px-4 pt-16 pb-8 min-h-[160px]">
-             {slides.map((slide, index) => (
-               <div 
-                 key={index}
-                 className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center transition-all duration-1000 ease-in-out ${currentSlide === index ? 'opacity-100 translate-y-0 z-10' : 'opacity-0 translate-y-4 z-0 pointer-events-none'}`}
-               >
-                 <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-xl tracking-tight">{slide.title}</h2>
-                 <p className="text-white/90 text-sm md:text-lg max-w-xl drop-shadow-md font-medium">{slide.subtitle}</p>
-               </div>
-             ))}
-           </div>
+        <div className="mt-5">
+          <div onClick={() => router.push('/search')} className="flex items-center bg-white border border-[#E5E7EB] rounded-full h-[56px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]">
+            <Search className="w-5 h-5 text-[#111827] shrink-0" />
+            <div className="flex-1 px-3 flex flex-col justify-center">
+              <span className="text-sm font-semibold text-[#111827] leading-tight">Search on Homyvo</span>
+              <span className="text-xs text-[#6B7280] leading-tight mt-0.5">Anywhere • Any week</span>
+            </div>
+            <div className="w-9 h-9 rounded-full border border-[#E5E7EB] flex items-center justify-center shrink-0">
+              <SlidersHorizontal className="w-4 h-4 text-[#111827]" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-           {/* Search Bar Embedded in Hero */}
-           <div className="relative z-20 px-4 md:px-8 pb-10 w-full max-w-4xl mx-auto">
-              <div onClick={() => router.push('/search')} className="flex items-center bg-white rounded-full h-[64px] md:h-[72px] px-3 md:px-5 shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:shadow-[0_8px_40px_rgb(0,0,0,0.3)] hover:-translate-y-0.5 transition-all cursor-pointer active:scale-[0.98]">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-slate-100 rounded-full flex items-center justify-center shrink-0 hidden sm:flex">
-                  <Search className="w-5 h-5 text-slate-500" />
-                </div>
-                <Search className="w-6 h-6 text-slate-500 shrink-0 sm:hidden ml-2" />
-                
-                <div className="flex-1 px-4 flex flex-col justify-center">
-                  <span className="text-base md:text-lg font-bold text-[#111827] leading-tight truncate">Search for locality, landmark, or builder</span>
-                  <span className="text-xs md:text-sm text-[#6B7280] leading-tight mt-0.5">Explore 8K+ listings across Tamil Nadu</span>
-                </div>
-                
-                <div className="h-[48px] md:h-[56px] px-6 bg-[#801786] hover:bg-[#6a1370] rounded-full flex items-center justify-center shrink-0 transition-colors shadow-md ml-2">
-                  <span className="text-white font-bold text-sm md:text-base">Search</span>
-                </div>
-              </div>
-           </div>
+      <div className="px-4 flex flex-col gap-8 mt-2">
+        
+        {/* 3. HERO SECTION (Fading Slideshow) */}
+        <div className="w-full rounded-2xl min-h-[140px] md:min-h-[160px] shadow-sm relative overflow-hidden group">
+           {slides.map((slide, index) => (
+             <div 
+               key={index}
+               className={`absolute inset-0 w-full h-full p-6 flex flex-col justify-center bg-gradient-to-b ${slide.bgClass} transition-opacity duration-1000 ease-in-out ${currentSlide === index ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+             >
+               <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-white/10 to-transparent blur-md"></div>
+               <h2 className="text-xl md:text-2xl font-bold text-white mb-1.5 relative z-20">{slide.title}</h2>
+               <p className="text-white/90 text-sm leading-snug lg:max-w-xs relative z-20">{slide.subtitle}</p>
+             </div>
+           ))}
         </div>
 
         {/* 4. CATEGORY CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 relative z-20 -mt-8 px-4 md:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 px-2 md:px-4">
           <div className="rounded-2xl bg-white p-4 flex items-center gap-4 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group">
             <div className="bg-purple-50 p-3 rounded-xl group-hover:scale-110 transition-transform duration-300 shrink-0">
               <GraduationCap className="w-6 h-6 text-[#801786]" />
