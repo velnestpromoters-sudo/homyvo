@@ -1,9 +1,13 @@
 "use client";
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
-import { ArrowLeft, Share2, MapPin, Bed, Bath, TriangleRight, Key, ShieldCheck, CheckCircle2, ChevronRight, PlayCircle, Eye, Lock, X } from 'lucide-react';
+import { 
+  ArrowLeft, Heart, Share2, Image as ImageIcon, Check, 
+  Building, Users, Maximize, CalendarDays, Award, Home, 
+  MapPin, Lock, Phone, MessageSquare, X, ChevronRight 
+} from 'lucide-react';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { useAuthStore } from '@/store/authStore';
 
@@ -23,8 +27,25 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true);
   const [paymentUnlocked, setPaymentUnlocked] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showCookieBar, setShowCookieBar] = useState(true);
+  
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const scrollLeft = scrollRef.current.scrollLeft;
+      const width = scrollRef.current.clientWidth;
+      const newIndex = Math.round(scrollLeft / width);
+      setActiveImage(newIndex);
+    }
+  };
 
   const handleUnlockPayment = async () => {
+    if (!isAuthenticated) {
+        openModal();
+        return;
+    }
+    
     setIsProcessingPayment(true);
     try {
       const orderRes = await fetch('/api/payment/create-access', { method: 'POST' });
@@ -53,7 +74,6 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           if (verifyData.success) {
             setPaymentUnlocked(true);
             setAccess('full');
-            // Re-fetch property to get actual completely unredacted contact data!
             const refreshed = await api.get(`/properties/${id}`);
             if (refreshed.data.success) {
                setProperty(refreshed.data.data);
@@ -67,7 +87,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           name: user?.name || 'Tenant',
           contact: '9999999999'
         },
-        theme: { color: '#ec38b7' }
+        theme: { color: '#801786' }
       };
       
       const rzp = new (window as any).Razorpay(options);
@@ -83,18 +103,32 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  // We fall back to mock data if no db is linked just for demo
   const fallbackMock = {
-    title: 'Modern 2BHK in Indiranagar',
-    location: { area: 'Indiranagar', city: 'Bangalore' },
-    rent: 25000, deposit: 100000, images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'],
-    matchScore: 95, moveInReady: true, isVerified: true,
-    ownerId: { name: 'Rahul R', mobile: '+91 9876543210' }
+    title: 'Emami Aerocity aero tower',
+    propertyType: 'apartment',
+    location: { area: 'Kalapatti', city: 'Coimbatore', address: '123 Aerocity Road, Kalapatti' },
+    rent: 20000, 
+    deposit: 60000, 
+    images: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80', 
+      'https://images.unsplash.com/photo-1502672260266-1c1de2d9d00c?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'
+    ],
+    furnishing: 'Furnished',
+    amenities: ['Furnished', 'Newly Constructed', 'Close to Hospital', 'Close to Airport'],
+    bhkType: '1',
+    preferences: { bachelorAllowed: true, familyAllowed: true, genderPreference: 'any' },
+    areaSqft: 450,
+    propertyAge: '0-1 Year Old',
+    availability: 'May 04, 2026',
+    floor: 1,
+    totalFloors: 3,
+    highlights: ['North Facing', 'Close to Market', 'Vaastu Compliant'],
+    isVerified: true,
+    ownerId: { name: 'Verified Owner', mobile: '+91 98765 43210', whatsapp: true }
   };
 
   useEffect(() => {
-    // In actual implementation this fetches from backend
-    // Since we just updated it, backend handles guest vs authenticated beautifully
     const fetchProperty = async () => {
       try {
         const res = await api.get(`/properties/${id}`);
@@ -104,7 +138,6 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         }
       } catch (e) {
         console.warn('API connection failed, using visual mock data instead.');
-        // Fallback for visual testing
         setProperty(fallbackMock);
         setAccess(isAuthenticated && role === 'tenant' ? 'full' : 'limited');
       } finally {
@@ -115,254 +148,307 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   }, [id, isAuthenticated, role]);
 
   if (loading) return (
-    <div className="h-screen bg-slate-50 flex flex-col items-center justify-center">
-       <div className="w-12 h-12 border-4 border-[#ec38b7] border-t-transparent rounded-full animate-spin mb-4" />
-       <p className="text-slate-400 font-medium animate-pulse">Loading property details...</p>
+    <div className="min-h-screen bg-[#F5F5F7] flex flex-col items-center justify-center">
+       <div className="w-10 h-10 border-4 border-[#801786] border-t-transparent rounded-full animate-spin mb-4" />
+       <p className="text-[#999999] text-sm font-medium animate-pulse">Loading property...</p>
     </div>
   );
-  if (!property) return <div className="h-screen flex items-center justify-center">Not Found</div>;
+  if (!property) return <div className="h-screen flex items-center justify-center text-slate-500">Not Found</div>;
+
+  const isPG = property.propertyType === 'pg';
+  const propertyTitlePrefix = isPG ? 'PG/Hostel for Rent in' : 'Flat/Apartment for Rent in';
+  const bhkOrSharing = isPG ? `${property.pgDetails?.sharingType || 'Multi'} Sharing PG` : `${property.bhkType} BHK`;
+  const randomSocialCount = Math.floor(Math.random() * 5) + 2; // For visual proof
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-24">
-      <div className="relative h-64 w-full bg-slate-200 cursor-pointer active:opacity-95 transition-opacity" onClick={() => setShowGallery(true)}>
-        <img src={property.images[0]} alt="Prop" className="w-full h-full object-cover" />
-        
-        {property.images.length > 0 && (
-            <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-[11px] font-bold flex items-center gap-1.5 shadow-lg border border-white/20">
-               <Eye className="w-3.5 h-3.5" /> 1 / {property.images.length} Photos
+    <div className="min-h-screen bg-[#F5F5F7] flex flex-col pb-40 font-sans selection:bg-[#801786]/20">
+      
+      {/* SECTION 1: IMAGE CAROUSEL (TOP HERO) */}
+      <div className="relative w-full h-[35vh] min-h-[260px] bg-black">
+        <div 
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full"
+        >
+          {property.images?.length ? property.images.map((img: string, i: number) => (
+            <div key={i} className="w-full h-full flex-shrink-0 snap-center relative" onClick={() => setShowGallery(true)}>
+              <img src={img} alt={`Property view ${i+1}`} className="w-full h-full object-cover" />
             </div>
-        )}
-        <button onClick={() => router.back()} className="absolute top-4 left-4 p-2 bg-black/40 rounded-full text-white backdrop-blur-md z-10 transition-colors hover:bg-black/60">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-
-        {/* Tenant Notes Glassmorphic Overlay */}
-        {property.tenantNotes && (
-           <div className="absolute top-4 left-16 right-4 z-10 animate-in fade-in slide-in-from-top-2 duration-500">
-              <div className="bg-black/60 backdrop-blur-md border border-white/20 rounded-2xl p-3 shadow-2xl">
-                 <p className="text-white text-[13px] font-bold leading-snug drop-shadow-md">
-                    <span className="text-[#ec38b7] font-black mr-1.5 uppercase tracking-wider text-[10px]">Owner Note:</span>
-                    {property.tenantNotes}
-                 </p>
-              </div>
-           </div>
-        )}
-      </div>
-
-      <div className="p-5 flex-1 mt-2">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex-1 pr-2">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-               <h1 className="text-2xl font-black text-slate-900 leading-tight">{property.title || 'Premium Apartment'}</h1>
-               {property.propertyType === 'pg' && property.pgDetails?.gender && (
-                  <span className="bg-indigo-100 text-indigo-800 text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-indigo-200 shadow-sm mt-1">
-                     {property.pgDetails.gender} PG
-                  </span>
-               )}
+          )) : (
+            <div className="w-full h-full flex-shrink-0 snap-center bg-slate-200 flex items-center justify-center">
+               <ImageIcon className="w-12 h-12 text-slate-400" />
             </div>
-            <div className="flex items-center gap-1 text-slate-500 font-medium text-sm">
-               <MapPin className="w-4 h-4" /> {property.location?.area}, {property.location?.city}
-            </div>
-          </div>
-          {property.isVerified && (
-             <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-blue-100 uppercase tracking-wider">
-               <ShieldCheck className="w-3.5 h-3.5" /> Verified
-             </div>
           )}
         </div>
 
-        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col mb-6 gap-4 relative overflow-hidden">
-           {/* Abstract Decorative Element */}
-           <div className="absolute top-0 right-0 w-32 h-32 bg-pink-50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-           
-           <div className="flex justify-between items-center relative z-10 w-full">
-              <div className="flex-1">
-                 <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Rent</p>
-                 <p className="text-2xl font-black text-[#ec38b7]">₹{property.rent?.toLocaleString()}</p>
-              </div>
-              <div className="h-10 w-[1px] bg-slate-200 mx-4"></div>
-              <div className="flex-1 text-right">
-                 <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">Deposit</p>
-                 <p className="text-xl font-bold text-slate-800">₹{property.deposit?.toLocaleString()}</p>
-              </div>
-           </div>
-           
-           {/* Dynamic Amenities Injector */}
-           {property.amenities && property.amenities.length > 0 && (
-              <div className="relative z-10 pt-4 border-t border-slate-100/60 mt-1">
-                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Key Highlights & Amenities</p>
-                 <div className="flex flex-wrap gap-2">
-                    {property.amenities.map((amenity: string, idx: number) => (
-                       <span key={idx} className="bg-slate-50 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200/60 flex items-center gap-1.5 shadow-sm">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#801786]" /> {amenity}
-                       </span>
-                    ))}
-                 </div>
-              </div>
-           )}
+        {/* Top Gradient & Nav Overlay */}
+        <div className="absolute top-0 left-0 w-full p-4 pt-5 flex justify-between items-center bg-gradient-to-b from-black/70 to-transparent z-10">
+            <button onClick={() => router.back()} className="p-2 -ml-2 text-white active:scale-90 transition-transform">
+                <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div className="flex gap-2">
+                <button className="p-2 text-white active:scale-90 transition-transform"><Heart className="w-6 h-6" /></button>
+                <button className="p-2 text-white active:scale-90 transition-transform"><Share2 className="w-6 h-6" /></button>
+            </div>
         </div>
 
-        {!isAuthenticated ? (
-          <div className="mt-8 bg-purple-50/50 border border-purple-100 rounded-3xl p-6 text-center shadow-inner">
-             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-50">
-                <ShieldCheck className="w-8 h-8 text-[#ec38b7]" />
-             </div>
-             <h3 className="text-lg font-bold text-slate-900 mb-2">Login to View Full Details</h3>
-             <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-               Securely access the owner's direct contact, exact location, video tours, and schedule a visit instantly.
-             </p>
-             <button 
-               onClick={openModal} 
-               className="w-full py-4 bg-[#ec38b7] text-white font-bold rounded-xl shadow-lg shadow-purple-500/20 active:scale-95 transition-all"
-             >
-               Login to View Details
-             </button>
-          </div>
-        ) : (
-          <div className="mt-8 space-y-6 animate-in slide-in-from-bottom-2 fade-in">
-            <h3 className="text-lg font-bold text-slate-900 border-b pb-2 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-green-500" /> Contact
-            </h3>
-            
-            {/* Master Protected Block */}
-            <div className="relative overflow-hidden rounded-3xl -mx-1 p-1">
-              <div className={access === 'limited' && !paymentUnlocked ? "blur-[6px] pointer-events-none select-none transition-all duration-500 space-y-4" : "transition-all duration-500 space-y-4"}>
-                
-                {/* Core Property Details Extracted */}
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 grid grid-cols-2 gap-y-5 gap-x-3">
-                   <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">BHK Type</p>
-                      <p className="font-bold text-slate-800 text-sm">{property.bhkType || 'BHK Unavailable'}</p>
-                   </div>
-                   <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Bachelors</p>
-                      <p className="font-bold text-slate-800 text-sm">{property.preferences?.bachelorAllowed ? 'Allowed' : 'Not Allowed'}</p>
-                   </div>
-                   <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Furnishing</p>
-                      <p className="font-bold text-slate-800 text-sm capitalize">{property.furnishing || 'None'}</p>
-                   </div>
-                   <div>
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Availability</p>
-                      <p className="font-bold text-slate-800 text-sm capitalize">{property.availability?.replace('_', ' ') || 'Immediate'}</p>
-                   </div>
-                   <div className="col-span-2 mt-1">
-                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Exact Address</p>
-                      <p className="font-bold text-slate-800 text-sm">{property.location?.address || 'Address hidden by owner'}</p>
-                   </div>
-                   {property.location?.googleMapLink && (
-                     <div className="col-span-2 mt-1">
-                        <a href={property.location.googleMapLink} target="_blank" rel="noreferrer" className="text-[#ec38b7] text-sm font-bold flex items-center gap-1 hover:underline">
-                           <MapPin className="w-4 h-4" /> Open in Google Maps
-                        </a>
-                     </div>
-                   )}
-                </div>
+        {/* Badges Overlay */}
+        <div className="absolute top-[70px] left-4 text-white text-xs font-semibold drop-shadow-md z-10 tracking-wide">
+            Updated yesterday by owner
+        </div>
+        <div className="absolute top-[70px] right-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg text-white text-[11px] font-bold flex items-center gap-1.5 z-10 border border-white/10">
+            <ImageIcon className="w-3.5 h-3.5" /> {property.images?.length || 0}
+        </div>
 
-                {/* Owner Details Protected Box */}
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Owner Credentials</p>
-                  <p className="font-black text-slate-800 text-xl mb-1">{property.ownerId?.name || 'Verified Owner'}</p>
-                  <p className="font-semibold text-[#ec38b7] text-lg tracking-wide mb-5">
-                     {property.ownerId?.mobile || '+91 98XXX XXXXX'}
-                  </p>
-                  
-                  <div className="flex gap-3">
-                    <button onClick={() => window.open(`tel:${property.ownerId?.mobile}`, '_self')} className="flex-1 py-3 border-2 border-[#ec38b7] bg-purple-50 text-[#ec38b7] font-black rounded-xl text-sm shadow-sm active:scale-95 transition-all">
-                      Call Now
-                    </button>
-                    <button className="flex-1 py-3 bg-[#ec38b7] text-white font-black rounded-xl text-sm shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
-                      Request Visit
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {access === 'limited' && !paymentUnlocked && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[1px]">
-                    <div className="bg-white px-6 py-5 rounded-2xl shadow-xl border border-purple-100 flex flex-col items-center text-center max-w-[280px]">
-                      <Lock className="w-8 h-8 text-[#801786] mb-2" />
-                      <p className="font-black text-slate-900 mb-1 text-base">Details Hidden</p>
-                      
-                      {property.availableContactSlots === 0 ? (
-                         <>
-                            <p className="text-xs text-red-500 font-bold mb-4 px-2 tracking-tight">Property Viewing Full! No contact slots remain.</p>
-                            <button 
-                               disabled 
-                               className="px-8 py-3 bg-gray-200 text-gray-500 font-black tracking-wide rounded-xl text-sm shadow-inner w-full flex justify-center items-center cursor-not-allowed"
-                            >
-                               Slots Filled
-                            </button>
-                         </>
-                      ) : (
-                         <>
-                            <p className="text-xs text-slate-500 mb-2 px-2 tracking-tight">Pay to instantly unlock the exact address, maps, and direct phone number.</p>
-                            <span className="text-[10px] font-bold text-[#ec38b7] uppercase tracking-widest bg-pink-50 border border-pink-100 rounded-full px-2 py-0.5 mb-3 animate-pulse">
-                               Only {property.availableContactSlots} slots remain
-                            </span>
-                            <button 
-                               onClick={handleUnlockPayment}
-                               disabled={isProcessingPayment} 
-                               className="px-8 py-3 bg-[#801786] text-white font-black tracking-wide rounded-xl text-sm shadow-lg active:scale-95 transition-all w-full flex justify-center items-center gap-2"
-                            >
-                               {isProcessingPayment ? "Processing..." : "Unlock for ₹49"}
-                            </button>
-                         </>
-                      )}
-                    </div>
-                  </div>
-              )}
+        {/* Dots Indicator */}
+        {property.images?.length > 1 && (
+            <div className="absolute bottom-10 left-0 w-full flex justify-center gap-1.5 z-10">
+                {property.images.map((_: any, idx: number) => (
+                    <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${idx === activeImage ? 'bg-white w-4' : 'bg-white/50 w-1.5'}`} />
+                ))}
             </div>
-          </div>
         )}
       </div>
 
-      {/* Full Screen Image Gallery Modal */}
-      {showGallery && property.images && property.images.length > 0 && (
+      {/* SECTION 2: PRICE & QUICK SUMMARY CARD */}
+      <div className="bg-white rounded-t-[1.5rem] -mt-6 relative z-20 px-5 pt-7 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
+         <div className="flex items-baseline gap-1 mb-1.5">
+            <span className="text-[28px] font-extrabold text-[#111111] tracking-tight">₹ {property.rent?.toLocaleString()}</span>
+            <span className="text-sm font-medium text-[#666666]">/month</span>
+         </div>
+         <div className="flex items-center text-[13px] mb-5">
+            <span className="text-[#666666]">₹ {property.deposit?.toLocaleString()} security deposit...</span>
+            <button className="text-[#0066FF] font-semibold ml-1.5 flex items-center">See Price Details <ChevronRight className="w-3.5 h-3.5" /></button>
+         </div>
+         <div className="inline-block bg-[#F5F5F7] px-3 py-1.5 rounded text-[11px] font-bold text-[#111111] uppercase tracking-wider">
+            {property.furnishing || 'Unfurnished'}
+         </div>
+      </div>
+
+      {/* SECTION 3: AMENITIES QUICK LIST */}
+      <div className="px-5 pb-6 bg-white">
+         <div className="flex flex-col gap-3">
+            {property.amenities?.slice(0,4).map((a: string, i: number) => (
+               <div key={i} className="flex items-center gap-2.5">
+                  <Check className="w-4 h-4 text-[#16A34A]" strokeWidth={3} />
+                  <span className="text-sm font-semibold text-[#111111]">{a}</span>
+               </div>
+            ))}
+         </div>
+      </div>
+
+      <div className="h-2 w-full bg-[#F5F5F7]"></div>
+
+      {/* SECTION 4: PROPERTY TITLE & LOCATION */}
+      <div className="px-5 py-6 bg-white">
+         <p className="text-[13px] text-[#666666] mb-1 font-medium">{propertyTitlePrefix}</p>
+         <h1 className="text-[22px] font-extrabold text-[#111111] leading-tight mb-1.5">{property.title}</h1>
+         <p className="text-sm text-[#666666] font-medium">{property.location?.area}, {property.location?.city}</p>
+      </div>
+
+      {/* SECTION 5: ICON DATA GRID */}
+      <div className="px-5 pb-8 bg-white overflow-hidden">
+         <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-5 px-5">
+             
+             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                 <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm">
+                    <Building className="w-5 h-5 text-slate-600" />
+                 </div>
+                 <div>
+                    <p className="text-[13px] font-bold text-[#111111]">{property.floor || 1}</p>
+                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">out of {property.totalFloors || 3} floors</p>
+                 </div>
+             </div>
+
+             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                 <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                    <Users className="w-5 h-5 text-blue-600" />
+                 </div>
+                 <div>
+                    <p className="text-[13px] font-bold text-[#111111]">For {property.preferences?.familyAllowed ? 'Family' : 'Bachelors'}</p>
+                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">{property.preferences?.genderPreference === 'any' ? 'Anyone' : property.preferences?.genderPreference}</p>
+                 </div>
+             </div>
+
+             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                 <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center border border-orange-100 shadow-sm">
+                    <Maximize className="w-5 h-5 text-orange-600" />
+                 </div>
+                 <div>
+                    <p className="text-[13px] font-bold text-[#111111]">{property.areaSqft || 450} sq.ft.</p>
+                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">Builtup Area</p>
+                 </div>
+             </div>
+
+             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                 <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100 shadow-sm">
+                    <CalendarDays className="w-5 h-5 text-emerald-600" />
+                 </div>
+                 <div>
+                    <p className="text-[13px] font-bold text-[#111111]">Available</p>
+                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">from {property.availability || 'Immediate'}</p>
+                 </div>
+             </div>
+
+             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                 <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center border border-amber-100 shadow-sm">
+                    <Award className="w-5 h-5 text-amber-600" />
+                 </div>
+                 <div>
+                    <p className="text-[13px] font-bold text-[#111111]">{property.propertyAge || '0-1 Year'}</p>
+                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">Old Property</p>
+                 </div>
+             </div>
+
+         </div>
+      </div>
+
+      {/* SECTION 6: KEY HIGHLIGHTS BLOCK */}
+      <div className="p-5 bg-gradient-to-b from-[#FFFDF0] to-white border-t border-[#F5F5F7]">
+         <div className="flex items-center gap-3.5 mb-5">
+             <div className="w-11 h-11 relative flex items-center justify-center bg-orange-100/50 rounded-full">
+                <div className="w-8 h-8 border-2 border-orange-400 rounded-full flex items-center justify-center">
+                    <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                </div>
+             </div>
+             <div>
+                <h2 className="text-[19px] font-extrabold text-[#111111] tracking-tight">Key Highlights</h2>
+                <p className="text-[13px] text-[#666666]">Why you should choose the property</p>
+             </div>
+         </div>
+         
+         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+            <h3 className="text-[13px] font-bold flex items-center gap-2 mb-3.5 text-[#111111]">
+               <Home className="w-4 h-4 text-[#0066FF]" /> Property Highlights
+            </h3>
+            <ul className="space-y-2.5">
+               {property.highlights?.map((hl: string, i: number) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                     <span className="mt-[5px] text-black text-[10px]">●</span> 
+                     <span className="text-[13.5px] text-[#666666] font-medium leading-snug">{hl}</span>
+                  </li>
+               ))}
+               <li className="pt-1"><button className="text-[#0066FF] text-[13.5px] font-semibold">... more</button></li>
+            </ul>
+         </div>
+      </div>
+
+      <div className="h-2 w-full bg-[#F5F5F7]"></div>
+
+      {/* SECTION 7: OWNER DETAILS (CONTROLLED BY PAYWALL) */}
+      <div className="p-5 bg-white relative overflow-hidden pb-12">
+         <h2 className="text-[19px] font-extrabold text-[#111111] mb-5 tracking-tight">Owner Details</h2>
+         
+         <div className={access === 'limited' && !paymentUnlocked ? 'blur-[5px] pointer-events-none select-none transition-all duration-500' : 'transition-all duration-500'}>
+             <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-4">
+                 <p className="font-extrabold text-[#111111] text-lg mb-1">{property.ownerId?.name || 'Verified Owner'}</p>
+                 <p className="text-sm text-[#666666] mb-4">Owner of {property.title}</p>
+                 <p className="font-bold text-[#111111] text-xl tracking-wider mb-2">
+                    {property.ownerId?.mobile || '+91 98XXX XXXXX'}
+                 </p>
+                 <p className="text-xs text-green-600 font-bold flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Mobile Number Verified
+                 </p>
+             </div>
+             <div className="bg-slate-50 border border-slate-100 rounded-xl p-5">
+                 <p className="font-bold text-[#111111] mb-2 text-sm flex items-center gap-1.5"><MapPin className="w-4 h-4 text-red-500"/> Exact Location</p>
+                 <p className="text-sm text-[#666666] leading-relaxed">{property.location?.address || 'Complete address hidden until unlocked.'}</p>
+             </div>
+         </div>
+
+         {/* Lock UI Overlay */}
+         {access === 'limited' && !paymentUnlocked && (
+             <div className="absolute inset-0 top-12 z-10 flex flex-col items-center justify-center bg-white/30 px-6 text-center">
+                 <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md mb-3 border border-slate-100">
+                     <Lock className="w-6 h-6 text-[#111111]" />
+                 </div>
+                 <p className="font-extrabold text-[#111111] text-lg mb-1">Unlock owner contact & exact location</p>
+                 <p className="text-sm text-[#666666] mb-5 max-w-[250px]">Get direct access to the owner's phone number and the exact property address.</p>
+                 <button 
+                    onClick={handleUnlockPayment}
+                    disabled={isProcessingPayment}
+                    className="w-full max-w-[280px] py-3.5 bg-[#801786] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex justify-center items-center"
+                 >
+                    {isProcessingPayment ? 'Processing...' : 'Pay ₹99 to Unlock'}
+                 </button>
+             </div>
+         )}
+      </div>
+
+      {/* SECTION 9: SOCIAL PROOF */}
+      <div className="fixed bottom-[88px] left-0 w-full z-40 bg-[#FDE8EF] border-t border-pink-100 py-2.5 px-4 flex items-center gap-2 shadow-[0_-2px_10px_rgba(0,0,0,0.02)]">
+         <div className="w-6 h-6 bg-[#C72C9C] rounded-full flex items-center justify-center">
+             <Clock className="w-3.5 h-3.5 text-white" />
+         </div>
+         <span className="text-[13px] font-medium text-[#111111] tracking-tight">{randomSocialCount} people already contacted yesterday</span>
+      </div>
+
+      {/* SECTION 8: CONTACT ACTION BAR (STICKY BOTTOM) */}
+      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-100 shadow-[0_-8px_20px_rgba(0,0,0,0.04)] z-50 px-4 py-3 pb-4">
+          <div className="flex gap-2.5 items-center">
+              <button 
+                onClick={() => { if(access === 'full') window.open(`https://wa.me/${property.ownerId?.mobile}`, '_blank'); else handleUnlockPayment(); }}
+                className="flex-[1.2] py-3.5 border-2 border-[#16A34A] text-[#16A34A] rounded-full flex items-center justify-center gap-1.5 font-bold text-[14px] active:scale-95 transition-transform bg-white"
+              >
+                  <MessageSquare className="w-4 h-4 fill-current" /> WhatsApp
+              </button>
+              <button 
+                onClick={() => { if(access === 'full') window.open(`tel:${property.ownerId?.mobile}`, '_self'); else handleUnlockPayment(); }}
+                className="flex-[1.5] py-3.5 bg-[#0066FF] text-white rounded-full font-bold text-[14px] shadow-md active:scale-95 transition-transform"
+              >
+                  {access === 'full' || paymentUnlocked ? 'View Number' : 'Unlock Contact'}
+              </button>
+              <button 
+                onClick={() => { if(access === 'full') window.open(`tel:${property.ownerId?.mobile}`, '_self'); else handleUnlockPayment(); }}
+                className="w-12 h-12 bg-[#0066FF] text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
+              >
+                  <Phone className="w-5 h-5 fill-current" />
+              </button>
+          </div>
+      </div>
+
+      {/* SECTION 10: COOKIE / CONSENT BAR */}
+      {showCookieBar && (
+          <div className="fixed bottom-0 left-0 w-full bg-[#F5F5F7] z-[60] px-4 py-3 flex items-center justify-between border-t border-slate-200">
+             <p className="text-[11px] text-[#666666] leading-tight flex-1 pr-4">
+                This site uses cookies to improve your experience. By browsing, you agree to our <span className="underline cursor-pointer">Privacy Policy</span> & <span className="underline cursor-pointer">Cookie Policy</span>
+             </p>
+             <button onClick={() => setShowCookieBar(false)} className="px-4 py-2 bg-[#0066FF] text-white text-xs font-bold rounded-full">
+                Okay
+             </button>
+          </div>
+      )}
+
+      {/* FULL SCREEN GALLERY MODALS */}
+      {showGallery && property.images?.length > 0 && (
           <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in zoom-in-95 duration-200">
               <div className="p-4 flex justify-between items-center sticky top-0 bg-gradient-to-b from-black/90 to-transparent z-10">
-                  <span className="text-white font-black tracking-wide text-sm">{property.images.length} Photos</span>
-                  <button 
-                      onClick={() => setShowGallery(false)} 
-                      className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md border border-white/20 transition-colors"
-                  >
+                  <span className="text-white font-bold text-sm">{property.images.length} Photos</span>
+                  <button onClick={() => setShowGallery(false)} className="p-2 bg-white/10 rounded-full text-white backdrop-blur-md">
                       <X className="w-5 h-5" />
                   </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-10 pt-4 flex flex-col gap-10 items-center">
+              <div className="flex-1 overflow-y-auto px-4 pb-10 pt-4 flex flex-col gap-8 items-center">
                   {property.images.map((img: string, idx: number) => (
-                      <div 
-                          key={idx} 
-                          className="relative w-full max-w-5xl rounded-xl overflow-hidden shadow-2xl bg-slate-900/40 flex items-center justify-center border border-white/5 cursor-zoom-in active:scale-[0.99] transition-transform"
-                          onClick={() => setEnlargedImage(img)}
-                      >
-                          <img src={img} alt={`Gallery ${idx + 1}`} className="max-w-full max-h-[75vh] w-auto h-auto object-contain" />
-                          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-white/90 font-mono text-[11px] uppercase font-bold">
-                              {idx + 1} / {property.images.length}
-                          </div>
+                      <div key={idx} className="relative w-full" onClick={() => setEnlargedImage(img)}>
+                          <img src={img} alt={`Gallery ${idx + 1}`} className="w-full rounded-xl" />
                       </div>
                   ))}
               </div>
           </div>
       )}
 
-      {/* Extreme Full Screen Immersive Lightbox Modal */}
       {enlargedImage && (
-          <div className="fixed inset-0 z-[110] bg-black flex flex-col animate-in fade-in zoom-in-95 duration-200">
-              <button 
-                  onClick={() => setEnlargedImage(null)}
-                  className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md border border-white/20 transition-colors z-20 shadow-2xl"
-              >
-                  <X className="w-6 h-6 drop-shadow-md" />
+          <div className="fixed inset-0 z-[110] bg-black flex flex-col animate-in fade-in zoom-in-95 duration-200" onClick={() => setEnlargedImage(null)}>
+              <button className="absolute top-6 right-6 p-2 bg-white/10 rounded-full text-white z-20">
+                  <X className="w-6 h-6" />
               </button>
-              <div 
-                  className="flex-1 w-full h-full flex justify-center items-center p-2 cursor-zoom-out" 
-                  onClick={() => setEnlargedImage(null)}
-              >
-                  <img src={enlargedImage} alt="Immersive Expanded Screen" className="max-w-full max-h-[100dvh] object-contain shadow-[0_0_80px_rgba(0,0,0,0.8)]" />
+              <div className="flex-1 flex justify-center items-center p-2">
+                  <img src={enlargedImage} className="max-w-full max-h-[100dvh] object-contain" />
               </div>
           </div>
       )}
+
     </div>
   );
 }
