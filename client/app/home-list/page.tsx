@@ -22,22 +22,22 @@ const slides = [
   {
     title: "List your property today",
     subtitle: "Connect with verified tenants securely and instantly",
-    bgClass: "from-indigo-600 to-cyan-600"
+    bgClass: "from-[#b22394] to-[#1819a8]"
   },
   {
     title: "Zero Brokerage platform",
     subtitle: "Direct access between owners and verified tenants",
-    bgClass: "from-emerald-500 to-teal-700"
+    bgClass: "from-[#b22394] to-[#1819a8]"
   },
   {
     title: "Verified Hostels & PGs",
     subtitle: "Find safe and affordable accommodations for students",
-    bgClass: "from-orange-500 to-rose-600"
+    bgClass: "from-[#b22394] to-[#1819a8]"
   },
   {
     title: "Premium Family Homes",
     subtitle: "Spacious apartments in prime locations across Tamil Nadu",
-    bgClass: "from-blue-600 to-purple-700"
+    bgClass: "from-[#b22394] to-[#1819a8]"
   }
 ];
 
