@@ -217,8 +217,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             <span className="text-sm font-medium text-[#666666]">/month</span>
          </div>
          <div className="flex items-center text-[13px] mb-5">
-            <span className="text-[#666666]">₹ {property.deposit?.toLocaleString()} security deposit...</span>
-            <button className="text-[#0066FF] font-semibold ml-1.5 flex items-center">See Price Details <ChevronRight className="w-3.5 h-3.5" /></button>
+            <span className="text-[#666666]">₹ {property.deposit?.toLocaleString()} security deposit</span>
          </div>
          <div className="inline-block bg-[#F5F5F7] px-3 py-1.5 rounded text-[11px] font-bold text-[#111111] uppercase tracking-wider">
             {property.furnishing || 'Unfurnished'}
@@ -250,15 +249,17 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       <div className="px-5 pb-8 bg-white overflow-hidden">
          <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-5 px-5">
              
-             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
-                 <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm">
-                    <Building className="w-5 h-5 text-slate-600" />
+             {property.floor && (
+                 <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                     <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-sm">
+                        <Building className="w-5 h-5 text-slate-600" />
+                     </div>
+                     <div>
+                        <p className="text-[13px] font-bold text-[#111111]">{property.floor}</p>
+                        <p className="text-[11px] text-[#999999] leading-tight mt-0.5">out of {property.totalFloors || '?'} floors</p>
+                     </div>
                  </div>
-                 <div>
-                    <p className="text-[13px] font-bold text-[#111111]">{property.floor || 1}</p>
-                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">out of {property.totalFloors || 3} floors</p>
-                 </div>
-             </div>
+             )}
 
              <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
@@ -270,15 +271,17 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                  </div>
              </div>
 
-             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
-                 <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center border border-orange-100 shadow-sm">
-                    <Maximize className="w-5 h-5 text-orange-600" />
+             {property.areaSqft && (
+                 <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                     <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center border border-orange-100 shadow-sm">
+                        <Maximize className="w-5 h-5 text-orange-600" />
+                     </div>
+                     <div>
+                        <p className="text-[13px] font-bold text-[#111111]">{property.areaSqft} sq.ft.</p>
+                        <p className="text-[11px] text-[#999999] leading-tight mt-0.5">Builtup Area</p>
+                     </div>
                  </div>
-                 <div>
-                    <p className="text-[13px] font-bold text-[#111111]">{property.areaSqft || 450} sq.ft.</p>
-                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">Builtup Area</p>
-                 </div>
-             </div>
+             )}
 
              <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
                  <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100 shadow-sm">
@@ -290,48 +293,51 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                  </div>
              </div>
 
-             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
-                 <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center border border-amber-100 shadow-sm">
-                    <Award className="w-5 h-5 text-amber-600" />
+             {property.propertyAge && (
+                 <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                     <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center border border-amber-100 shadow-sm">
+                        <Award className="w-5 h-5 text-amber-600" />
+                     </div>
+                     <div>
+                        <p className="text-[13px] font-bold text-[#111111]">{property.propertyAge}</p>
+                        <p className="text-[11px] text-[#999999] leading-tight mt-0.5">Old Property</p>
+                     </div>
                  </div>
-                 <div>
-                    <p className="text-[13px] font-bold text-[#111111]">{property.propertyAge || '0-1 Year'}</p>
-                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">Old Property</p>
-                 </div>
-             </div>
+             )}
 
          </div>
       </div>
 
       {/* SECTION 6: KEY HIGHLIGHTS BLOCK */}
-      <div className="p-5 bg-gradient-to-b from-[#FFFDF0] to-white border-t border-[#F5F5F7]">
-         <div className="flex items-center gap-3.5 mb-5">
-             <div className="w-11 h-11 relative flex items-center justify-center bg-orange-100/50 rounded-full">
-                <div className="w-8 h-8 border-2 border-orange-400 rounded-full flex items-center justify-center">
-                    <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                </div>
+      {property.highlights && property.highlights.length > 0 && (
+          <div className="p-5 bg-gradient-to-b from-[#FFFDF0] to-white border-t border-[#F5F5F7]">
+             <div className="flex items-center gap-3.5 mb-5">
+                 <div className="w-11 h-11 relative flex items-center justify-center bg-orange-100/50 rounded-full">
+                    <div className="w-8 h-8 border-2 border-orange-400 rounded-full flex items-center justify-center">
+                        <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                    </div>
+                 </div>
+                 <div>
+                    <h2 className="text-[19px] font-extrabold text-[#111111] tracking-tight">Key Highlights</h2>
+                    <p className="text-[13px] text-[#666666]">Why you should choose the property</p>
+                 </div>
              </div>
-             <div>
-                <h2 className="text-[19px] font-extrabold text-[#111111] tracking-tight">Key Highlights</h2>
-                <p className="text-[13px] text-[#666666]">Why you should choose the property</p>
+             
+             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
+                <h3 className="text-[13px] font-bold flex items-center gap-2 mb-3.5 text-[#111111]">
+                   <Home className="w-4 h-4 text-[#0066FF]" /> Property Highlights
+                </h3>
+                <ul className="space-y-2.5">
+                   {property.highlights.map((hl: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                         <span className="mt-[5px] text-black text-[10px]">●</span> 
+                         <span className="text-[13.5px] text-[#666666] font-medium leading-snug">{hl}</span>
+                      </li>
+                   ))}
+                </ul>
              </div>
-         </div>
-         
-         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-            <h3 className="text-[13px] font-bold flex items-center gap-2 mb-3.5 text-[#111111]">
-               <Home className="w-4 h-4 text-[#0066FF]" /> Property Highlights
-            </h3>
-            <ul className="space-y-2.5">
-               {property.highlights?.map((hl: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                     <span className="mt-[5px] text-black text-[10px]">●</span> 
-                     <span className="text-[13.5px] text-[#666666] font-medium leading-snug">{hl}</span>
-                  </li>
-               ))}
-               <li className="pt-1"><button className="text-[#0066FF] text-[13.5px] font-semibold">... more</button></li>
-            </ul>
-         </div>
-      </div>
+          </div>
+      )}
 
       <div className="h-2 w-full bg-[#F5F5F7]"></div>
 
@@ -352,7 +358,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
              </div>
              <div className="bg-slate-50 border border-slate-100 rounded-xl p-5">
                  <p className="font-bold text-[#111111] mb-2 text-sm flex items-center gap-1.5"><MapPin className="w-4 h-4 text-red-500"/> Exact Location</p>
-                 <p className="text-sm text-[#666666] leading-relaxed">{property.location?.address || 'Complete address hidden until unlocked.'}</p>
+                 <p className="text-sm text-[#666666] leading-relaxed mb-3">{property.location?.address || 'Complete address hidden until unlocked.'}</p>
+                 {property.location?.googleMapLink && access === 'full' && (
+                     <a href={property.location.googleMapLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-[#0066FF] bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
+                        <MapPin className="w-4 h-4" /> Open in Google Maps
+                     </a>
+                 )}
              </div>
          </div>
 
