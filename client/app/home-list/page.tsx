@@ -59,7 +59,47 @@ export default function HomeListPage() {
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [osmSuggestions, setOsmSuggestions] = useState<string[]>([]);
+  const [isSearchingOSM, setIsSearchingOSM] = useState(false);
 
+  useEffect(() => {
+    if (!trendingSearchText || trendingSearchText.length < 2) {
+       setOsmSuggestions([]);
+       return;
+    }
+    
+    setIsSearchingOSM(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trendingSearchText)}&format=json&addressdetails=1&countrycodes=in&limit=5`);
+        const data = await res.json();
+        if (data && Array.isArray(data)) {
+           const formatted = data.map((item: any) => {
+             const parts = [];
+             const name = item.address?.suburb || item.address?.village || item.address?.town || item.address?.city_district || item.name;
+             const district = item.address?.state_district || item.address?.county;
+             const state = item.address?.state;
+             
+             if (name) parts.push(name);
+             if (district && district !== name) parts.push(district);
+             if (state) parts.push(state);
+             
+             return parts.length > 0 ? parts.join(', ') : item.display_name.split(',').slice(0, 3).join(', ');
+           });
+           
+           // Deduplicate
+           const unique = Array.from(new Set<string>(formatted));
+           setOsmSuggestions(unique);
+        }
+      } catch(e) {
+        console.error("OSM Fetch Error:", e);
+      } finally {
+        setIsSearchingOSM(false);
+      }
+    }, 500);
+    
+    return () => clearTimeout(timeout);
+  }, [trendingSearchText]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -155,20 +195,7 @@ export default function HomeListPage() {
     }
   };
 
-  const uniqueAreas = React.useMemo(() => {
-     const areas = new Set<string>();
-     allRawProperties.forEach(p => {
-        if (p.title && !p.title.includes('Unknown Area')) {
-           areas.add(p.title);
-        }
-     });
-     return Array.from(areas);
-  }, [allRawProperties]);
 
-  const filteredDropdownAreas = React.useMemo(() => {
-     if (!trendingSearchText) return uniqueAreas;
-     return uniqueAreas.filter(a => a.toLowerCase().includes(trendingSearchText.toLowerCase()));
-  }, [uniqueAreas, trendingSearchText]);
 
   const trendingProperties = React.useMemo(() => {
     let filtered = [...allRawProperties];
@@ -417,22 +444,26 @@ export default function HomeListPage() {
                           }}
                           className="text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold border border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-600 w-32 sm:w-40 shadow-sm text-blue-900 bg-white"
                         />
-                        {showDropdown && filteredDropdownAreas.length > 0 && (
-                          <div className="absolute top-full mt-1 left-0 w-48 bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden z-50 max-h-40 overflow-y-auto">
-                            {filteredDropdownAreas.map((area, idx) => (
-                               <div 
-                                 key={idx} 
-                                 className="px-3 py-2 text-xs text-gray-700 hover:bg-blue-50 cursor-pointer font-medium border-b border-gray-100 last:border-0"
-                                 onMouseDown={(e) => {
-                                    e.preventDefault(); // Prevents input blur
-                                    setTrendingSearchText(area);
-                                    setTrendingFilter('search');
-                                    setShowDropdown(false);
-                                 }}
-                               >
-                                 {area}
-                               </div>
-                            ))}
+                        {showDropdown && (osmSuggestions.length > 0 || isSearchingOSM) && (
+                          <div className="absolute top-full mt-1 left-0 w-64 bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden z-50 max-h-40 overflow-y-auto">
+                            {isSearchingOSM ? (
+                               <div className="px-3 py-2 text-xs text-gray-400 italic text-center">Searching map...</div>
+                            ) : (
+                               osmSuggestions.map((area, idx) => (
+                                 <div 
+                                   key={idx} 
+                                   className="px-3 py-2 text-xs text-gray-700 hover:bg-blue-50 cursor-pointer font-medium border-b border-gray-100 last:border-0 truncate"
+                                   onMouseDown={(e) => {
+                                      e.preventDefault(); // Prevents input blur
+                                      setTrendingSearchText(area);
+                                      setTrendingFilter('search');
+                                      setShowDropdown(false);
+                                   }}
+                                 >
+                                   {area}
+                                 </div>
+                               ))
+                            )}
                           </div>
                         )}
                       </div>
