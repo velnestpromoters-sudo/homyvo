@@ -286,22 +286,6 @@ export default function HomeListPage() {
             
             {/* Crisp white inner edge to simulate paper thickness */}
             <path d="M 0 0 Q 48 48 100 100" fill="none" stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.9" />
-
-            {/* Classic Prestige Serif 'HOT' Text */}
-            <text 
-               x="74" y="26" 
-               fontFamily='"JetBrains Mono", monospace' 
-               fontSize="20" 
-               fontWeight="bold" 
-               fill="#ffffff" 
-               transform="rotate(45 74 26)" 
-               textAnchor="middle" 
-               dominantBaseline="middle"
-               letterSpacing="1.5" 
-               style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,0,0,0.8)' }}
-            >
-              HOT
-            </text>
           </svg>
           
           <div className="mb-4 flex items-center justify-between relative z-20">
