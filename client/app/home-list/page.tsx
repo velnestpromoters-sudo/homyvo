@@ -63,7 +63,7 @@ export default function HomeListPage() {
   const [isSearchingOSM, setIsSearchingOSM] = useState(false);
 
   useEffect(() => {
-    if (!trendingSearchText || trendingSearchText.length < 2) {
+    if (!trendingSearchText || trendingSearchText.trim() === '') {
        setOsmSuggestions([]);
        return;
     }
@@ -71,13 +71,15 @@ export default function HomeListPage() {
     setIsSearchingOSM(true);
     const timeout = setTimeout(async () => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trendingSearchText)}&format=json&addressdetails=1&countrycodes=in&limit=5`);
+        const query = encodeURIComponent(trendingSearchText.trim());
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&addressdetails=1&countrycodes=in&limit=6`);
         const data = await res.json();
+        
         if (data && Array.isArray(data)) {
            const formatted = data.map((item: any) => {
              const parts = [];
              const name = item.address?.suburb || item.address?.village || item.address?.town || item.address?.city_district || item.name;
-             const district = item.address?.state_district || item.address?.county;
+             const district = item.address?.state_district || item.address?.county || item.address?.city;
              const state = item.address?.state;
              
              if (name) parts.push(name);
@@ -96,7 +98,7 @@ export default function HomeListPage() {
       } finally {
         setIsSearchingOSM(false);
       }
-    }, 500);
+    }, 200); // Super fast 200ms debounce for letter-by-letter prediction
     
     return () => clearTimeout(timeout);
   }, [trendingSearchText]);
