@@ -3,7 +3,7 @@ const Access = require('../models/Access');
 
 exports.getAllProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ isActive: true }).select('title location rent images matchScore moveInReady isVerified ownerId bhkType preferences propertyType pgDetails tenantNotes');
+    const properties = await Property.find({ isActive: true }).select('title location rent images matchScore moveInReady isVerified ownerId bhkType preferences propertyType pgDetails tenantNotes boostExpiresAt');
     res.status(200).json({ success: true, data: properties });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
