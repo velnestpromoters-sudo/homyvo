@@ -259,51 +259,30 @@ export default function HomeListPage() {
 
         {/* 5. TRENDING NOW */}
         <section className="bg-blue-50 -mx-4 px-4 py-6 border-y border-blue-100 shadow-inner my-2 relative overflow-hidden">
-          {/* Photorealistic 3D Folded Corner Ribbon */}
-          <svg viewBox="0 0 100 100" className="absolute top-0 right-0 w-[140px] h-[140px] pointer-events-none z-10 drop-shadow-xl">
-            <defs>
-              <linearGradient id="bg-red" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#800000" />
-                <stop offset="100%" stopColor="#cc0000" />
-              </linearGradient>
-              <linearGradient id="fold-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#b30000" />
-                <stop offset="35%" stopColor="#ff3333" />
-                <stop offset="50%" stopColor="#ffffff" />
-                <stop offset="65%" stopColor="#ff3333" />
-                <stop offset="100%" stopColor="#b30000" />
-              </linearGradient>
-              <filter id="fold-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="-1" dy="1" stdDeviation="1.5" floodColor="#000" floodOpacity="0.6"/>
-              </filter>
-            </defs>
-            
-            {/* Main Background Triangle (Concave Inner Edge) */}
-            <path d="M 0 0 L 100 0 L 100 100 Q 60 40 0 0 Z" fill="url(#bg-red)" />
-            
-            {/* The 3D Peeling Fold (Crescent Flap) */}
-            <path d="M 0 0 Q 60 40 100 100 Q 48 48 0 0 Z" fill="url(#fold-glow)" filter="url(#fold-shadow)" />
-            
-            {/* Crisp white inner edge to simulate paper thickness */}
-            <path d="M 0 0 Q 48 48 100 100" fill="none" stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.9" />
-
-            {/* Classic Prestige Serif 'HOT' Text */}
-            <text 
-               x="74" y="26" 
-               fontFamily='"Times New Roman", Times, serif' 
-               fontSize="20" 
-               fontWeight="bold" 
-               fontStyle="italic"
-               fill="#ffffff" 
-               transform="rotate(45 74 26)" 
-               textAnchor="middle" 
-               dominantBaseline="middle"
-               letterSpacing="1.5" 
-               style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}
+          {/* Straight Red Corner Ribbon Banner */}
+          <div className="absolute top-0 right-0 w-[150px] h-[150px] overflow-hidden pointer-events-none z-10 drop-shadow-xl">
+            <div 
+              className="absolute top-[28px] -right-[40px] w-[200px] text-center shadow-lg border-y border-red-400"
+              style={{
+                 background: 'linear-gradient(to right, #800000 0%, #cc0000 30%, #ff6666 45%, #ffffff 50%, #ff6666 55%, #cc0000 70%, #800000 100%)',
+                 transform: 'rotate(45deg)',
+                 padding: '6px 0',
+              }}
             >
-              HOT
-            </text>
-          </svg>
+               <span 
+                 style={{ 
+                   fontFamily: '"Brush Script MT", "Lucida Handwriting", "Dancing Script", cursive', 
+                   fontSize: '24px', 
+                   fontWeight: 'normal',
+                   letterSpacing: '2px',
+                   color: '#ffffff',
+                   textShadow: '2px 2px 4px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,0,0,0.8)'
+                 }}
+               >
+                 Hot
+               </span>
+            </div>
+          </div>
           
           <div className="mb-4 flex items-center justify-between relative z-20">
             <div>
