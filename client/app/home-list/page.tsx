@@ -258,7 +258,12 @@ export default function HomeListPage() {
         </div>
 
         {/* 5. TRENDING NOW */}
-        <section className="bg-blue-50 -mx-4 px-4 py-6 border-y border-blue-100 shadow-inner my-2">
+        <section className="bg-blue-50 -mx-4 px-4 py-6 border-y border-blue-100 shadow-inner my-2 relative overflow-hidden">
+          {/* Slanted Red Corner Ribbon */}
+          <div className="absolute -right-12 top-5 w-40 bg-gradient-to-r from-red-600 to-red-500 text-white text-center py-1.5 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-red-600/30 rotate-45 z-10 pointer-events-none">
+            HOT
+          </div>
+          
           <div className="mb-4 flex items-center justify-between">
             <div>
                <h2 className="text-xl font-black text-blue-900 flex items-center gap-2">
@@ -267,7 +272,7 @@ export default function HomeListPage() {
                </h2>
                <p className="text-sm text-blue-700/80 font-medium">Most popular places in Tamil Nadu</p>
             </div>
-            <div className="bg-blue-600 text-white text-[10px] uppercase font-black px-2 py-1 rounded-md tracking-wider shadow-sm">Hot</div>
+            {/* Old HOT pill removed */}
           </div>
           <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 snap-x min-h-[150px]">
              {isLoading ? (
