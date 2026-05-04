@@ -228,7 +228,10 @@ export default function HomeListPage() {
 
         {/* 4. CATEGORY CARDS */}
         <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4 px-2 md:px-4">
-          <div className="rounded-2xl bg-white p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group">
+          <div 
+            onClick={() => router.push('/home?category=student')}
+            className="rounded-2xl bg-white p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group"
+          >
             <div className="bg-purple-50 p-2.5 md:p-3 rounded-xl group-hover:scale-110 transition-transform duration-300 shrink-0">
               <GraduationCap className="w-5 h-5 md:w-6 md:h-6 text-[#801786]" />
             </div>
@@ -237,7 +240,10 @@ export default function HomeListPage() {
               <p className="text-[10px] md:text-xs text-[#6B7280] mt-1 font-medium">{studentProperties.length}+ Affordable stays</p>
             </div>
           </div>
-          <div className="rounded-2xl bg-white p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group">
+          <div 
+             onClick={() => router.push('/home?category=family')}
+             className="rounded-2xl bg-white p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group"
+          >
              <div className="bg-indigo-50 p-2.5 md:p-3 rounded-xl group-hover:scale-110 transition-transform duration-300 shrink-0">
               <Home className="w-5 h-5 md:w-6 md:h-6 text-indigo-600" />
             </div>

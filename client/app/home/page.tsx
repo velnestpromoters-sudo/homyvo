@@ -72,7 +72,19 @@ export default function HomeReelPage() {
       try {
         const res = await api.get('/properties');
         if (res.data.success) {
-          setProperties(res.data.data);
+          let fetched = res.data.data || [];
+          
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const category = params.get('category');
+            if (category === 'student') {
+               fetched = fetched.filter((p: any) => p.preferences?.bachelorAllowed || p.propertyType === 'pg');
+            } else if (category === 'family') {
+               fetched = fetched.filter((p: any) => !p.preferences?.bachelorAllowed && p.propertyType !== 'pg');
+            }
+          }
+          
+          setProperties(fetched);
         }
       } catch (err) {
         console.error("Failed to load property feed", err);
