@@ -57,6 +57,8 @@ export default function HomeListPage() {
   const [trendingSearchText, setTrendingSearchText] = useState('');
   const [showTrendingSearchInput, setShowTrendingSearchInput] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -134,15 +136,38 @@ export default function HomeListPage() {
 
   const handleNearMe = () => {
     setTrendingFilter('near_me');
+    if (userLocation) return;
+    setIsLocating(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => alert("Could not get location. Please enable location services.")
+        (pos) => {
+           setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+           setIsLocating(false);
+        },
+        (err) => {
+           alert("Could not get location. Please enable location services.");
+           setIsLocating(false);
+        }
       );
     } else {
       alert("Geolocation is not supported by this browser.");
+      setIsLocating(false);
     }
   };
+
+  const uniqueAreas = React.useMemo(() => {
+     const areas = new Set<string>();
+     allRawProperties.forEach(p => {
+        const areaName = p.title.split(',')[0].trim();
+        if (areaName && areaName !== 'Unknown Area') areas.add(areaName);
+     });
+     return Array.from(areas);
+  }, [allRawProperties]);
+
+  const filteredDropdownAreas = React.useMemo(() => {
+     if (!trendingSearchText) return uniqueAreas;
+     return uniqueAreas.filter(a => a.toLowerCase().includes(trendingSearchText.toLowerCase()));
+  }, [uniqueAreas, trendingSearchText]);
 
   const trendingProperties = React.useMemo(() => {
     let filtered = [...allRawProperties];
@@ -366,31 +391,55 @@ export default function HomeListPage() {
                    
                    <button 
                       onClick={handleNearMe}
-                      className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold border transition-colors shadow-sm ${trendingFilter === 'near_me' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
+                      disabled={isLocating}
+                      className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold border transition-colors shadow-sm ${trendingFilter === 'near_me' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'} ${isLocating ? 'opacity-70 cursor-wait' : ''}`}
                    >
-                     Near Me
+                     {isLocating ? 'Locating...' : 'Near Me'}
                    </button>
                    
                    {showTrendingSearchInput ? (
-                      <input 
-                        type="text" 
-                        autoFocus
-                        placeholder="Type place..." 
-                        value={trendingSearchText}
-                        onChange={(e) => {
-                           setTrendingFilter('search');
-                           setTrendingSearchText(e.target.value);
-                        }}
-                        onBlur={() => {
-                           if (!trendingSearchText) setShowTrendingSearchInput(false);
-                        }}
-                        className="text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold border border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-600 w-24 sm:w-32 shadow-sm text-blue-900 bg-white"
-                      />
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          autoFocus
+                          placeholder="Type place..." 
+                          value={trendingSearchText}
+                          onChange={(e) => {
+                             setTrendingFilter('search');
+                             setTrendingSearchText(e.target.value);
+                             setShowDropdown(true);
+                          }}
+                          onFocus={() => setShowDropdown(true)}
+                          onBlur={() => {
+                             setTimeout(() => setShowDropdown(false), 200); // delay to allow click on dropdown
+                             if (!trendingSearchText) setShowTrendingSearchInput(false);
+                          }}
+                          className="text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold border border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-600 w-32 sm:w-40 shadow-sm text-blue-900 bg-white"
+                        />
+                        {showDropdown && filteredDropdownAreas.length > 0 && (
+                          <div className="absolute top-full mt-1 left-0 w-48 bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden z-50 max-h-40 overflow-y-auto">
+                            {filteredDropdownAreas.map((area, idx) => (
+                               <div 
+                                 key={idx} 
+                                 className="px-3 py-2 text-xs text-gray-700 hover:bg-blue-50 cursor-pointer font-medium border-b border-gray-100 last:border-0"
+                                 onClick={() => {
+                                    setTrendingSearchText(area);
+                                    setTrendingFilter('search');
+                                    setShowDropdown(false);
+                                 }}
+                               >
+                                 {area}
+                               </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                    ) : (
                      <button 
                         onClick={() => {
                           setTrendingFilter('search');
                           setShowTrendingSearchInput(true);
+                          setShowDropdown(true);
                         }}
                         className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-bold border transition-colors shadow-sm ${trendingFilter === 'search' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'}`}
                      >
