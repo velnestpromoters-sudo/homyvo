@@ -259,52 +259,53 @@ export default function HomeListPage() {
 
         {/* 5. TRENDING NOW */}
         <section className="bg-blue-50 -mx-4 px-4 py-6 border-y border-blue-100 shadow-inner my-2 relative overflow-hidden">
-          {/* Slanted Red Corner Ribbon (3D Folded Style + Classic Serif Font) */}
-          <svg viewBox="0 0 200 200" className="absolute top-0 right-0 w-[110px] h-[110px] pointer-events-none z-10 drop-shadow-lg">
+          {/* Photorealistic 3D Folded Corner Ribbon */}
+          <svg viewBox="0 0 100 100" className="absolute top-0 right-0 w-[140px] h-[140px] pointer-events-none z-10 drop-shadow-xl">
             <defs>
-              <linearGradient id="ribbon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ff1a1a" />
-                <stop offset="40%" stopColor="#d10000" />
-                <stop offset="100%" stopColor="#8a0000" />
+              <linearGradient id="bg-red" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#800000" />
+                <stop offset="100%" stopColor="#cc0000" />
               </linearGradient>
-              <linearGradient id="fold-highlight" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="35%" stopColor="#ffffff" stopOpacity="0" />
-                <stop offset="48%" stopColor="#ffffff" stopOpacity="0.8" />
-                <stop offset="52%" stopColor="#ffffff" stopOpacity="0.9" />
-                <stop offset="65%" stopColor="#ffffff" stopOpacity="0" />
+              <linearGradient id="fold-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#b30000" />
+                <stop offset="35%" stopColor="#ff3333" />
+                <stop offset="50%" stopColor="#ffffff" />
+                <stop offset="65%" stopColor="#ff3333" />
+                <stop offset="100%" stopColor="#b30000" />
               </linearGradient>
-              <filter id="shadow">
-                <feDropShadow dx="1" dy="2" stdDeviation="2" floodOpacity="0.6"/>
+              <filter id="fold-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="-1" dy="1" stdDeviation="1.5" floodColor="#000" floodOpacity="0.6"/>
               </filter>
             </defs>
             
-            {/* Main Red Concave Shape */}
-            <path d="M 0 0 L 200 0 L 200 200 Q 110 110 0 0 Z" fill="url(#ribbon-grad)" />
+            {/* Main Background Triangle (Concave Inner Edge) */}
+            <path d="M 0 0 L 100 0 L 100 100 Q 60 40 0 0 Z" fill="url(#bg-red)" />
             
-            {/* 3D Fold Highlight over the curve */}
-            <path d="M 0 0 Q 110 110 200 200 Q 120 100 0 0 Z" fill="url(#fold-highlight)" />
+            {/* The 3D Peeling Fold (Crescent Flap) */}
+            <path d="M 0 0 Q 60 40 100 100 Q 48 48 0 0 Z" fill="url(#fold-glow)" filter="url(#fold-shadow)" />
             
-            {/* White Border Effect on the edge */}
-            <path d="M 0 0 Q 110 110 200 200" fill="none" stroke="white" strokeWidth="3" strokeOpacity="0.8" />
+            {/* Crisp white inner edge to simulate paper thickness */}
+            <path d="M 0 0 Q 48 48 100 100" fill="none" stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.9" />
 
-            {/* Classic Serif 'HOT' Text */}
+            {/* Classic Prestige Serif 'HOT' Text */}
             <text 
-               x="135" y="70" 
-               fontFamily='"Times New Roman", Georgia, serif' 
-               fontSize="38" 
-               fontWeight="900" 
+               x="74" y="26" 
+               fontFamily='"Times New Roman", Times, serif' 
+               fontSize="20" 
+               fontWeight="bold" 
                fontStyle="italic"
                fill="#ffffff" 
-               transform="rotate(45 135 70)" 
+               transform="rotate(45 74 26)" 
                textAnchor="middle" 
-               letterSpacing="4" 
-               filter="url(#shadow)"
+               dominantBaseline="middle"
+               letterSpacing="1.5" 
+               style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}
             >
               HOT
             </text>
           </svg>
           
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between relative z-20">
             <div>
                <h2 className="text-xl font-black text-blue-900 flex items-center gap-2">
                    <Star className="w-5 h-5 text-blue-600 fill-blue-600" />
@@ -312,9 +313,8 @@ export default function HomeListPage() {
                </h2>
                <p className="text-sm text-blue-700/80 font-medium">Most popular places in Tamil Nadu</p>
             </div>
-            {/* Old HOT pill removed */}
           </div>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 snap-x min-h-[150px]">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 snap-x min-h-[150px] relative z-20">
              {isLoading ? (
                <div className="w-full flex justify-center py-4">
                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
