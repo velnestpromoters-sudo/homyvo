@@ -48,19 +48,54 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     
     setIsProcessingPayment(true);
     try {
-      const res = await fetch("http://localhost:5000/api/payment/create-unlock-payment", {
-        method: "POST",
-        body: JSON.stringify({ email: user?.email || "tenant@homyvo.com", propertyId: id }),
-        headers: { "Content-Type": "application/json" }
-      });
-
-      const data = await res.json();
-      if (data.url) {
-         window.location.href = data.url;
-      } else {
-         alert("Payment setup failed. Please try again.");
+      const orderRes = await fetch('/api/payment/create-access', { method: 'POST' });
+      const orderData = await orderRes.json();
+      
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mock_id',
+        amount: orderData.amount,
+        currency: 'INR',
+        name: 'Homyvo Property Access',
+        description: 'Unlock Owner Contact Details',
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          const verifyRes = await fetch('/api/payment/verify-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              propertyId: id,
+              userId: user?._id
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            setPaymentUnlocked(true);
+            setAccess('full');
+            const refreshed = await api.get(`/properties/${id}`);
+            if (refreshed.data.success) {
+               setProperty(refreshed.data.data);
+            }
+          } else {
+             alert('Payment verification failed');
+          }
+          setIsProcessingPayment(false);
+        },
+        prefill: {
+          name: user?.name || 'Tenant',
+          contact: '9999999999'
+        },
+        theme: { color: '#801786' }
+      };
+      
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any){
+         alert("Payment Failed! " + response.error.description);
          setIsProcessingPayment(false);
-      }
+      });
+      rzp.open();
     } catch (err) {
       console.error(err);
       alert("Payment initialization error");

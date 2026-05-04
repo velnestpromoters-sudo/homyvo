@@ -57,22 +57,53 @@ export default function Step5() {
        if (data.success) {
            const propertyId = data.data._id;
            
-           // INSTAMOJO ₹500 FLOW
-           const userEmail = useAuthStore.getState().user?.email || "owner@homyvo.com";
-           const orderRes = await fetch('http://localhost:5000/api/payment/create-listing-payment', { 
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ email: userEmail, propertyId })
-           });
+           // RAZORPAY ₹199 FLOW
+           const orderRes = await fetch('/api/payment/create-listing', { method: 'POST' });
            const orderData = await orderRes.json();
            
-           if (orderData.url) {
-               formState.resetForm();
-               window.location.href = orderData.url;
-           } else {
-               alert("Payment setup failed. Property saved but inactive.");
-               router.push('/owner/dashboard');
-           }
+           const options = {
+             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mock_id',
+             amount: orderData.amount,
+             currency: 'INR',
+             name: 'Homyvo Property Listing',
+             description: 'One-time ₹199 publishing fee',
+             order_id: orderData.id,
+             handler: async function (response: any) {
+               const verifyRes = await fetch('/api/payment/verify-listing', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    propertyId
+                 })
+               });
+               
+               const verifyData = await verifyRes.json();
+               
+               if (verifyData.success) {
+                 formState.resetForm();
+                 alert("Property published and activated successfully!");
+                 router.push('/owner/dashboard');
+               } else {
+                 alert("Payment Verification Failed in Backend! " + (verifyData.message || "Invalid signature."));
+                 setIsSubmitting(false);
+               }
+             },
+             prefill: {
+               name: 'Owner',
+               contact: '9999999999'
+             },
+             theme: { color: '#801786' }
+           };
+           
+           const rzp = new (window as any).Razorpay(options);
+           rzp.on('payment.failed', function (response: any){
+              alert("Payment Failed! Property saved but inactive. " + response.error.description);
+              router.push('/owner/dashboard');
+           });
+           rzp.open();
 
        } else {
            alert("Failed to create property. " + (data.error || data.message || "Unknown error"));
