@@ -354,7 +354,7 @@ export default function HomeListPage() {
         {/* 4. CATEGORY CARDS */}
         <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4 px-2 md:px-4">
           <div 
-            onClick={() => router.push('/home?category=student')}
+            onClick={() => router.push('/search?queryText=pg+bachelor')}
             className="rounded-xl bg-white p-2.5 md:p-3 flex flex-col md:flex-row items-start md:items-center gap-2.5 md:gap-3 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group"
           >
             <div className="bg-purple-50 p-2 rounded-lg group-hover:scale-110 transition-transform duration-300 shrink-0">
@@ -366,7 +366,7 @@ export default function HomeListPage() {
             </div>
           </div>
           <div 
-             onClick={() => router.push('/home?category=family')}
+             onClick={() => router.push('/search?queryText=family+apartment')}
              className="rounded-xl bg-white p-2.5 md:p-3 flex flex-col md:flex-row items-start md:items-center gap-2.5 md:gap-3 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group"
           >
              <div className="bg-indigo-50 p-2 rounded-lg group-hover:scale-110 transition-transform duration-300 shrink-0">

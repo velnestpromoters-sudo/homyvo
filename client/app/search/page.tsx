@@ -19,6 +19,16 @@ export default function SearchPage() {
   const [localFilters, setLocalFilters] = useState({ type: 'all', sort: 'none' });
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+     if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('queryText');
+        if (q) {
+           setSearchQuery(q);
+        }
+     }
+  }, []);
+
   const filteredResults = React.useMemo(() => {
       let res = [...searchResults];
       if (localFilters.type === 'pg') res = res.filter(r => r.propertyType === 'pg');
