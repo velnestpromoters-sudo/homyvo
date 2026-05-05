@@ -19,12 +19,19 @@ export default function CategoryPage() {
     const fetchCategoryProperties = async () => {
       setIsLoading(true);
       try {
-        // Use the search API we built to perfectly match these intents
-        const queryText = type === 'student' ? 'pg bachelor' : 'family apartment';
-        const res = await fetch(`/api/properties/search?queryText=${encodeURIComponent(queryText)}&_t=${Date.now()}`);
+        const res = await fetch(`/api/properties`);
         const data = await res.json();
         if (data.success && data.data) {
-          setProperties(data.data);
+           const fetched = data.data;
+           const filtered = fetched.filter((p: any) => {
+              const isPg = p.propertyType === 'pg';
+              if (type === 'student') {
+                 return p.preferences?.bachelorAllowed || isPg;
+              } else {
+                 return !(p.preferences?.bachelorAllowed || isPg);
+              }
+           });
+           setProperties(filtered);
         }
       } catch (err) {
         console.error("Failed to fetch category properties:", err);
