@@ -15,9 +15,19 @@ export default function SearchPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(false); // Used for the local results filter now
+  const [localFilters, setLocalFilters] = useState({ type: 'all', sort: 'none' });
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
+  const filteredResults = React.useMemo(() => {
+      let res = [...searchResults];
+      if (localFilters.type === 'pg') res = res.filter(r => r.propertyType === 'pg');
+      if (localFilters.type === 'apartment') res = res.filter(r => r.propertyType === 'apartment');
+      
+      if (localFilters.sort === 'price_low') res.sort((a,b) => a.rent - b.rent);
+      if (localFilters.sort === 'price_high') res.sort((a,b) => b.rent - a.rent);
+      return res;
+  }, [searchResults, localFilters]);
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
@@ -201,24 +211,16 @@ export default function SearchPage() {
             className="w-full bg-slate-100 placeholder:text-slate-400 text-slate-900 font-bold tracking-tight text-[14px] pl-5 pr-20 py-3.5 rounded-full outline-none focus:ring-2 focus:ring-[#801786]/20 focus:bg-white border border-transparent focus:border-[#801786] transition-all shadow-inner"
             onFocus={() => setShowSuggestions(true)}
           />
-          <div className="absolute right-3 flex items-center gap-1">
-             <button 
-                onClick={() => { setShowFilters(!showFilters); setShowSuggestions(false); }} 
-                className={`p-1.5 rounded-full transition-colors ${showFilters ? 'text-[#801786] bg-[#801786]/10' : 'text-slate-400 hover:text-[#801786] hover:bg-[#801786]/10'}`}
-             >
-                <SlidersHorizontal className="w-5 h-5" />
-             </button>
-             <div className="w-8 h-8 flex items-center justify-center pointer-events-none">
-                {isSearching ? (
-                    <div className="w-4 h-4 border-2 border-slate-300 border-t-[#801786] rounded-full animate-spin"></div>
-                ) : (
-                    <SearchLucide className="w-4 h-4 text-slate-400" />
-                )}
-             </div>
+          <div className="absolute right-4 pointer-events-none">
+            {isSearching ? (
+                <div className="w-5 h-5 border-2 border-slate-300 border-t-[#801786] rounded-full animate-spin"></div>
+            ) : (
+                <SearchLucide className="w-5 h-5 text-slate-400" />
+            )}
           </div>
           
           {/* Predictive Google-Styled Dropdown */}
-          {showSuggestions && suggestions.length > 0 && searchQuery.trim().length > 0 && !showFilters && (
+          {showSuggestions && suggestions.length > 0 && searchQuery.trim().length > 0 && (
              <div className="absolute top-[110%] left-0 right-0 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-1 duration-200">
                 <div className="max-h-[50vh] overflow-y-auto overscroll-contain">
                    {suggestions.map((sug, i) => (
@@ -238,43 +240,7 @@ export default function SearchPage() {
              </div>
           )}
 
-          {/* Advanced Filters Panel */}
-          {showFilters && (
-             <div className="absolute top-[110%] left-0 right-0 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-[100] animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="flex justify-between items-center mb-3">
-                   <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                      <SlidersHorizontal className="w-4 h-4 text-[#801786]" />
-                      Advanced Filters
-                   </h3>
-                   <button onClick={() => setShowFilters(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase">Close</button>
-                </div>
-                <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                   You can naturally type your filters! Our AI search engine understands phrases like:
-                   <br/><span className="font-mono text-[#801786] bg-[#801786]/5 px-1 py-0.5 rounded mt-1 inline-block">"boys pg near kalapatti under 6000"</span>
-                </p>
-                <div className="space-y-3">
-                   <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Quick Appends</p>
-                      <div className="flex flex-wrap gap-2">
-                         {['under 5000', 'under 10000', 'boys pg', 'girls pg', 'family'].map(f => (
-                            <button 
-                               key={f}
-                               onClick={() => {
-                                  const current = searchQuery.trim();
-                                  if (!current.toLowerCase().includes(f)) {
-                                     setSearchQuery(current ? `${current} ${f}` : f);
-                                  }
-                               }}
-                               className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors"
-                            >
-                               + {f}
-                            </button>
-                         ))}
-                      </div>
-                   </div>
-                </div>
-             </div>
-          )}
+
         </div>
 
         <button 
@@ -296,14 +262,51 @@ export default function SearchPage() {
                  <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider">
                     {searchResults.length} Results Found
                  </h2>
-                 <button className="flex items-center gap-1.5 text-xs font-bold text-[#801786] bg-[#801786]/10 px-3 py-1.5 rounded-full">
-                    <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
-                 </button>
+                 <div className="relative">
+                    <button 
+                       onClick={() => setShowFilters(!showFilters)}
+                       className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${showFilters ? 'text-white bg-[#801786]' : 'text-[#801786] bg-[#801786]/10 hover:bg-[#801786]/20'}`}
+                    >
+                       <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
+                    </button>
+                    {showFilters && (
+                       <div className="absolute right-0 top-[120%] mt-1 w-56 bg-white border border-slate-200 shadow-xl rounded-xl p-3 z-50 animate-in fade-in slide-in-from-top-1">
+                          <div className="mb-3">
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Property Type</p>
+                             <div className="flex flex-wrap gap-1.5">
+                               {['all', 'pg', 'apartment'].map(t => (
+                                  <button 
+                                     key={t}
+                                     onClick={() => setLocalFilters(prev => ({...prev, type: t}))}
+                                     className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-colors ${localFilters.type === t ? 'bg-[#801786] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                  >
+                                     {t}
+                                  </button>
+                               ))}
+                             </div>
+                          </div>
+                          <div>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sort by Rent</p>
+                             <div className="flex flex-col gap-1">
+                               {[{val: 'none', label: 'Recommended'}, {val: 'price_low', label: 'Price: Low to High'}, {val: 'price_high', label: 'Price: High to Low'}].map(s => (
+                                  <button 
+                                     key={s.val}
+                                     onClick={() => setLocalFilters(prev => ({...prev, sort: s.val}))}
+                                     className={`text-left px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${localFilters.sort === s.val ? 'bg-[#801786]/10 text-[#801786]' : 'text-slate-600 hover:bg-slate-50'}`}
+                                  >
+                                     {s.label}
+                                  </button>
+                               ))}
+                             </div>
+                          </div>
+                       </div>
+                    )}
+                 </div>
               </div>
 
               {searchResults.length > 0 ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {searchResults.map((item) => (
+                    {filteredResults.map((item) => (
                        <PropertyCard 
                           key={item._id}
                           id={item._id}
