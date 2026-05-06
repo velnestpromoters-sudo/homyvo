@@ -203,12 +203,6 @@ export default function HomeListPage() {
     let filtered = [...allRawProperties];
     const now = new Date().getTime();
 
-    // Only include actively boosted properties OR organically trending properties (>0 views)
-    filtered = filtered.filter(p => {
-       const isBoosted = p.boostExpiresAt && new Date(p.boostExpiresAt).getTime() > now;
-       return isBoosted || (p.views && p.views > 0);
-    });
-
     const sortByTrendingScore = (a: any, b: any) => {
        const aBoosted = a.boostExpiresAt && new Date(a.boostExpiresAt).getTime() > now ? 1 : 0;
        const bBoosted = b.boostExpiresAt && new Date(b.boostExpiresAt).getTime() > now ? 1 : 0;
@@ -217,6 +211,11 @@ export default function HomeListPage() {
     };
 
     if (trendingFilter === 'allover') {
+      // Only include actively boosted properties OR organically trending properties (>0 views)
+      filtered = filtered.filter(p => {
+         const isBoosted = p.boostExpiresAt && new Date(p.boostExpiresAt).getTime() > now;
+         return isBoosted || (p.views && p.views > 0);
+      });
       filtered.sort(sortByTrendingScore);
       filtered = filtered.slice(0, 15);
     } 
