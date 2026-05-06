@@ -130,6 +130,15 @@ export default function HomeListPage() {
             const isPg = p.propertyType === 'pg';
             const typeStr = isPg ? 'PG' : (p.bhkType || 'Apartment');
             
+            const extractCoords = (link: string) => {
+              if (!link) return null;
+              const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+              if (match) return [parseFloat(match[2]), parseFloat(match[1])];
+              const matchQ = link.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+              if (matchQ) return [parseFloat(matchQ[2]), parseFloat(matchQ[1])];
+              return null;
+            };
+            
             const cardData = {
               _id: p._id,
               title: `${p.location?.area || 'Unknown Area'}, ${p.location?.city || ''}`,
@@ -137,7 +146,7 @@ export default function HomeListPage() {
               price: `₹${p.rent?.toLocaleString()}`,
               rating: (Math.random() * (5 - 4.2) + 4.2).toFixed(1), // Visual placeholder rating
               img: p.images?.[0] || 'https://picsum.photos/id/1018/400/300',
-              coordinates: p.location?.coordinates || null,
+              coordinates: p.location?.coordinates?.coordinates || extractCoords(p.location?.googleMapLink) || null,
               views: p.uniqueViewers?.length || 0,
               boostExpiresAt: p.boostExpiresAt
             };
