@@ -203,6 +203,12 @@ export default function HomeListPage() {
     let filtered = [...allRawProperties];
     const now = new Date().getTime();
 
+    // Only include actively boosted properties OR organically trending properties (>0 views)
+    filtered = filtered.filter(p => {
+       const isBoosted = p.boostExpiresAt && new Date(p.boostExpiresAt).getTime() > now;
+       return isBoosted || (p.views && p.views > 0);
+    });
+
     const sortByTrendingScore = (a: any, b: any) => {
        const aBoosted = a.boostExpiresAt && new Date(a.boostExpiresAt).getTime() > now ? 1 : 0;
        const bBoosted = b.boostExpiresAt && new Date(b.boostExpiresAt).getTime() > now ? 1 : 0;
@@ -381,35 +387,7 @@ export default function HomeListPage() {
 
         {/* 5. TRENDING NOW */}
         <section className="bg-blue-50 -mx-4 px-4 py-6 border-y border-blue-100 shadow-inner my-2 relative z-30">
-          {/* Photorealistic 3D Folded Corner Ribbon */}
-          <svg viewBox="0 0 100 100" className="absolute top-0 right-0 w-[140px] h-[140px] pointer-events-none z-10 drop-shadow-xl">
-            <defs>
-              <linearGradient id="bg-red" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#800000" />
-                <stop offset="100%" stopColor="#cc0000" />
-              </linearGradient>
-              <linearGradient id="fold-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#b30000" />
-                <stop offset="35%" stopColor="#ff3333" />
-                <stop offset="50%" stopColor="#ffffff" />
-                <stop offset="65%" stopColor="#ff3333" />
-                <stop offset="100%" stopColor="#b30000" />
-              </linearGradient>
-              <filter id="fold-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="-1" dy="1" stdDeviation="1.5" floodColor="#000" floodOpacity="0.6"/>
-              </filter>
-            </defs>
-            
-            {/* Main Background Triangle (Concave Inner Edge) */}
-            <path d="M 0 0 L 100 0 L 100 100 Q 60 40 0 0 Z" fill="url(#bg-red)" />
-            
-            {/* The 3D Peeling Fold (Crescent Flap) */}
-            <path d="M 0 0 Q 60 40 100 100 Q 48 48 0 0 Z" fill="url(#fold-glow)" filter="url(#fold-shadow)" />
-            
-            {/* Crisp white inner edge to simulate paper thickness */}
-            <path d="M 0 0 Q 48 48 100 100" fill="none" stroke="#ffffff" strokeWidth="0.5" strokeOpacity="0.9" />
-          </svg>
-          
+
           <div className="mb-4 flex flex-col items-start justify-between relative z-50">
             <div>
                <h2 className="text-xl font-black text-blue-900 flex items-center gap-2">
