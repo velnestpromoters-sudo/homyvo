@@ -56,55 +56,10 @@ export default function Step5() {
        const data = await res.json();
        if (data.success) {
            const propertyId = data.data._id;
-           
-           // RAZORPAY ₹199 FLOW
-           const orderRes = await fetch('/api/payment/create-listing', { method: 'POST' });
-           const orderData = await orderRes.json();
-           
-           const options = {
-             key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mock_id',
-             amount: orderData.amount,
-             currency: 'INR',
-             name: 'Homyvo Property Listing',
-             description: 'One-time ₹199 publishing fee',
-             order_id: orderData.id,
-             handler: async function (response: any) {
-               const verifyRes = await fetch('/api/payment/verify-listing', {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
-                 body: JSON.stringify({
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_signature: response.razorpay_signature,
-                    propertyId
-                 })
-               });
-               
-               const verifyData = await verifyRes.json();
-               
-               if (verifyData.success) {
-                 formState.resetForm();
-                 alert("Property published and activated successfully!");
-                 router.push('/owner/dashboard');
-               } else {
-                 alert("Payment Verification Failed in Backend! " + (verifyData.message || "Invalid signature."));
-                 setIsSubmitting(false);
-               }
-             },
-             prefill: {
-               name: 'Owner',
-               contact: '9999999999'
-             },
-             theme: { color: '#801786' }
-           };
-           
-           const rzp = new (window as any).Razorpay(options);
-           rzp.on('payment.failed', function (response: any){
-              alert("Payment Failed! Property saved but inactive. " + response.error.description);
-              router.push('/owner/dashboard');
-           });
-           rzp.open();
-
+           // TEMPORARY: FREE LISTING BYPASS
+           formState.resetForm();
+           alert("Property published successfully! Your first 3 months are completely free!");
+           router.push('/owner/dashboard');
        } else {
            alert("Failed to create property. " + (data.error || data.message || "Unknown error"));
        }
@@ -120,6 +75,14 @@ export default function Step5() {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
        <h2 className="text-2xl font-black text-gray-900 mb-1">Verify & Publish</h2>
        <p className="text-sm text-gray-500 mb-6">Review terms and publish your home.</p>
+
+       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-4 rounded-xl shadow-sm text-white mb-6 flex items-center justify-between">
+           <div>
+               <h3 className="font-bold text-lg flex items-center gap-2">🎉 Special Offer Applied!</h3>
+               <p className="text-sm opacity-95 font-medium">Your first 3 months of listing are completely FREE. No payment required today.</p>
+           </div>
+           <div className="font-black text-2xl line-through opacity-70">₹199</div>
+       </div>
 
        <div className="bg-white border rounded-xl p-5 shadow-sm text-sm space-y-4 mb-6">
            <div className="flex justify-between border-b pb-3">

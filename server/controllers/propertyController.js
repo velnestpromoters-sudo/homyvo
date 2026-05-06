@@ -230,6 +230,8 @@ exports.createProperty = async (req, res) => {
       tenantNotes: req.body.tenantNotes || '',
       images: imageUrls,
       ownerId: req.user._id,
+      isActive: true, // TEMPORARY: Free listing offer
+      listingPaymentStatus: "paid", // TEMPORARY: Free listing offer
     });
 
     res.status(201).json({ success: true, data: newProperty });
