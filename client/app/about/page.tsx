@@ -246,9 +246,9 @@ export default function AboutPage() {
                     <AtSign className="w-5 h-5 text-purple-400" />
                     <span className="font-semibold tracking-wide">@homyvo</span>
                  </a>
-                 <a href="#" className="flex items-center gap-3 text-[#D1D5DB] hover:text-white transition-colors w-full bg-white/5 border border-white/5 p-4 rounded-2xl hover:bg-white/10 active:scale-95">
+                 <a href="tel:+916369269611" className="flex items-center gap-3 text-[#D1D5DB] hover:text-white transition-colors w-full bg-white/5 border border-white/5 p-4 rounded-2xl hover:bg-white/10 active:scale-95">
                     <Phone className="w-5 h-5 text-emerald-400" />
-                    <span className="font-semibold tracking-wide">+91 XXXXXXXXXX</span>
+                    <span className="font-semibold tracking-wide">+91 63692 69611</span>
                  </a>
                  <a href="mailto:velnestpromoters@gmail.com" className="flex items-center gap-3 text-[#D1D5DB] hover:text-white transition-colors w-full bg-white/5 border border-white/5 p-4 rounded-2xl hover:bg-white/10 active:scale-95">
                     <Mail className="w-5 h-5 text-blue-400" />
