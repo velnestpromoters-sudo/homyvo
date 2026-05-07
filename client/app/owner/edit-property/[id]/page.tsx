@@ -28,7 +28,13 @@ export default function EditPropertyPage() {
      areaSqft: '',
      propertyAge: '',
      highlights: [] as string[],
-     contactNumbers: { primary: '', alternate: '' }
+     contactNumbers: { primary: '', alternate: '' },
+     location: {
+       address: '',
+       area: '',
+       city: '',
+       googleMapLink: ''
+     }
   });
 
   useEffect(() => {
@@ -56,7 +62,8 @@ export default function EditPropertyPage() {
               areaSqft: p.areaSqft || '',
               propertyAge: p.propertyAge || '',
               highlights: p.highlights || [],
-              contactNumbers: p.contactNumbers || { primary: '', alternate: '' }
+              contactNumbers: p.contactNumbers || { primary: '', alternate: '' },
+              location: p.location || { address: '', area: '', city: '', googleMapLink: '' }
            });
         } else {
            alert("Failed to load property.");
@@ -136,6 +143,49 @@ export default function EditPropertyPage() {
                   onChange={e => setFormData({...formData, title: e.target.value})}
                   className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
                />
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4">
+               <h3 className="font-bold text-gray-800 border-b pb-2">Location Details</h3>
+               <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Complete Address</label>
+                  <textarea 
+                     rows={2} required
+                     value={formData.location.address}
+                     onChange={e => setFormData({...formData, location: {...formData.location, address: e.target.value}})}
+                     className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
+                  />
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-2">Area / Locality</label>
+                     <input 
+                        type="text" required
+                        value={formData.location.area}
+                        onChange={e => setFormData({...formData, location: {...formData.location, area: e.target.value}})}
+                        className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
+                     />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-2">City</label>
+                     <input 
+                        type="text" required
+                        value={formData.location.city}
+                        onChange={e => setFormData({...formData, location: {...formData.location, city: e.target.value}})}
+                        className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
+                     />
+                  </div>
+               </div>
+               <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Google Maps Link</label>
+                  <input 
+                     type="url"
+                     value={formData.location.googleMapLink}
+                     onChange={e => setFormData({...formData, location: {...formData.location, googleMapLink: e.target.value}})}
+                     placeholder="https://maps.google.com/..."
+                     className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
+                  />
+               </div>
             </div>
 
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-2 gap-4">

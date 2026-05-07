@@ -370,6 +370,10 @@ exports.updateProperty = async (req, res) => {
           property.contactNumbers = { ...property.contactNumbers, ...req.body.contactNumbers };
           property.markModified('contactNumbers');
       }
+      if (req.body.location) {
+          property.location = { ...property.location, ...req.body.location };
+          property.markModified('location');
+      }
 
       await property.save();
       res.status(200).json({ success: true, data: property });

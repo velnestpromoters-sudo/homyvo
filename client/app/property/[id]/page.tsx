@@ -366,10 +366,24 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
              <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-4">
                  <p className="font-extrabold text-[#111111] text-lg mb-1">{property.ownerId?.name || 'Verified Owner'}</p>
                  <p className="text-sm text-[#666666] mb-4">Owner of {property.title}</p>
-                 <p className="font-bold text-[#111111] text-xl tracking-wider mb-2">
-                    {property.ownerId?.mobile || '+91 98XXX XXXXX'}
-                 </p>
-                 <p className="text-xs text-green-600 font-bold flex items-center gap-1">
+                 
+                 <div className="mb-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Primary Mobile</p>
+                    <p className="font-bold text-[#111111] text-xl tracking-wider">
+                       {property.contactNumbers?.primary || property.ownerId?.mobile || '+91 98XXX XXXXX'}
+                    </p>
+                 </div>
+
+                 {property.contactNumbers?.alternate && (
+                    <div className="mb-2 mt-3">
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Alternate Mobile</p>
+                       <p className="font-bold text-[#111111] text-lg tracking-wider">
+                          {property.contactNumbers.alternate}
+                       </p>
+                    </div>
+                 )}
+
+                 <p className="text-xs text-green-600 font-bold flex items-center gap-1 mt-4">
                     <Check className="w-3.5 h-3.5" /> Mobile Number Verified
                  </p>
              </div>

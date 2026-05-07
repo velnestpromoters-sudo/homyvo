@@ -128,7 +128,8 @@ export default function HomeListPage() {
 
           fetched.forEach((p: any) => {
             const isPg = p.propertyType === 'pg';
-            const typeStr = isPg ? 'PG' : (p.bhkType || 'Apartment');
+            const pgGender = p.pgDetails?.gender ? ` (${p.pgDetails.gender.toUpperCase()})` : '';
+            const typeStr = isPg ? `PG${pgGender}` : (p.bhkType || 'Apartment');
             
             const extractCoords = (link: string) => {
               if (!link) return null;
