@@ -141,7 +141,8 @@ export default function HomeListPage() {
             
             const cardData = {
               _id: p._id,
-              title: `${p.location?.area || 'Unknown Area'}, ${p.location?.city || ''}`,
+              title: p.title || 'Untitled Property',
+              location: `${p.location?.area || 'Unknown Area'}, ${p.location?.city || ''}`,
               type: typeStr,
               price: `₹${p.rent?.toLocaleString()}`,
               rating: (Math.random() * (5 - 4.2) + 4.2).toFixed(1), // Visual placeholder rating
@@ -603,10 +604,10 @@ function HorizontalScrollCards({ items, router }: { items: any[], router: any })
                <Heart className={`w-4 h-4 ${wishlist.some(w => w._id === item._id) ? 'fill-[#ec38b7] text-[#ec38b7]' : 'text-slate-400'}`} />
             </button>
           </div>
-          <div className="mb-0.5">
-            <h3 className="font-semibold text-[#111827] text-sm leading-tight">{item.title}</h3>
+          <div className="mb-0.5 truncate pr-2">
+            <h3 className="font-semibold text-[#111827] text-sm leading-tight truncate">{item.title}</h3>
           </div>
-          <p className="text-sm text-[#6B7280] mb-1">{item.type}</p>
+          <p className="text-xs text-[#6B7280] mb-1 truncate">{item.location} • {item.type}</p>
           <p className="text-sm font-semibold text-[#111827]">
             {item.price} <span className="font-normal text-[#6B7280]">/ month</span>
           </p>
