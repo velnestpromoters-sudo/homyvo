@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, PhoneCall } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 
 export default function SupportBall() {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { user } = useAuthStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleDragEnd = (event: any, info: any) => {
     // If the user drags a lot, don't trigger a click
@@ -32,12 +37,12 @@ export default function SupportBall() {
     <>
       <motion.div
         drag
-        dragConstraints={{ left: -window.innerWidth + 80, right: 0, top: -window.innerHeight + 80, bottom: 0 }}
+        dragConstraints={mounted ? { left: -window.innerWidth + 80, right: 0, top: -window.innerHeight + 80, bottom: 0 } : { left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={0.1}
         dragMomentum={false}
         onDragEnd={handleDragEnd}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-[90px] right-6 z-[999] w-14 h-14 bg-[#ec38b7] rounded-full shadow-[0_4px_20px_rgba(236,56,183,0.5)] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+        className={`fixed bottom-[90px] right-6 z-[999] w-14 h-14 bg-[#ec38b7] rounded-full shadow-[0_4px_20px_rgba(236,56,183,0.5)] flex items-center justify-center cursor-pointer active:scale-95 transition-transform ${mounted ? 'visible' : 'invisible'}`}
         whileTap={{ scale: 0.9 }}
       >
         <MessageCircle className="w-7 h-7 text-white" />
