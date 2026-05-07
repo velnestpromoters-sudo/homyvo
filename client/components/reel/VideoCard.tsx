@@ -210,7 +210,7 @@ export default function VideoCard({
         
         {/* Title / Rent / Sharing */}
         <h2 className="text-white text-3xl font-black mb-1 drop-shadow-md flex items-end gap-2">
-          {isPg && <span className="text-[#ec38b7] text-2xl tracking-tight">PG • {bestPgSharingStr}</span>}
+          {isPg && <span className="text-white text-2xl tracking-tight">PG • {bestPgSharingStr}</span>}
           {!isPg && <>₹{rent.toLocaleString()} <span className="text-lg text-white/80 font-semibold mb-0.5">/mo</span></>}
         </h2>
         
