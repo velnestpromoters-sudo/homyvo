@@ -611,10 +611,10 @@ function HorizontalScrollCards({ items, router }: { items: any[], router: any })
           <div className="flex items-center gap-1.5 text-xs text-[#6B7280] mb-1.5 overflow-hidden">
              <span className="truncate flex-1">{item.location}</span>
              <span className={`shrink-0 font-extrabold text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm border ${
-                 item.type.includes('BOYS') ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                 item.type.includes('GIRLS') ? 'bg-pink-50 text-pink-700 border-pink-200' :
-                 item.type.includes('CO-LIVING') ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                 'bg-slate-50 text-slate-700 border-slate-200'
+                 item.type.includes('BOYS') ? 'bg-blue-600 text-white border-blue-700' :
+                 item.type.includes('GIRLS') ? 'bg-[#ec38b7] text-white border-pink-600' :
+                 item.type.includes('CO-LIVING') ? 'bg-purple-600 text-white border-purple-700' :
+                 'bg-slate-700 text-white border-slate-800'
              }`}>
                 {item.type}
              </span>
