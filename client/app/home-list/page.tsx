@@ -608,7 +608,17 @@ function HorizontalScrollCards({ items, router }: { items: any[], router: any })
           <div className="mb-0.5 truncate pr-2">
             <h3 className="font-semibold text-[#111827] text-sm leading-tight truncate">{item.title}</h3>
           </div>
-          <p className="text-xs text-[#6B7280] mb-1 truncate">{item.location} • {item.type}</p>
+          <div className="flex items-center gap-1.5 text-xs text-[#6B7280] mb-1.5 overflow-hidden">
+             <span className="truncate flex-1">{item.location}</span>
+             <span className={`shrink-0 font-extrabold text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm border ${
+                 item.type.includes('BOYS') ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                 item.type.includes('GIRLS') ? 'bg-pink-50 text-pink-700 border-pink-200' :
+                 item.type.includes('CO-LIVING') ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                 'bg-slate-50 text-slate-700 border-slate-200'
+             }`}>
+                {item.type}
+             </span>
+          </div>
           <p className="text-sm font-semibold text-[#111827]">
             {item.price} <span className="font-normal text-[#6B7280]">/ month</span>
           </p>
