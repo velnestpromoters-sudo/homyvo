@@ -28,7 +28,7 @@ export default function EditPropertyPage() {
      areaSqft: '',
      propertyAge: '',
      highlights: [] as string[],
-     contactNumbers: { primary: '', alternate: '' },
+     contactNumbers: { name: '', primary: '', alternate: '' },
      location: {
        address: '',
        area: '',
@@ -62,7 +62,7 @@ export default function EditPropertyPage() {
               areaSqft: p.areaSqft || '',
               propertyAge: p.propertyAge || '',
               highlights: p.highlights || [],
-              contactNumbers: p.contactNumbers || { primary: '', alternate: '' },
+              contactNumbers: p.contactNumbers || { name: '', primary: '', alternate: '' },
               location: p.location || { address: '', area: '', city: '', googleMapLink: '' }
            });
         } else {
