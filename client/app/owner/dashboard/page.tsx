@@ -300,7 +300,14 @@ export default function OwnerDashboard() {
                    {/* Bottom Overlaid Text Block */}
                    <div className="relative z-10 p-4 flex flex-col pb-5">
                       <p className="text-white text-xl font-black drop-shadow-md tracking-tight">₹{prop.rent.toLocaleString()}<span className="text-xs text-white/80 font-medium ml-0.5">/mo</span></p>
-                      <h4 className="font-bold text-white text-[15px] line-clamp-1 mt-1 drop-shadow-md">{prop.title}</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                         <h4 className="font-bold text-white text-[15px] line-clamp-1 drop-shadow-md">{prop.title}</h4>
+                         {prop.propertyType === 'pg' && prop.pgDetails?.gender && (
+                            <span className="text-[9px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-md px-1.5 py-0.5 rounded text-white shadow-sm border border-white/10 shrink-0">
+                               {prop.pgDetails.gender}
+                            </span>
+                         )}
+                      </div>
                       
                       <div className="flex items-center gap-1.5 mt-1.5">
                          <svg className="w-3.5 h-3.5 text-[#ec38b7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
