@@ -364,7 +364,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
          
          <div className={access === 'limited' && !paymentUnlocked ? 'blur-[5px] pointer-events-none select-none transition-all duration-500' : 'transition-all duration-500'}>
              <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 mb-4">
-                 <p className="font-extrabold text-[#111111] text-lg mb-1">{property.ownerId?.name || 'Verified Owner'}</p>
+                 <p className="font-extrabold text-[#111111] text-lg mb-1">{property.contactNumbers?.name || property.ownerId?.name || 'Verified Owner'}</p>
                  <p className="text-sm text-[#666666] mb-4">Owner of {property.title}</p>
                  
                  <div className="mb-2">

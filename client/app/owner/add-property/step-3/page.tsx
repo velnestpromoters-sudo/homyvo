@@ -119,6 +119,17 @@ export default function Step3() {
              <label className="block text-sm font-bold text-gray-800">Contact Details for this Property *</label>
              <div className="flex flex-col gap-3">
                 <div>
+                   <span className="text-xs font-bold text-gray-500 block mb-1">Contact Person Name *</span>
+                   <input 
+                      type="text"
+                      required
+                      placeholder="e.g. John Doe"
+                      value={contactNumbers.name || ''}
+                      onChange={(e) => updateContactNumbers('name', e.target.value)}
+                      className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-[#801786] outline-none"
+                   />
+                </div>
+                <div>
                    <span className="text-xs font-bold text-gray-500 block mb-1">Primary Mobile Number *</span>
                    <input 
                       type="tel"

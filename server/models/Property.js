@@ -55,6 +55,7 @@ const propertySchema = new mongoose.Schema({
   uniqueViewers: [{ type: String }],
   boostExpiresAt: { type: Date },
   contactNumbers: {
+    name: String,
     primary: String,
     alternate: String
   }

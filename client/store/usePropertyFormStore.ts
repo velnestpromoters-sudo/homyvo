@@ -24,6 +24,7 @@ interface PgDetailsData {
 }
 
 interface ContactNumbersData {
+  name: string;
   primary: string;
   alternate: string;
 }
@@ -81,7 +82,7 @@ const initialState = {
   furnishing: 'none',
   availability: 'immediate',
   availableFrom: '',
-  contactNumbers: { primary: '', alternate: '' },
+  contactNumbers: { name: '', primary: '', alternate: '' },
   images: []
 };
 

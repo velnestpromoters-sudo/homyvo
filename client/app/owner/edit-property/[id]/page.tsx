@@ -254,6 +254,15 @@ export default function EditPropertyPage() {
             </div>
 
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-2 gap-4">
+               <div className="col-span-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Contact Person Name</label>
+                  <input 
+                     type="text" required
+                     value={formData.contactNumbers.name}
+                     onChange={e => setFormData({...formData, contactNumbers: {...formData.contactNumbers, name: e.target.value}})}
+                     className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
+                  />
+               </div>
                <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Primary Mobile</label>
                   <input 
