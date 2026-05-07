@@ -6,7 +6,7 @@ import { usePropertyFormStore } from '@/store/usePropertyFormStore';
 
 export default function Step3() {
   const router = useRouter();
-  const { propertyType, pgDetails, preferences, updateField, updatePreference, updatePgDetails, amenities, furnishing, availability, availableFrom } = usePropertyFormStore();
+  const { propertyType, pgDetails, preferences, contactNumbers, updateField, updatePreference, updatePgDetails, updateContactNumbers, amenities, furnishing, availability, availableFrom } = usePropertyFormStore();
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +112,36 @@ export default function Step3() {
                    />
                 </div>
              )}
+          </div>
+
+          {/* CONTACT NUMBERS */}
+          <div className="bg-white p-5 border-2 rounded-xl flex flex-col shadow-sm gap-4">
+             <label className="block text-sm font-bold text-gray-800">Contact Details for this Property *</label>
+             <div className="flex flex-col gap-3">
+                <div>
+                   <span className="text-xs font-bold text-gray-500 block mb-1">Primary Mobile Number *</span>
+                   <input 
+                      type="tel"
+                      required
+                      pattern="[0-9]{10}"
+                      placeholder="e.g. 9876543210"
+                      value={contactNumbers.primary}
+                      onChange={(e) => updateContactNumbers('primary', e.target.value)}
+                      className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-[#801786] outline-none"
+                   />
+                </div>
+                <div>
+                   <span className="text-xs font-bold text-gray-500 block mb-1">Alternate Mobile Number (Optional)</span>
+                   <input 
+                      type="tel"
+                      pattern="[0-9]{10}"
+                      placeholder="e.g. 9123456780"
+                      value={contactNumbers.alternate}
+                      onChange={(e) => updateContactNumbers('alternate', e.target.value)}
+                      className="w-full border-2 border-gray-200 p-3 rounded-xl focus:border-[#801786] outline-none"
+                   />
+                </div>
+             </div>
           </div>
 
           {/* PG DETAILS */}

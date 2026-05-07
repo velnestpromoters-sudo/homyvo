@@ -5,10 +5,26 @@ const otpGenerator = require('otp-generator');
 const { sendOTPEmail } = require('../services/emailService');
 const { saveOTP, verifyOTP } = require('../utils/otpStore');
 
+const dns = require('dns');
+const util = require('util');
+const resolveMx = util.promisify(dns.resolveMx);
+
 exports.sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: 'Email required' });
+
+    // Verify if the email is a real existing ID by checking its domain's MX records
+    const domain = email.split('@')[1];
+    if (!domain) return res.status(400).json({ success: false, message: 'Invalid email format' });
+    try {
+        const mxRecords = await resolveMx(domain);
+        if (!mxRecords || mxRecords.length === 0) {
+            return res.status(400).json({ success: false, message: 'Email domain does not exist or cannot receive emails.' });
+        }
+    } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid email domain. Please use a real, existing email address.' });
+    }
 
     const existingUser = await User.findOne({ email });
     const isExistingUser = !!existingUser;

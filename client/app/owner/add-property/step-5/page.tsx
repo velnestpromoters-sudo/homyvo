@@ -40,6 +40,7 @@ export default function Step5() {
        // Encode objects into flat strings for FormData translation
        formData.append('location', JSON.stringify(formState.location));
        formData.append('preferences', JSON.stringify(formState.preferences));
+       formData.append('contactNumbers', JSON.stringify(formState.contactNumbers));
        
        formState.images.forEach((img) => {
            formData.append('images', img);

@@ -23,6 +23,11 @@ interface PgDetailsData {
   }[];
 }
 
+interface ContactNumbersData {
+  primary: string;
+  alternate: string;
+}
+
 interface PropertyFormState {
   // Step 1: Basic
   propertyType: 'apartment' | 'pg';
@@ -45,6 +50,7 @@ interface PropertyFormState {
   furnishing: string;
   availability: string;
   availableFrom: string;
+  contactNumbers: ContactNumbersData;
   
   // Step 4: Media
   images: File[];
@@ -54,6 +60,7 @@ interface PropertyFormState {
   updateLocation: (field: keyof LocationData, value: string) => void;
   updatePreference: (field: keyof PreferencesData, value: any) => void;
   updatePgDetails: (field: keyof PgDetailsData, value: any) => void;
+  updateContactNumbers: (field: keyof ContactNumbersData, value: string) => void;
   setImages: (newImages: File[]) => void;
   resetForm: () => void;
 }
@@ -74,6 +81,7 @@ const initialState = {
   furnishing: 'none',
   availability: 'immediate',
   availableFrom: '',
+  contactNumbers: { primary: '', alternate: '' },
   images: []
 };
 
@@ -95,6 +103,11 @@ export const usePropertyFormStore = create<PropertyFormState>((set) => ({
   updatePgDetails: (field, value) => set((state) => ({
     ...state,
     pgDetails: { ...state.pgDetails, [field]: value }
+  })),
+
+  updateContactNumbers: (field, value) => set((state) => ({
+    ...state,
+    contactNumbers: { ...state.contactNumbers, [field]: value }
   })),
   
   setImages: (newImages) => set((state) => ({

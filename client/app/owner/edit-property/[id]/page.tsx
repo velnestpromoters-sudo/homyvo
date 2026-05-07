@@ -27,7 +27,8 @@ export default function EditPropertyPage() {
      totalFloors: '',
      areaSqft: '',
      propertyAge: '',
-     highlights: [] as string[]
+     highlights: [] as string[],
+     contactNumbers: { primary: '', alternate: '' }
   });
 
   useEffect(() => {
@@ -54,7 +55,8 @@ export default function EditPropertyPage() {
               totalFloors: p.totalFloors || '',
               areaSqft: p.areaSqft || '',
               propertyAge: p.propertyAge || '',
-              highlights: p.highlights || []
+              highlights: p.highlights || [],
+              contactNumbers: p.contactNumbers || { primary: '', alternate: '' }
            });
         } else {
            alert("Failed to load property.");
@@ -198,6 +200,27 @@ export default function EditPropertyPage() {
                      <option value="5-10 Years">5-10 Years</option>
                      <option value="10+ Years">10+ Years</option>
                   </select>
+               </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 grid grid-cols-2 gap-4">
+               <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Primary Mobile</label>
+                  <input 
+                     type="tel" required pattern="[0-9]{10}"
+                     value={formData.contactNumbers.primary}
+                     onChange={e => setFormData({...formData, contactNumbers: {...formData.contactNumbers, primary: e.target.value}})}
+                     className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
+                  />
+               </div>
+               <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Alternate Mobile</label>
+                  <input 
+                     type="tel" pattern="[0-9]{10}"
+                     value={formData.contactNumbers.alternate}
+                     onChange={e => setFormData({...formData, contactNumbers: {...formData.contactNumbers, alternate: e.target.value}})}
+                     className="w-full border p-3 rounded-xl outline-none focus:border-[#801786]"
+                  />
                </div>
             </div>
 

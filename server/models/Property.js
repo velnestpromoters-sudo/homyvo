@@ -53,7 +53,11 @@ const propertySchema = new mongoose.Schema({
   highlights: [{ type: String }],
   availableContactSlots: { type: Number, default: 4 },
   uniqueViewers: [{ type: String }],
-  boostExpiresAt: { type: Date }
+  boostExpiresAt: { type: Date },
+  contactNumbers: {
+    primary: String,
+    alternate: String
+  }
 }, { timestamps: true });
 
 propertySchema.index({ "location.coordinates": "2dsphere" });

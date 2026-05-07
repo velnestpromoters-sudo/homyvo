@@ -211,6 +211,8 @@ exports.createProperty = async (req, res) => {
         }
         if (req.body.preferences) parsedPreferences = JSON.parse(req.body.preferences);
         if (req.body.pgDetails) parsedPgDetails = JSON.parse(req.body.pgDetails);
+        let parsedContactNumbers = undefined;
+        if (req.body.contactNumbers) parsedContactNumbers = JSON.parse(req.body.contactNumbers);
     } catch(e) { console.error("Error parsing JSON body fields:", e); }
 
     const newProperty = await Property.create({
@@ -230,6 +232,7 @@ exports.createProperty = async (req, res) => {
       tenantNotes: req.body.tenantNotes || '',
       images: imageUrls,
       ownerId: req.user._id,
+      contactNumbers: parsedContactNumbers,
       isActive: true, // TEMPORARY: Free listing offer
       listingPaymentStatus: "paid", // TEMPORARY: Free listing offer
     });
@@ -362,6 +365,10 @@ exports.updateProperty = async (req, res) => {
       if (req.body.preferences) {
           property.preferences = { ...property.preferences, ...req.body.preferences };
           property.markModified('preferences');
+      }
+      if (req.body.contactNumbers) {
+          property.contactNumbers = { ...property.contactNumbers, ...req.body.contactNumbers };
+          property.markModified('contactNumbers');
       }
 
       await property.save();
