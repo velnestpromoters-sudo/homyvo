@@ -139,6 +139,7 @@ exports.createProperty = async (req, res) => {
     let parsedLocation = {};
     let parsedPreferences = {};
     let parsedPgDetails = undefined;
+    let parsedContactNumbers = undefined;
     try {
         if (req.body.location) {
             parsedLocation = JSON.parse(req.body.location);
@@ -211,7 +212,6 @@ exports.createProperty = async (req, res) => {
         }
         if (req.body.preferences) parsedPreferences = JSON.parse(req.body.preferences);
         if (req.body.pgDetails) parsedPgDetails = JSON.parse(req.body.pgDetails);
-        let parsedContactNumbers = undefined;
         if (req.body.contactNumbers) parsedContactNumbers = JSON.parse(req.body.contactNumbers);
     } catch(e) { console.error("Error parsing JSON body fields:", e); }
 
