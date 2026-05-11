@@ -59,7 +59,7 @@ export default function Step5() {
            const propertyId = data.data._id;
            // TEMPORARY: FREE LISTING BYPASS
            formState.resetForm();
-           alert("Property published successfully! Your first 3 months are completely free!");
+           alert("Property published successfully! Your first 3 properties are completely free!");
            router.push('/owner/dashboard');
        } else {
            alert("Failed to create property. " + (data.error || data.message || "Unknown error"));
@@ -80,7 +80,7 @@ export default function Step5() {
        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-4 rounded-xl shadow-sm text-white mb-6 flex items-center justify-between">
            <div>
                <h3 className="font-bold text-lg flex items-center gap-2">🎉 Special Offer Applied!</h3>
-               <p className="text-sm opacity-95 font-medium">Your first 3 months of listing are completely FREE. No payment required today.</p>
+               <p className="text-sm opacity-95 font-medium">Your first 3 properties listed are completely FREE. You do not have to pay for the listing.</p>
            </div>
            <div className="font-black text-2xl line-through opacity-70">₹199</div>
        </div>
