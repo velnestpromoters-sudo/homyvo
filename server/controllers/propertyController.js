@@ -182,26 +182,25 @@ exports.createProperty = async (req, res) => {
                      parsedLocation.lat = Number(atMatch[1]);
                      parsedLocation.lng = Number(atMatch[2]);
                  }
-                 }
-             } // closes secondary evaluation
+                 } // closes secondary evaluation
+             } // closes main map link extraction block
              
              // Standardize the link format to the exact explicit coordinate tracking mapping
              if (parsedLocation.lat && parsedLocation.lng) {
                  parsedLocation.googleMapLink = `https://maps.google.com/?q=${parsedLocation.lat},${parsedLocation.lng}`;
              }
-         } // closes main map link extraction block
 
-        // Native Map to GeoJSON Schema
-            if (parsedLocation.lat && parsedLocation.lng) {
-                parsedLocation.coordinates = {
-                   type: "Point",
-                   coordinates: [Number(parsedLocation.lng), Number(parsedLocation.lat)]
-                };
-            } else {
-                // If coordinate mapping entirely fails, sanitize object to prevent structural 2dsphere DB crash
-                delete parsedLocation.coordinates;
-            }
-        }
+             // Native Map to GeoJSON Schema
+             if (parsedLocation.lat && parsedLocation.lng) {
+                 parsedLocation.coordinates = {
+                    type: "Point",
+                    coordinates: [Number(parsedLocation.lng), Number(parsedLocation.lat)]
+                 };
+             } else {
+                 // If coordinate mapping entirely fails, sanitize object to prevent structural 2dsphere DB crash
+                 delete parsedLocation.coordinates;
+             }
+         } // closes if (req.body.location)
         if (req.body.preferences) parsedPreferences = JSON.parse(req.body.preferences);
         if (req.body.pgDetails) parsedPgDetails = JSON.parse(req.body.pgDetails);
         if (req.body.contactNumbers) parsedContactNumbers = JSON.parse(req.body.contactNumbers);
