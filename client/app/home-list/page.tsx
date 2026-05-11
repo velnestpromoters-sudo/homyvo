@@ -59,8 +59,9 @@ export default function HomeListPage() {
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [osmSuggestions, setOsmSuggestions] = useState<string[]>([]);
+  const [osmSuggestions, setOsmSuggestions] = useState<{name: string, lat: number, lng: number}[]>([]);
   const [isSearchingOSM, setIsSearchingOSM] = useState(false);
+  const [searchedCoordinates, setSearchedCoordinates] = useState<{lat: number, lng: number} | null>(null);
 
   useEffect(() => {
     if (!trendingSearchText || trendingSearchText.trim() === '') {
@@ -86,12 +87,19 @@ export default function HomeListPage() {
              if (district && district !== name) parts.push(district);
              if (state) parts.push(state);
              
-             return parts.length > 0 ? parts.join(', ') : item.display_name.split(',').slice(0, 3).join(', ');
+             return {
+                name: parts.length > 0 ? parts.join(', ') : item.display_name.split(',').slice(0, 3).join(', '),
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lon)
+             };
            });
            
            // Deduplicate
-           const unique = Array.from(new Set<string>(formatted));
-           setOsmSuggestions(unique);
+           const uniqueMap = new Map();
+           formatted.forEach((item: any) => {
+               if (!uniqueMap.has(item.name)) uniqueMap.set(item.name, item);
+           });
+           setOsmSuggestions(Array.from(uniqueMap.values()));
         }
       } catch(e) {
         console.error("OSM Fetch Error:", e);
@@ -243,7 +251,15 @@ export default function HomeListPage() {
       filtered.sort(sortByTrendingScore);
     }
     else if (trendingFilter === 'search') {
-      if (trendingSearchText) {
+      if (searchedCoordinates) {
+        filtered = filtered.filter(p => {
+           if (!p.coordinates || p.coordinates.length < 2) return false;
+           const pLng = p.coordinates[0];
+           const pLat = p.coordinates[1];
+           const dist = getDistance(searchedCoordinates.lat, searchedCoordinates.lng, pLat, pLng);
+           return dist <= 30; // 30km radius from searched place
+        });
+      } else if (trendingSearchText) {
         const searchTerms = trendingSearchText.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
         filtered = filtered.filter(p => {
             const titleMatch = searchTerms.some(term => p.title.toLowerCase().includes(term));
@@ -429,6 +445,7 @@ export default function HomeListPage() {
                           onChange={(e) => {
                              setTrendingFilter('search');
                              setTrendingSearchText(e.target.value);
+                             setSearchedCoordinates(null);
                              setShowDropdown(true);
                           }}
                           onFocus={() => setShowDropdown(true)}
@@ -443,18 +460,19 @@ export default function HomeListPage() {
                             {isSearchingOSM ? (
                                <div className="px-3 py-2 text-xs text-gray-400 italic text-center">Searching map...</div>
                             ) : (
-                               osmSuggestions.map((area, idx) => (
+                               osmSuggestions.map((suggestion, idx) => (
                                  <div 
                                    key={idx} 
                                    className="px-3 py-2 text-xs text-gray-700 hover:bg-blue-50 cursor-pointer font-medium border-b border-gray-100 last:border-0 truncate"
                                    onMouseDown={(e) => {
                                       e.preventDefault(); // Prevents input blur
-                                      setTrendingSearchText(area);
+                                      setTrendingSearchText(suggestion.name);
+                                      setSearchedCoordinates({ lat: suggestion.lat, lng: suggestion.lng });
                                       setTrendingFilter('search');
                                       setShowDropdown(false);
                                    }}
                                  >
-                                   {area}
+                                   {suggestion.name}
                                  </div>
                                ))
                             )}
