@@ -152,23 +152,14 @@ exports.createProperty = async (req, res) => {
                  if (finalUrl.includes('goo.gl')) {
                      try {
                         const resp = await fetch(finalUrl, { 
-                           method: 'GET', 
-                           redirect: 'follow',
+                           method: 'HEAD', 
+                           redirect: 'manual',
                            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
                         });
                         
-                        if (resp.url) finalUrl = resp.url;
-                        
-                        // Deep decryption: Scrape the raw HTML for hidden explicit tracking maps
-                        const htmlText = await resp.text();
-                        const regMeta = htmlText.match(/center=(-?\d+\.\d+)%2C(-?\d+\.\d+)/);
-                        
-                        // If coordinates exist natively encrypted in the DOM tree, pull them instantly
-                        if (regMeta) {
-                           parsedLocation.lat = Number(regMeta[1]);
-                           parsedLocation.lng = Number(regMeta[2]);
-                        }
-                     } catch(e) { console.error("Deep URL redirect extraction failed:", e); }
+                        const locHeader = resp.headers.get('location');
+                        if (locHeader) finalUrl = locHeader;
+                     } catch(e) { console.error("URL redirect extraction failed:", e); }
                  }
 
                  // Only run secondary string evaluations if deep HTML decryption failed
@@ -191,12 +182,13 @@ exports.createProperty = async (req, res) => {
                      parsedLocation.lat = Number(atMatch[1]);
                      parsedLocation.lng = Number(atMatch[2]);
                  }
-                 
-                 // Standardize the link format to the exact explicit coordinate tracking mapping
-                 if (parsedLocation.lat && parsedLocation.lng) {
-                     parsedLocation.googleMapLink = `https://maps.google.com/?q=${parsedLocation.lat},${parsedLocation.lng}`;
                  }
              } // closes secondary evaluation
+             
+             // Standardize the link format to the exact explicit coordinate tracking mapping
+             if (parsedLocation.lat && parsedLocation.lng) {
+                 parsedLocation.googleMapLink = `https://maps.google.com/?q=${parsedLocation.lat},${parsedLocation.lng}`;
+             }
          } // closes main map link extraction block
 
         // Native Map to GeoJSON Schema
