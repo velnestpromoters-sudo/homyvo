@@ -244,8 +244,12 @@ export default function HomeListPage() {
     }
     else if (trendingFilter === 'search') {
       if (trendingSearchText) {
-        const search = trendingSearchText.toLowerCase();
-        filtered = filtered.filter(p => p.title.toLowerCase().includes(search));
+        const searchTerms = trendingSearchText.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+        filtered = filtered.filter(p => {
+            const titleMatch = searchTerms.some(term => p.title.toLowerCase().includes(term));
+            const locMatch = searchTerms.some(term => p.location.toLowerCase().includes(term));
+            return titleMatch || locMatch;
+        });
       }
       filtered.sort(sortByTrendingScore);
     }
