@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import BottomBar from '@/components/common/BottomBar';
+import FAQ from '@/components/FAQ';
 import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
@@ -611,6 +612,9 @@ export default function HomeListPage() {
              ))}
            </div>
         </section>
+
+        {/* 9. FREQUENTLY ASKED QUESTIONS */}
+        <FAQ />
 
         {/* SEO BRAND SIGNAL */}
         <div className="py-6 flex justify-center text-center">
