@@ -10,8 +10,9 @@ export default function SupportBall() {
   const [mounted, setMounted] = useState(false);
   const { user } = useAuthStore();
   const [messages, setMessages] = useState<{sender: 'bot'|'user', text: string}[]>([
-    { sender: 'bot', text: 'Hi there! 👋 How can we help you today?' }
+    { sender: 'bot', text: 'Hi there! 👋 I am the Homyvo Assistant. How can I help you today?' }
   ]);
+  const [isTyping, setIsTyping] = useState(false);
   const [input, setInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -31,18 +32,50 @@ export default function SupportBall() {
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages(prev => [...prev, { sender: 'user', text: input }]);
+    const userMessage = input.trim();
+    setMessages(prev => [...prev, { sender: 'user', text: userMessage }]);
     setInput('');
+    setIsTyping(true);
     
-    // Simulate bot reply
-    setTimeout(() => {
-       setMessages(prev => [...prev, { 
-         sender: 'bot', 
-         text: "Thanks for reaching out! We are connecting you with an agent. For immediate assistance, please call the number above." 
-       }]);
-    }, 1000);
+    try {
+       const systemPrompt = `You are the Homyvo Support Assistant. You answer questions strictly about the Homyvo rental platform in Tamil Nadu. Be highly concise (2-3 sentences max) and friendly. 
+Here is your knowledge base:
+- Homyvo is a premium rental platform in Tamil Nadu connecting tenants directly with verified property owners with ZERO brokerage.
+- We focus on PGs, Apartments, and Commercial Spaces.
+- To search nearby, use the 'Nearest to Me' sort option and grant location access.
+- Browsing is free. There is no brokerage. Contacting owners might require a small platform fee.
+- Verified properties have a blue badge. Owners must submit trust verification documents.
+- If a user asks something unrelated, inappropriate, or needing complex human help, kindly redirect them to call our support line at +91 63692 69611.`;
+
+       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBaibMaP7d1FIp-hlLMQpZ6PbCDMH_Nw50`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+               contents: [{
+                   parts: [
+                       { text: systemPrompt },
+                       ...messages.slice(-4).map(m => ({ text: `${m.sender === 'bot' ? 'Assistant' : 'User'}: ${m.text}` })),
+                       { text: `User: ${userMessage}` }
+                   ]
+               }]
+           })
+       });
+
+       const data = await response.json();
+       let botReply = "I'm having trouble connecting to my brain right now. Please call us at +91 63692 69611.";
+       if (data.candidates && data.candidates[0].content.parts[0].text) {
+           botReply = data.candidates[0].content.parts[0].text.replace(/^Assistant:\s*/i, '');
+       }
+       
+       setMessages(prev => [...prev, { sender: 'bot', text: botReply }]);
+    } catch (error) {
+       console.error("Chatbot Error:", error);
+       setMessages(prev => [...prev, { sender: 'bot', text: "Sorry, I'm offline right now. Please call +91 63692 69611 for support." }]);
+    } finally {
+       setIsTyping(false);
+    }
   };
 
   const supportNumber = "63692 69611";
@@ -119,6 +152,15 @@ export default function SupportBall() {
                   </div>
                 </div>
               ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-slate-100 rounded-2xl rounded-tl-sm p-3 py-4 flex gap-1.5 items-center w-fit">
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              )}
               <div ref={chatEndRef} />
             </div>
 
