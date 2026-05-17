@@ -1,4 +1,5 @@
 const Quota = require('../models/Quota');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 exports.askChatbot = async (req, res) => {
     try {
@@ -19,7 +20,17 @@ exports.askChatbot = async (req, res) => {
             });
         }
         
-        // Hit Gemini API
+        // Initialize Gemini API
+        if (!process.env.GEMINI_API_KEY) {
+            console.error("Missing GEMINI_API_KEY in environment variables.");
+            return res.json({ 
+                success: true, 
+                reply: "I'm having trouble connecting to my brain right now. Please call us at +91 63692 69611." 
+            });
+        }
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
         const systemPrompt = `You are the Homyvo Support Assistant. You answer questions strictly about the Homyvo rental platform in Tamil Nadu. Be highly concise (2-3 sentences max) and friendly. 
 Here is your knowledge base:
 - Homyvo is a premium rental platform in Tamil Nadu connecting tenants directly with verified property owners with ZERO brokerage.
@@ -29,38 +40,16 @@ Here is your knowledge base:
 - Verified properties have a blue badge. Owners must submit trust verification documents.
 - If a user asks something unrelated, inappropriate, or needing complex human help, kindly redirect them to call our support line at +91 63692 69611.`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { text: systemPrompt },
-                        ...messages.map(m => ({ text: m })),
-                        { text: `User: ${userMessage}` }
-                    ]
-                }]
-            })
-        });
+        // Combine into one large prompt string
+        const historyText = messages && messages.length > 0 ? messages.join('\n') : '';
+        const prompt = `${systemPrompt}\n\nChat History:\n${historyText}\n\nUser: ${userMessage}\nAssistant:`;
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            console.error("Gemini API Error Response:", data);
-            return res.json({ 
-                success: true, 
-                reply: "I'm having trouble connecting to my brain right now. Please call us at +91 63692 69611." 
-            });
-        }
+        const result = await model.generateContent(prompt);
+        const botReply = result.response.text();
         
         // Increment Quota ON SUCCESS
         quota.used += 1;
         await quota.save();
-
-        let botReply = "I'm having trouble connecting to my brain right now. Please call us at +91 63692 69611.";
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            botReply = data.candidates[0].content.parts[0].text.replace(/^Assistant:\s*/i, '');
-        }
 
         res.json({ success: true, reply: botReply });
     } catch (err) {
