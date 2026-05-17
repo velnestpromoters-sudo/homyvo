@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.get('/', (req, res) => {
-  res.status(200).send('<h2>Bnest API Backend is Live & Running!</h2><p>Base endpoints: /api/auth, /api/properties</p>');
+  res.status(200).send('<h2>Homyvo API Backend is Live & Running!</h2><p>Base endpoints: /api/auth, /api/properties</p>');
 });
 
 const interactionRoutes = require('./routes/interactionRoutes');
@@ -25,6 +25,9 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/interactions', interactionRoutes);
 app.use('/api/admin', adminRoutes);
+
+const chatbotRoutes = require('./routes/chatbotRoutes');
+app.use('/api/chatbot', chatbotRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);

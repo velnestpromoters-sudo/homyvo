@@ -1,3 +1,5 @@
+const Quota = require('../models/Quota');
+
 exports.sendOTPEmail = async (to, otp) => {
   const data = {
     service_id: process.env.EMAILJS_SERVICE_ID,
@@ -28,6 +30,20 @@ exports.sendOTPEmail = async (to, otp) => {
        const errText = await response.text();
        throw new Error(`EmailJS Error: ${errText}`);
     }
+
+    // Increment EmailJS Quota Tracker
+    const month = new Date().toISOString().substring(0, 7); // "YYYY-MM"
+    try {
+        let quota = await Quota.findOne({ type: 'emailjs_monthly', period: month });
+        if (!quota) {
+            quota = new Quota({ type: 'emailjs_monthly', period: month, used: 0 });
+        }
+        quota.used += 1;
+        await quota.save();
+    } catch(qErr) {
+        console.error("Quota Tracking Failed:", qErr);
+    }
+
   } catch (error) {
     console.error("EmailJS Backend Failure:", error);
     throw error;

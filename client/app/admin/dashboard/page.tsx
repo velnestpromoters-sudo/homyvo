@@ -29,6 +29,10 @@ interface AdminStats {
     trend: 'up' | 'down';
     recentSignups: number;
   };
+  quotas: {
+    emailjs: { used: number, limit: number };
+    geminiRpd: { used: number, limit: number };
+  };
 }
 
 export default function AdminDashboard() {
@@ -294,7 +298,7 @@ export default function AdminDashboard() {
                            <div className="text-slate-500 text-xs">Limit: 1,500 / day</div>
                         </div>
                      </div>
-                     <div className="text-xl font-black text-white">1,500<span className="text-slate-500 text-sm ml-1">Max</span></div>
+                     <div className="text-xl font-black text-white">{1500 - (stats.quotas?.geminiRpd?.used || 0)}<span className="text-slate-500 text-sm ml-1">Left</span></div>
                   </div>
                   {/* TPM */}
                   <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
@@ -341,7 +345,7 @@ export default function AdminDashboard() {
                            <div className="text-slate-500 text-xs">Limit: 200 / month</div>
                         </div>
                      </div>
-                     <div className="text-xl font-black text-white">200<span className="text-slate-500 text-sm ml-1">Max</span></div>
+                     <div className="text-xl font-black text-white">{200 - (stats.quotas?.emailjs?.used || 0)}<span className="text-slate-500 text-sm ml-1">Left</span></div>
                   </div>
                   {/* Templates */}
                   <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between">

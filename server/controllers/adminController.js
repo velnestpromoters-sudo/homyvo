@@ -70,6 +70,16 @@ exports.getDashboardStats = async (req, res) => {
       growthPercentage = Math.round(((recentUsersCount - previousUsersCount) / previousUsersCount) * 100);
     }
 
+    // 3. Fetch live Quotas
+    const Quota = require('../models/Quota');
+    const today = new Date().toISOString().split('T')[0];
+    const month = new Date().toISOString().substring(0, 7);
+    
+    const [emailQuota, geminiQuota] = await Promise.all([
+       Quota.findOne({ type: 'emailjs_monthly', period: month }),
+       Quota.findOne({ type: 'gemini_daily', period: today })
+    ]);
+
     res.json({
       success: true,
       data: {
@@ -84,6 +94,10 @@ exports.getDashboardStats = async (req, res) => {
           percentage: growthPercentage,
           trend: growthPercentage >= 0 ? 'up' : 'down',
           recentSignups: recentUsersCount
+        },
+        quotas: {
+          emailjs: { used: emailQuota ? emailQuota.used : 0, limit: 200 },
+          geminiRpd: { used: geminiQuota ? geminiQuota.used : 0, limit: 1500 }
         }
       }
     });
