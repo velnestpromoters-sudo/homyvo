@@ -14,6 +14,19 @@ export default function CategoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [localFilters, setLocalFilters] = useState({ type: 'all', sort: 'none' });
   const [showFilters, setShowFilters] = useState(false);
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  const getDistance = (lat1?: number, lon1?: number, lat2?: number, lon2?: number) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 999999;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
 
   useEffect(() => {
     const fetchCategoryProperties = async () => {
@@ -32,7 +45,7 @@ export default function CategoryPage() {
               } else {
                  return !(p.preferences?.bachelorAllowed || isPg) && p.propertyType !== 'commercial';
               }
-           });
+           }).map((p: any) => ({ ...p, randomSeed: Math.random() }));
            setProperties(filtered);
         }
       } catch (err) {
@@ -67,10 +80,38 @@ export default function CategoryPage() {
           if (localFilters.type === '3bhk') res = res.filter(r => r.bhkType === '3bhk');
       }
       
+      if (localFilters.sort === 'none') {
+          res.sort((a,b) => a.randomSeed - b.randomSeed);
+      }
       if (localFilters.sort === 'price_low') res.sort((a,b) => a.rent - b.rent);
       if (localFilters.sort === 'price_high') res.sort((a,b) => b.rent - a.rent);
+      if (localFilters.sort === 'nearest' && userLocation) {
+          res.sort((a,b) => {
+              const distA = getDistance(userLocation.lat, userLocation.lng, a.location?.coordinates?.coordinates?.[1], a.location?.coordinates?.coordinates?.[0]);
+              const distB = getDistance(userLocation.lat, userLocation.lng, b.location?.coordinates?.coordinates?.[1], b.location?.coordinates?.coordinates?.[0]);
+              return distA - distB;
+          });
+      }
       return res;
-  }, [properties, localFilters, isStudent]);
+  }, [properties, localFilters, isStudent, isCommercial, userLocation]);
+
+  const handleSortSelect = (val: string) => {
+      if (val === 'nearest' && !userLocation) {
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                  pos => {
+                      setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                      setLocalFilters(prev => ({ ...prev, sort: 'nearest' }));
+                  },
+                  () => alert("Location access required for Nearest sort.")
+              );
+          } else {
+              alert("Geolocation not supported.");
+          }
+      } else {
+          setLocalFilters(prev => ({ ...prev, sort: val }));
+      }
+  };
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-slate-50">
@@ -169,12 +210,12 @@ export default function CategoryPage() {
                              )}
                           </div>
                           <div>
-                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sort by Rent</p>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Sort by</p>
                              <div className="flex flex-col gap-1">
-                               {[{val: 'none', label: 'Recommended'}, {val: 'price_low', label: 'Price: Low to High'}, {val: 'price_high', label: 'Price: High to Low'}].map(s => (
+                               {[{val: 'none', label: 'Recommended'}, {val: 'nearest', label: 'Nearest to Me'}, {val: 'price_low', label: 'Price: Low to High'}, {val: 'price_high', label: 'Price: High to Low'}].map(s => (
                                   <button 
                                      key={s.val}
-                                     onClick={() => setLocalFilters(prev => ({...prev, sort: s.val}))}
+                                     onClick={() => handleSortSelect(s.val)}
                                      className={`text-left px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors ${localFilters.sort === s.val ? 'bg-[#801786]/10 text-[#801786]' : 'text-slate-600 hover:bg-slate-50'}`}
                                   >
                                      {s.label}

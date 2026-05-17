@@ -174,9 +174,9 @@ export default function HomeListPage() {
             }
           });
           
-          setStudentProperties(students);
-          setFamilyProperties(families);
-          setCommercialProperties(commercial);
+          setStudentProperties(students.sort(() => Math.random() - 0.5));
+          setFamilyProperties(families.sort(() => Math.random() - 0.5));
+          setCommercialProperties(commercial.sort(() => Math.random() - 0.5));
           setAllRawProperties(rawForTrending);
         }
       } catch (error) {
