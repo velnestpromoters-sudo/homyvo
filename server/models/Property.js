@@ -44,7 +44,7 @@ const propertySchema = new mongoose.Schema({
   },
   preferences: {
     bachelorAllowed: Boolean,
-    maxOccupants: Number
+    maxOccupants: String
   },
   floor: { type: Number },
   totalFloors: { type: Number },

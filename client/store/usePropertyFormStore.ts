@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface LocationData {
   address: string;
@@ -86,34 +87,44 @@ const initialState = {
   images: []
 };
 
-export const usePropertyFormStore = create<PropertyFormState>((set) => ({
-  ...initialState,
-  
-  updateField: (field, value) => set((state) => ({ ...state, [field]: value })),
-  
-  updateLocation: (field, value) => set((state) => ({
-    ...state,
-    location: { ...state.location, [field]: value }
-  })),
-  
-  updatePreference: (field, value) => set((state) => ({
-    ...state,
-    preferences: { ...state.preferences, [field]: value }
-  })),
+export const usePropertyFormStore = create<PropertyFormState>()(
+  persist(
+    (set) => ({
+      ...initialState,
+      
+      updateField: (field, value) => set((state) => ({ ...state, [field]: value })),
+      
+      updateLocation: (field, value) => set((state) => ({
+        ...state,
+        location: { ...state.location, [field]: value }
+      })),
+      
+      updatePreference: (field, value) => set((state) => ({
+        ...state,
+        preferences: { ...state.preferences, [field]: value }
+      })),
 
-  updatePgDetails: (field, value) => set((state) => ({
-    ...state,
-    pgDetails: { ...state.pgDetails, [field]: value }
-  })),
+      updatePgDetails: (field, value) => set((state) => ({
+        ...state,
+        pgDetails: { ...state.pgDetails, [field]: value }
+      })),
 
-  updateContactNumbers: (field, value) => set((state) => ({
-    ...state,
-    contactNumbers: { ...state.contactNumbers, [field]: value }
-  })),
-  
-  setImages: (newImages) => set((state) => ({
-     images: newImages.slice(0, 5) // Hard cap at 5 per rules
-  })),
+      updateContactNumbers: (field, value) => set((state) => ({
+        ...state,
+        contactNumbers: { ...state.contactNumbers, [field]: value }
+      })),
+      
+      setImages: (newImages) => set((state) => ({
+         images: newImages.slice(0, 5) // Hard cap at 5 per rules
+      })),
 
-  resetForm: () => set(initialState)
-}));
+      resetForm: () => set(initialState)
+    }),
+    {
+      name: 'property-form-storage', // name of item in the storage (must be unique)
+      partialize: (state) => Object.fromEntries(
+        Object.entries(state).filter(([key]) => key !== 'images')
+      ), // Do not persist File objects as they cannot be serialized
+    }
+  )
+);
