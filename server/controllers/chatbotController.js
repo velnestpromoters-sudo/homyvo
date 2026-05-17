@@ -44,6 +44,14 @@ Here is your knowledge base:
         });
 
         const data = await response.json();
+
+        if (!response.ok) {
+            console.error("Gemini API Error Response:", data);
+            return res.json({ 
+                success: true, 
+                reply: "I'm having trouble connecting to my brain right now. Please call us at +91 63692 69611." 
+            });
+        }
         
         // Increment Quota ON SUCCESS
         quota.used += 1;
@@ -56,7 +64,7 @@ Here is your knowledge base:
 
         res.json({ success: true, reply: botReply });
     } catch (err) {
-        console.error("Backend Chatbot Error:", err);
+        console.error("Backend Chatbot Exception Error:", err);
         res.status(500).json({ success: false, message: "Chatbot error" });
     }
 };
