@@ -84,7 +84,8 @@ export default function HomeReelPage() {
             }
           }
           
-          setProperties(fetched);
+          // Shuffle the properties so the reel feed is random
+          setProperties(fetched.sort(() => Math.random() - 0.5));
         }
       } catch (err) {
         console.error("Failed to load property feed", err);
