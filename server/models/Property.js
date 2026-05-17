@@ -9,7 +9,7 @@ const propertySchema = new mongoose.Schema({
     city: String,
     googleMapLink: String,
     coordinates: {
-      type: { type: String, enum: ['Point'], default: 'Point' },
+      type: { type: String, enum: ['Point'] },
       coordinates: { type: [Number] }
     }
   },

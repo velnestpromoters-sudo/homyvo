@@ -181,6 +181,27 @@ exports.createProperty = async (req, res) => {
                  } else if (atMatch) {
                      parsedLocation.lat = Number(atMatch[1]);
                      parsedLocation.lng = Number(atMatch[2]);
+                 } else {
+                     // Geocoding Fallback for Text-based redirects
+                     try {
+                         const qTextMatch = finalUrl.match(/q=([^&]+)/);
+                         let searchText = "";
+                         if (qTextMatch && !qTextMatch[1].match(/^[\d.-]+,[\d.-]+$/)) {
+                             searchText = decodeURIComponent(qTextMatch[1].replace(/\+/g, ' '));
+                         } else if (parsedLocation.area && parsedLocation.city) {
+                             searchText = `${parsedLocation.area}, ${parsedLocation.city}`;
+                         }
+
+                         if (searchText) {
+                             const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=1`;
+                             const geoRes = await fetch(nominatimUrl, { headers: { 'User-Agent': 'bnest-geo-engine' } });
+                             const geoData = await geoRes.json();
+                             if (geoData && geoData.length > 0) {
+                                 parsedLocation.lat = Number(geoData[0].lat);
+                                 parsedLocation.lng = Number(geoData[0].lon);
+                             }
+                         }
+                     } catch(e) { console.error("Geocoding fallback failed", e); }
                  }
                  } // closes secondary evaluation
              } // closes main map link extraction block
