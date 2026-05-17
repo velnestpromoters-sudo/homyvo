@@ -1,5 +1,4 @@
 const Quota = require('../models/Quota');
-const fetch = require('node-fetch'); // Ensure node-fetch is available or use native fetch if Node 18+
 
 exports.askChatbot = async (req, res) => {
     try {
