@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, PhoneCall, Send } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 
 export default function SupportBall() {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,16 +50,12 @@ Here is your knowledge base:
 - Verified properties have a blue badge. Owners must submit trust verification documents.
 - If a user asks something unrelated, inappropriate, or needing complex human help, kindly redirect them to call our support line at +91 63692 69611.`;
 
-       const response = await fetch('/api/chatbot/ask', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({
-               messages: messages.slice(-4).map(m => `${m.sender === 'bot' ? 'Assistant' : 'User'}: ${m.text}`),
-               userMessage: userMessage
-           })
+       const response = await api.post('/chatbot/ask', {
+           messages: messages.slice(-4).map(m => `${m.sender === 'bot' ? 'Assistant' : 'User'}: ${m.text}`),
+           userMessage: userMessage
        });
 
-       const data = await response.json();
+       const data = response.data;
        let botReply = "I'm having trouble connecting to my brain right now. Please call us at +91 63692 69611.";
        if (data.success && data.reply) {
            botReply = data.reply;
