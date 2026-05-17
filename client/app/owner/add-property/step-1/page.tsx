@@ -21,18 +21,25 @@ export default function Step1() {
        <form onSubmit={handleNext} className="flex flex-col gap-6">
           <div>
              <label className="block text-sm font-bold text-gray-700 mb-2">Property Type *</label>
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 <button 
                   type="button"
                   onClick={() => updateField('propertyType', 'apartment')}
-                  className={`p-4 border-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-colors ${propertyType === 'apartment' ? 'border-[#801786] bg-purple-50 text-[#801786]' : 'border-gray-200 text-gray-500 hover:border-purple-200'}`}
+                  className={`p-3 md:p-4 border-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-colors ${propertyType === 'apartment' ? 'border-[#801786] bg-purple-50 text-[#801786]' : 'border-gray-200 text-gray-500 hover:border-purple-200'}`}
                 >
                    Apartment
                 </button>
                 <button 
                   type="button"
+                  onClick={() => updateField('propertyType', 'commercial')}
+                  className={`p-3 md:p-4 border-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-colors ${propertyType === 'commercial' ? 'border-[#801786] bg-purple-50 text-[#801786]' : 'border-gray-200 text-gray-500 hover:border-purple-200'}`}
+                >
+                   Commercial
+                </button>
+                <button 
+                  type="button"
                   onClick={() => updateField('propertyType', 'pg')}
-                  className={`p-4 border-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-colors ${propertyType === 'pg' ? 'border-[#801786] bg-purple-50 text-[#801786]' : 'border-gray-200 text-gray-500 hover:border-purple-200'}`}
+                  className={`p-3 md:p-4 border-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transition-colors ${propertyType === 'pg' ? 'border-[#801786] bg-purple-50 text-[#801786]' : 'border-gray-200 text-gray-500 hover:border-purple-200'}`}
                 >
                    PG / Co-living
                 </button>
@@ -84,7 +91,7 @@ export default function Step1() {
 
           {propertyType !== 'pg' && (
              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">BHK Type *</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">{propertyType === 'commercial' ? 'Commercial Space Type *' : 'BHK Type *'}</label>
                 <select 
                    required
                    value={bhkType}
@@ -92,11 +99,23 @@ export default function Step1() {
                    className="w-full border-2 border-gray-200 p-4 rounded-xl focus:border-[#801786] focus:ring-0 outline-none bg-white appearance-none"
                 >
                    <option value="" disabled>Select Layout</option>
-                   <option value="1RK">1 RK</option>
-                   <option value="1BHK">1 BHK</option>
-                   <option value="2BHK">2 BHK</option>
-                   <option value="3BHK">3 BHK</option>
-                   <option value="4BHK+">4 BHK+</option>
+                   {propertyType === 'commercial' ? (
+                       <>
+                           <option value="Office Space">Office Space</option>
+                           <option value="Warehouse">Warehouse</option>
+                           <option value="Rental Shop">Rental Shop</option>
+                           <option value="Commercial Land">Commercial Land</option>
+                           <option value="Other">Other</option>
+                       </>
+                   ) : (
+                       <>
+                           <option value="1RK">1 RK</option>
+                           <option value="1BHK">1 BHK</option>
+                           <option value="2BHK">2 BHK</option>
+                           <option value="3BHK">3 BHK</option>
+                           <option value="4BHK+">4 BHK+</option>
+                       </>
+                   )}
                 </select>
              </div>
           )}

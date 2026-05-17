@@ -31,7 +31,7 @@ const propertySchema = new mongoose.Schema({
   tenantNotes: { type: String, default: '' },
   amenities: [{ type: String }],
   furnishing: { type: String, enum: ['full', 'semi', 'none'], default: 'none' },
-  propertyType: { type: String, enum: ['apartment', 'pg'], default: 'apartment' },
+  propertyType: { type: String, enum: ['apartment', 'pg', 'commercial'], default: 'apartment' },
   pgDetails: {
     gender: { type: String, enum: ['boys', 'girls', 'co-living'] },
     totalRooms: Number,

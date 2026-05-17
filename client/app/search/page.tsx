@@ -33,6 +33,7 @@ export default function SearchPage() {
       let res = [...searchResults];
       if (localFilters.type === 'pg') res = res.filter(r => r.propertyType === 'pg');
       if (localFilters.type === 'apartment') res = res.filter(r => r.propertyType === 'apartment');
+      if (localFilters.type === 'commercial') res = res.filter(r => r.propertyType === 'commercial');
       
       if (localFilters.sort === 'price_low') res.sort((a,b) => a.rent - b.rent);
       if (localFilters.sort === 'price_high') res.sort((a,b) => b.rent - a.rent);
@@ -284,7 +285,7 @@ export default function SearchPage() {
                           <div className="mb-3">
                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Property Type</p>
                              <div className="flex flex-wrap gap-1.5">
-                               {['all', 'pg', 'apartment'].map(t => (
+                               {['all', 'pg', 'apartment', 'commercial'].map(t => (
                                   <button 
                                      key={t}
                                      onClick={() => setLocalFilters(prev => ({...prev, type: t}))}

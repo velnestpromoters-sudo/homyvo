@@ -156,8 +156,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   if (!property) return <div className="h-screen flex items-center justify-center text-slate-500">Not Found</div>;
 
   const isPG = property.propertyType === 'pg';
-  const propertyTitlePrefix = isPG ? 'PG/Hostel for Rent in' : 'Flat/Apartment for Rent in';
-  const bhkOrSharing = isPG ? `${property.pgDetails?.sharingType || 'Multi'} Sharing PG` : `${property.bhkType} BHK`;
+  const isCommercial = property.propertyType === 'commercial';
+  const propertyTitlePrefix = isPG ? 'PG/Hostel for Rent in' : isCommercial ? 'Commercial Space for Rent in' : 'Flat/Apartment for Rent in';
+  const bhkOrSharing = isPG ? `${property.pgDetails?.sharingType || 'Multi'} Sharing PG` : isCommercial ? `${property.bhkType || 'Commercial'}` : `${property.bhkType} BHK`;
   const socialCount = property.contactsYesterday || property.viewCount || 0;
 
   return (
@@ -261,15 +262,27 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                  </div>
              )}
 
-             <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
-                 <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
-                    <Users className="w-5 h-5 text-blue-600" />
+             {property.propertyType !== 'commercial' ? (
+                 <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                        <Users className="w-5 h-5 text-blue-600" />
+                     </div>
+                     <div>
+                        <p className="text-[13px] font-bold text-[#111111]">For {property.preferences?.familyAllowed ? 'Family' : 'Bachelors'}</p>
+                        <p className="text-[11px] text-[#999999] leading-tight mt-0.5">{property.preferences?.genderPreference === 'any' ? 'Anyone' : property.preferences?.genderPreference}</p>
+                     </div>
                  </div>
-                 <div>
-                    <p className="text-[13px] font-bold text-[#111111]">For {property.preferences?.familyAllowed ? 'Family' : 'Bachelors'}</p>
-                    <p className="text-[11px] text-[#999999] leading-tight mt-0.5">{property.preferences?.genderPreference === 'any' ? 'Anyone' : property.preferences?.genderPreference}</p>
+             ) : (
+                 <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">
+                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+                        <Building className="w-5 h-5 text-blue-600" />
+                     </div>
+                     <div>
+                        <p className="text-[13px] font-bold text-[#111111]">{property.bhkType || 'Commercial'}</p>
+                        <p className="text-[11px] text-[#999999] leading-tight mt-0.5">Space Type</p>
+                     </div>
                  </div>
-             </div>
+             )}
 
              {property.areaSqft && (
                  <div className="flex flex-col items-center min-w-[85px] max-w-[90px] text-center gap-2.5">

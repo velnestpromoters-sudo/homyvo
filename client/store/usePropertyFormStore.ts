@@ -31,7 +31,7 @@ interface ContactNumbersData {
 
 interface PropertyFormState {
   // Step 1: Basic
-  propertyType: 'apartment' | 'pg';
+  propertyType: 'apartment' | 'pg' | 'commercial';
   title: string;
   rent: string;
   deposit: string;
@@ -67,7 +67,7 @@ interface PropertyFormState {
 }
 
 const initialState = {
-  propertyType: 'apartment' as 'apartment' | 'pg',
+  propertyType: 'apartment' as 'apartment' | 'pg' | 'commercial',
   title: '', rent: '', deposit: '', bhkType: '', tenantNotes: '',
   pgDetails: {
     gender: '' as '',

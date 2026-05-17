@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, Home, GraduationCap } from 'lucide-react';
+import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, Home, GraduationCap, LayoutDashboard } from 'lucide-react';
 import { PropertyCard } from '@/components/property/PropertyCard';
 
 export default function CategoryPage() {
@@ -27,8 +27,10 @@ export default function CategoryPage() {
               const isPg = p.propertyType === 'pg';
               if (type === 'student') {
                  return p.preferences?.bachelorAllowed || isPg;
+              } else if (type === 'commercial') {
+                 return p.propertyType === 'commercial';
               } else {
-                 return !(p.preferences?.bachelorAllowed || isPg);
+                 return !(p.preferences?.bachelorAllowed || isPg) && p.propertyType !== 'commercial';
               }
            });
            setProperties(filtered);
@@ -43,6 +45,7 @@ export default function CategoryPage() {
     fetchCategoryProperties();
   }, [type]);
   const isStudent = type === 'student';
+  const isCommercial = type === 'commercial';
 
   const filteredResults = React.useMemo(() => {
       let res = [...properties];
@@ -54,7 +57,11 @@ export default function CategoryPage() {
              if (localFilters.type === 'co') return r.pgDetails?.gender === 'co-living';
              return true;
           });
-      } else if (!isStudent && localFilters.type !== 'all') {
+      } else if (isCommercial && localFilters.type !== 'all') {
+          if (localFilters.type === 'office') res = res.filter(r => r.bhkType === 'Office Space');
+          if (localFilters.type === 'warehouse') res = res.filter(r => r.bhkType === 'Warehouse');
+          if (localFilters.type === 'shop') res = res.filter(r => r.bhkType === 'Rental Shop');
+      } else if (!isStudent && !isCommercial && localFilters.type !== 'all') {
           if (localFilters.type === '1bhk') res = res.filter(r => r.bhkType === '1bhk');
           if (localFilters.type === '2bhk') res = res.filter(r => r.bhkType === '2bhk');
           if (localFilters.type === '3bhk') res = res.filter(r => r.bhkType === '3bhk');
@@ -77,19 +84,21 @@ export default function CategoryPage() {
              <ArrowLeftLucide className="w-6 h-6 text-slate-700" />
            </button>
            <div className="flex items-center gap-2.5">
-              <div className={`p-2 rounded-lg ${isStudent ? 'bg-purple-50' : 'bg-indigo-50'}`}>
+              <div className={`p-2 rounded-lg ${isStudent ? 'bg-purple-50' : isCommercial ? 'bg-teal-50' : 'bg-indigo-50'}`}>
                  {isStudent ? (
                     <GraduationCap className="w-5 h-5 text-[#801786]" />
+                 ) : isCommercial ? (
+                    <LayoutDashboard className="w-5 h-5 text-teal-600" />
                  ) : (
                     <Home className="w-5 h-5 text-indigo-600" />
                  )}
               </div>
               <div>
                  <h1 className="text-lg font-black text-slate-900 leading-none">
-                    {isStudent ? 'Student & Bachelor' : 'Family Residences'}
+                    {isStudent ? 'Student & Bachelor' : isCommercial ? 'Commercial Spaces' : 'Family Residences'}
                  </h1>
                  <p className="text-[11px] font-semibold text-slate-500 mt-1">
-                    {properties.length} Premium {isStudent ? 'Stays' : 'Homes'}
+                    {properties.length} Premium {isStudent ? 'Stays' : isCommercial ? 'Spaces' : 'Homes'}
                  </p>
               </div>
            </div>
@@ -130,6 +139,18 @@ export default function CategoryPage() {
                                          className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-colors ${localFilters.type === t ? 'bg-[#801786] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                       >
                                          {t === 'co' ? 'Co-living' : t}
+                                      </button>
+                                   ))}
+                                </div>
+                             ) : isCommercial ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                   {['all', 'office', 'warehouse', 'shop'].map(t => (
+                                      <button 
+                                         key={t}
+                                         onClick={() => setLocalFilters(prev => ({...prev, type: t}))}
+                                         className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-colors ${localFilters.type === t ? 'bg-[#801786] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                      >
+                                         {t}
                                       </button>
                                    ))}
                                 </div>
@@ -190,7 +211,7 @@ export default function CategoryPage() {
                     </div>
                     <h3 className="text-slate-800 font-extrabold text-lg mb-1">No matches found</h3>
                     <p className="text-slate-500 text-sm max-w-[250px] mx-auto leading-relaxed">
-                       We couldn't find any {isStudent ? 'student' : 'family'} properties matching your criteria.
+                       We couldn't find any {isStudent ? 'student' : isCommercial ? 'commercial' : 'family'} properties matching your criteria.
                     </p>
                  </div>
               )}

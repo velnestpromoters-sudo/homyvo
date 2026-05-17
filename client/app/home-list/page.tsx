@@ -51,6 +51,7 @@ export default function HomeListPage() {
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [studentProperties, setStudentProperties] = useState<any[]>([]);
   const [familyProperties, setFamilyProperties] = useState<any[]>([]);
+  const [commercialProperties, setCommercialProperties] = useState<any[]>([]);
   const [allRawProperties, setAllRawProperties] = useState<any[]>([]);
   
   const [trendingFilter, setTrendingFilter] = useState<'near_me' | 'search' | 'allover'>('allover');
@@ -130,6 +131,7 @@ export default function HomeListPage() {
           
           const students: any[] = [];
           const families: any[] = [];
+          const commercial: any[] = [];
           const rawForTrending: any[] = [];
           
           const now = new Date().getTime();
@@ -163,7 +165,9 @@ export default function HomeListPage() {
 
             rawForTrending.push(cardData);
 
-            if (p.preferences?.bachelorAllowed || isPg) {
+            if (p.propertyType === 'commercial') {
+              commercial.push(cardData);
+            } else if (p.preferences?.bachelorAllowed || isPg) {
               students.push(cardData);
             } else {
               families.push(cardData);
@@ -172,6 +176,7 @@ export default function HomeListPage() {
           
           setStudentProperties(students);
           setFamilyProperties(families);
+          setCommercialProperties(commercial);
           setAllRawProperties(rawForTrending);
         }
       } catch (error) {
@@ -413,6 +418,18 @@ export default function HomeListPage() {
               <p className="text-[9px] md:text-[11px] text-[#6B7280] mt-0.5 font-medium">{familyProperties.length}+ Premium homes</p>
             </div>
           </div>
+          <div 
+             onClick={() => router.push('/category/commercial')}
+             className="rounded-xl bg-white p-2.5 md:p-3 flex flex-col md:flex-row items-start md:items-center gap-2.5 md:gap-3 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group col-span-2 md:col-span-1"
+          >
+             <div className="bg-teal-50 p-2 rounded-lg group-hover:scale-110 transition-transform duration-300 shrink-0">
+              <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5 text-teal-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-[#111827] text-[12px] md:text-sm leading-tight">Commercial Spaces</h3>
+              <p className="text-[9px] md:text-[11px] text-[#6B7280] mt-0.5 font-medium">{commercialProperties.length}+ Offices & Shops</p>
+            </div>
+          </div>
         </div>
 
         {/* 5. TRENDING NOW */}
@@ -555,6 +572,25 @@ export default function HomeListPage() {
                <HorizontalScrollCards items={familyProperties} router={router} />
              ) : (
                <div className="text-sm text-[#6B7280] italic ml-1">No family homes available currently.</div>
+             )}
+          </div>
+        </section>
+
+        {/* 7.5 COMMERCIAL SPACES */}
+        <section>
+          <div className="mb-3 mt-4">
+            <h2 className="text-lg font-bold text-[#111827]">Commercial Spaces</h2>
+            <p className="text-sm text-[#6B7280]">Offices, shops and warehouses</p>
+          </div>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x min-h-[150px]">
+            {isLoading ? (
+               <div className="w-full flex justify-center py-4">
+                 <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+               </div>
+             ) : commercialProperties.length > 0 ? (
+               <HorizontalScrollCards items={commercialProperties} router={router} />
+             ) : (
+               <div className="text-sm text-[#6B7280] italic ml-1">No commercial spaces available currently.</div>
              )}
           </div>
         </section>
