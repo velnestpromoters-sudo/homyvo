@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import Image from 'next/image';
-import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity } from 'lucide-react';
+import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail } from 'lucide-react';
 
 interface AdminUser {
   _id: string;
@@ -213,7 +213,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Growth Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -306,6 +306,53 @@ export default function AdminDashboard() {
                         </div>
                      </div>
                      <div className="text-xl font-black text-white">1M<span className="text-slate-500 text-sm ml-1">Max</span></div>
+                  </div>
+               </div>
+            </div>
+          </motion.div>
+
+          {/* EmailJS Limits Insight */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 relative overflow-hidden"
+          >
+            <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-violet-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col h-full">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
+                     <Mail className="w-5 h-5 text-violet-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">EmailJS Limits</h2>
+               </div>
+               <p className="text-slate-400 text-sm mb-6">
+                 Tracker for the Free Tier limits of transactional emails.
+               </p>
+
+               <div className="flex flex-col justify-start gap-4 flex-1">
+                  {/* Monthly Emails */}
+                  <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <Activity className="w-5 h-5 text-emerald-400" />
+                        <div>
+                           <div className="text-white font-bold">Monthly Quota</div>
+                           <div className="text-slate-500 text-xs">Limit: 200 / month</div>
+                        </div>
+                     </div>
+                     <div className="text-xl font-black text-white">200<span className="text-slate-500 text-sm ml-1">Max</span></div>
+                  </div>
+                  {/* Templates */}
+                  <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <ShieldCheck className="w-5 h-5 text-blue-400" />
+                        <div>
+                           <div className="text-white font-bold">Email Templates</div>
+                           <div className="text-slate-500 text-xs">Limit: 2 Templates</div>
+                        </div>
+                     </div>
+                     <div className="text-xl font-black text-white">2<span className="text-slate-500 text-sm ml-1">Max</span></div>
                   </div>
                </div>
             </div>
