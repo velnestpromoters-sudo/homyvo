@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import Image from 'next/image';
-import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2 } from 'lucide-react';
+import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity } from 'lucide-react';
 
 interface AdminUser {
   _id: string;
@@ -213,44 +213,104 @@ export default function AdminDashboard() {
         </div>
 
         {/* Growth Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 relative overflow-hidden"
-        >
-          <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[200%] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 relative overflow-hidden"
+          >
+            <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[200%] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">App Usage Growth</h2>
-              <p className="text-slate-400 text-sm max-w-md">
-                Comparing new user registrations from the last 30 days against the preceding 30-day period.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="bg-slate-950/50 p-6 rounded-2xl border border-white/5 flex flex-col items-center min-w-[160px]">
-                <span className="text-slate-400 text-xs uppercase tracking-wider mb-2 font-semibold">New Signups</span>
-                <span className="text-3xl font-bold text-white">+{stats.growth.recentSignups}</span>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">App Usage Growth</h2>
+                <p className="text-slate-400 text-sm max-w-md">
+                  Comparing new user registrations from the last 30 days against the preceding 30-day period.
+                </p>
               </div>
 
-              <div className={`p-6 rounded-2xl border flex flex-col items-center min-w-[160px] ${stats.growth.trend === 'up'
-                  ? 'bg-emerald-500/10 border-emerald-500/20'
-                  : 'bg-red-500/10 border-red-500/20'
-                }`}>
-                <span className={`text-xs uppercase tracking-wider mb-2 font-semibold ${stats.growth.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
-                  }`}>30-Day Trend</span>
+              <div className="flex flex-col gap-4">
+                <div className="bg-slate-950/50 p-6 rounded-2xl border border-white/5 flex flex-col items-center min-w-[160px]">
+                  <span className="text-slate-400 text-xs uppercase tracking-wider mb-2 font-semibold">New Signups</span>
+                  <span className="text-3xl font-bold text-white">+{stats.growth.recentSignups}</span>
+                </div>
 
-                <div className={`flex items-center gap-2 text-3xl font-bold ${stats.growth.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
+                <div className={`p-6 rounded-2xl border flex flex-col items-center min-w-[160px] ${stats.growth.trend === 'up'
+                    ? 'bg-emerald-500/10 border-emerald-500/20'
+                    : 'bg-red-500/10 border-red-500/20'
                   }`}>
-                  {stats.growth.trend === 'up' ? <TrendingUp className="w-8 h-8" /> : <TrendingDown className="w-8 h-8" />}
-                  {stats.growth.percentage}%
+                  <span className={`text-xs uppercase tracking-wider mb-2 font-semibold ${stats.growth.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
+                    }`}>30-Day Trend</span>
+
+                  <div className={`flex items-center gap-2 text-3xl font-bold ${stats.growth.trend === 'up' ? 'text-emerald-400' : 'text-red-400'
+                    }`}>
+                    {stats.growth.trend === 'up' ? <TrendingUp className="w-8 h-8" /> : <TrendingDown className="w-8 h-8" />}
+                    {stats.growth.percentage}%
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+
+          {/* AI Gemini API Engine Insights */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 relative overflow-hidden"
+          >
+            <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-pink-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col h-full">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center border border-pink-500/20">
+                     <Cpu className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">Gemini AI Limits</h2>
+               </div>
+               <p className="text-slate-400 text-sm mb-6">
+                 Tracker for the Free Tier limits of the Homyvo AI Assistant.
+               </p>
+
+               <div className="flex flex-col justify-center gap-4 flex-1">
+                  {/* RPM */}
+                  <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <Zap className="w-5 h-5 text-amber-400" />
+                        <div>
+                           <div className="text-white font-bold">Requests Per Minute (RPM)</div>
+                           <div className="text-slate-500 text-xs">Limit: 15 / min</div>
+                        </div>
+                     </div>
+                     <div className="text-xl font-black text-white">15<span className="text-slate-500 text-sm ml-1">Max</span></div>
+                  </div>
+                  {/* RPD */}
+                  <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <Activity className="w-5 h-5 text-emerald-400" />
+                        <div>
+                           <div className="text-white font-bold">Requests Per Day (RPD)</div>
+                           <div className="text-slate-500 text-xs">Limit: 1,500 / day</div>
+                        </div>
+                     </div>
+                     <div className="text-xl font-black text-white">1,500<span className="text-slate-500 text-sm ml-1">Max</span></div>
+                  </div>
+                  {/* TPM */}
+                  <div className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <ShieldCheck className="w-5 h-5 text-blue-400" />
+                        <div>
+                           <div className="text-white font-bold">Tokens Per Minute (TPM)</div>
+                           <div className="text-slate-500 text-xs">Limit: 1 Million / min</div>
+                        </div>
+                     </div>
+                     <div className="text-xl font-black text-white">1M<span className="text-slate-500 text-sm ml-1">Max</span></div>
+                  </div>
+               </div>
+            </div>
+          </motion.div>
+        </div>
 
         {/* User Modal Viewer */}
         {modalData && (
