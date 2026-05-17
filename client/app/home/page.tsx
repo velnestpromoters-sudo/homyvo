@@ -64,6 +64,7 @@ export default function HomeReelPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { locationName, setLocation, coordinates } = useLocationStore();
   const [properties, setProperties] = useState<PropertyFeedData[]>([]);
+  const [baseProperties, setBaseProperties] = useState<PropertyFeedData[]>([]);
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
 
   // Sync API Properties
@@ -85,6 +86,7 @@ export default function HomeReelPage() {
           }
           
           // Shuffle the properties so the reel feed is random
+          setBaseProperties([...fetched]);
           setProperties(fetched.sort(() => Math.random() - 0.5));
         }
       } catch (err) {
@@ -160,7 +162,7 @@ export default function HomeReelPage() {
     }
   }, [locationName, setLocation]);
 
-  // 2. Scroll Logic to detect Active Video (Intersection Observer technique via scrolling)
+  // 2. Scroll Logic to detect Active Video and Infinite Loop
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
     const slideHeight = container.clientHeight;
@@ -169,6 +171,14 @@ export default function HomeReelPage() {
     
     if (newActiveIndex !== activeSlide) {
       setActiveSlide(newActiveIndex);
+      
+      // If user reaches the last 2 slides, append more randomized properties to create an infinite loop
+      if (newActiveIndex >= properties.length - 2 && baseProperties.length > 0) {
+          const reshuffled = [...baseProperties].sort(() => Math.random() - 0.5);
+          // Update IDs slightly to prevent React key collision errors
+          const loopExtended = reshuffled.map(p => ({ ...p, _id: p._id + '-' + Date.now() + Math.random() }));
+          setProperties(prev => [...prev, ...loopExtended]);
+      }
     }
   };
 
