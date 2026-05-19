@@ -65,7 +65,13 @@ export default function SearchPage() {
        },
        (err) => {
           console.error(err);
-          alert("Please enable your device GPS location permissions.");
+          if (err.code === 1) {
+             alert("Please enable your device GPS location permissions.");
+          } else if (err.code === 2) {
+             alert("Location unavailable. Please ensure your device GPS is turned on.");
+          } else {
+             alert("Failed to get location. Please try again.");
+          }
           setIsSearching(false);
        },
        { enableHighAccuracy: true }

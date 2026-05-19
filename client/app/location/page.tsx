@@ -128,7 +128,13 @@ export default function LocationTracker() {
       },
       (err) => {
          console.warn("GPS Permission Denied:", err);
-         alert("Please enable GPS Location Permissions allowing the browser to track satellites.");
+         if (err.code === 1) {
+            alert("Please enable GPS Location Permissions allowing the browser to track satellites.");
+         } else if (err.code === 2) {
+            alert("Location information is unavailable. Please ensure your device GPS is turned on.");
+         } else {
+            alert("Location request failed. Please try again.");
+         }
          setIsLocating(false);
       },
       { enableHighAccuracy: true }
