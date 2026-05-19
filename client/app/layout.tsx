@@ -10,24 +10,45 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Homyvo – Verified Homes & PG Rentals in Tamil Nadu",
-  description: "Find verified PG, apartments, and rental homes in Tamil Nadu. Homyvo connects tenants with trusted property owners.",
-  keywords: ["Homyvo", "PG in Coimbatore", "rent house Tamil Nadu", "bachelor rooms", "verified homes India"],
+  title: {
+    template: "%s | Homyvo",
+    default: "Homyvo – Verified Homes & PG Rentals in Tamil Nadu"
+  },
+  description: "Find verified PG, apartments, and rental homes in Tamil Nadu. Homyvo connects tenants with trusted property owners. Direct contacts, no hidden fees.",
+  keywords: ["Homyvo", "PG in Coimbatore", "rent house Tamil Nadu", "bachelor rooms", "verified homes India", "apartments for rent", "no broker"],
   metadataBase: new URL("https://www.homyvo.com"),
   openGraph: {
-    title: "Homyvo – Verified Homes & PG Rentals in Tamil Nadu",
-    description: "Find verified PG, apartments, and rental homes in Tamil Nadu. Homyvo connects tenants with trusted property owners.",
+    title: "Homyvo – Verified Homes & PG Rentals",
+    description: "Find verified PG, apartments, and rental homes in Tamil Nadu. Direct contacts, no hidden fees.",
     url: "https://www.homyvo.com",
     siteName: "Homyvo",
     locale: "en_IN",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: "/icon.png",
+        width: 800,
+        height: 600,
+        alt: "Homyvo Logo",
+      }
+    ]
   },
   twitter: {
-    card: "summary_large_image"
+    card: "summary_large_image",
+    title: "Homyvo – Verified Homes & PG Rentals",
+    description: "Find verified PG, apartments, and rental homes in Tamil Nadu.",
+    images: ["/icon.png"]
   },
   robots: {
     index: true,
-    follow: true
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    }
   }
 };
 
@@ -36,15 +57,30 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "Organization",
+      "@id": "https://www.homyvo.com/#organization",
       "name": "Homyvo",
       "url": "https://www.homyvo.com",
-      "logo": "https://www.homyvo.com/logo.svg",
-      "sameAs": []
+      "logo": "https://www.homyvo.com/icon.png",
+      "description": "Homyvo is a premier real estate platform connecting tenants with verified property owners for PGs, apartments, and rental homes across Tamil Nadu.",
+      "sameAs": [
+        "https://www.facebook.com/homyvo",
+        "https://twitter.com/homyvo",
+        "https://www.instagram.com/homyvo"
+      ]
     },
     {
       "@type": "WebSite",
+      "@id": "https://www.homyvo.com/#website",
       "name": "Homyvo",
-      "url": "https://www.homyvo.com"
+      "url": "https://www.homyvo.com",
+      "publisher": {
+        "@id": "https://www.homyvo.com/#organization"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.homyvo.com/search?queryText={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     }
   ]
 };
