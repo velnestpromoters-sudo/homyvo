@@ -10,11 +10,41 @@ export default function SearchPage() {
   const router = useRouter();
   const { setLocation, locationName, coordinates } = useLocationStore();
   
+  type Suggestion = { name: string; lat: number; lng: number };
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
+  const triggerDirectSearch = async (sugName: string, lat: number, lng: number) => {
+    setSearchQuery(sugName);
+    setShowSuggestions(false);
+    setIsSearching(true);
+    try {
+        const params = new URLSearchParams();
+        params.append('queryText', searchQuery.trim());
+        params.append('lat', lat.toString());
+        params.append('lng', lng.toString());
+        const res = await fetch(`/api/properties/search?${params.toString()}&_t=${Date.now()}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success) {
+           setSearchResults(data.data || []);
+        }
+    } catch (err) {
+        console.error("Direct Search Engine Failed", err);
+    } finally {
+        setIsSearching(false);
+    }
+  };
   const [showFilters, setShowFilters] = useState(false); // Used for the local results filter now
   const [localFilters, setLocalFilters] = useState({ type: 'all', sort: 'none' });
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -115,7 +145,7 @@ export default function SearchPage() {
         } else {
             try {
                 // 1. Primary: Photon Search (Typo tolerant, Spatial bias)
-                let photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(targetGeo)}&limit=5`;
+                let photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(targetGeo)}&limit=15`;
                 if (coordinates?.lat && coordinates?.lng) {
                     photonUrl += `&lat=${coordinates.lat}&lon=${coordinates.lng}`;
                 }
@@ -137,40 +167,36 @@ export default function SearchPage() {
 
                 // 2. Fallback: Nominatim (Strict string match)
                 if (geoData.length === 0) {
-                    let osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetGeo)}&limit=5`;
+                    let osmUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(targetGeo)}&limit=15`;
                     const geoRes = await fetch(osmUrl, { headers: { 'User-Agent': 'bnest-geo-engine' } });
                     geoData = await geoRes.json();
                 }
 
                 if (geoData && geoData.length > 0) {
-                    lat = geoData[0].lat;
-                    lng = geoData[0].lon;
-                    
-                    // Generate predictive suggestions natively
-                    const places = geoData.map((g: any) => {
-                        const chunks = (g.display_name || '').split(',');
-                        return chunks.slice(0, 3).join(',').trim();
-                    }).filter(Boolean);
-                    const lowerText = rawText.toLowerCase();
-                    const lowerTarget = targetGeo.toLowerCase();
-                    let prefix = "";
-                    if (lowerText.includes(lowerTarget) && targetGeo.length > 0) {
-                       prefix = rawText.substring(0, lowerText.lastIndexOf(lowerTarget));
-                    }
-                    
-                    // Build prediction list eliminating duplicates maximizing tolerance resolution natively
-                    const uniquePlaces = Array.from(new Set(places)) as string[];
-                    
-                    if (prefix.trim() === "" && uniquePlaces.length > 0) {
-                        const intents = ["Boys PG near", "Girls PG near", "Family apartments in", "Bachelor allowed near"];
-                        let rawPicks: string[] = [];
-                        uniquePlaces.slice(0, 2).forEach((place) => {
-                            intents.forEach((intent) => rawPicks.push(`${intent} ${place}`));
+                    // Apply 100km radius restriction natively
+                    if (coordinates && coordinates.lat && coordinates.lng) {
+                        geoData = geoData.filter((g: any) => {
+                           const dist = calculateDistance(coordinates.lat!, coordinates.lng!, Number(g.lat), Number(g.lon));
+                           return dist <= 100;
                         });
-                        setSuggestions(rawPicks.slice(0, 8)); // Top 8 smartest matching combos natively generated
+                    }
+
+                    if (geoData.length > 0) {
+                        lat = geoData[0].lat;
+                        lng = geoData[0].lon;
+                        
+                        // Generate rich structured suggestions
+                        const uniqueMap = new Map();
+                        geoData.forEach((g: any) => {
+                            const chunks = (g.display_name || '').split(',');
+                            const name = chunks.slice(0, 3).join(',').trim();
+                            if (name && !uniqueMap.has(name)) {
+                                uniqueMap.set(name, { name, lat: Number(g.lat), lng: Number(g.lon) });
+                            }
+                        });
+                        setSuggestions(Array.from(uniqueMap.values()).slice(0, 8));
                     } else {
-                        const newSuggestions = uniquePlaces.slice(0, 10).map((place: string) => `${prefix}${place}`.trim());
-                        setSuggestions(newSuggestions);
+                        setSuggestions([]);
                     }
                 } else {
                     setSuggestions([]);
@@ -244,13 +270,10 @@ export default function SearchPage() {
                        <button 
                           key={i} 
                           className="w-full text-left px-5 py-3.5 hover:bg-slate-50 flex items-start gap-3 transition-colors active:bg-slate-100 border-b border-slate-50 last:border-0"
-                          onClick={() => {
-                             setSearchQuery(sug);
-                             setShowSuggestions(false);
-                          }}
+                          onClick={() => triggerDirectSearch(sug.name, sug.lat, sug.lng)}
                        >
                           <SearchLucide className="w-4 h-4 text-[#801786] shrink-0 opacity-40 mt-[3px]" />
-                          <span className="text-slate-700 font-medium text-sm leading-snug">{sug}</span>
+                          <span className="text-slate-700 font-medium text-sm leading-snug">{sug.name}</span>
                        </button>
                    ))}
                 </div>
