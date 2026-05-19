@@ -74,7 +74,7 @@ export default function SearchPage() {
           }
           setIsSearching(false);
        },
-       { enableHighAccuracy: true }
+       { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
     );
   };
 
