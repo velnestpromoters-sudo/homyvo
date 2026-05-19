@@ -29,7 +29,7 @@ exports.askChatbot = async (req, res) => {
             });
         }
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const systemPrompt = `You are the Homyvo Support Assistant. You answer questions strictly about the Homyvo rental platform in Tamil Nadu. Be highly concise (2-3 sentences max) and friendly. 
 Here is your knowledge base:
