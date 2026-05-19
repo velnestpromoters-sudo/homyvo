@@ -51,34 +51,56 @@ exports.searchProperties = async (req, res) => {
 
     let results = [];
 
-    // 2. Fundamental Spatial Search (Overrides entire text reliance)
+    // Extract search string logic so it's universally available for Hybrid Safety Net
+    const cleanLocationStr = qStr.replace(/\b(pg|boys|girls|rent|house|apartment|bhk|room|flat|villa|mens|womens|in|near|around|for|under|below|max|<|\d+)\b/gi, '').trim();
+    const searchStr = cleanLocationStr || qStr;
+
+    // 2. Hybrid Search Logic (Spatial + Text Safety Net)
     if (lat && lng && lat !== 'null' && lng !== 'null') {
       const numericLat = Number(lat);
       const numericLng = Number(lng);
 
-      // Attempt exactly 3 KM cutoff per Architecture rule
-      query["location.coordinates"] = {
-        $near: {
-          $geometry: { type: "Point", coordinates: [numericLng, numericLat] },
-          $maxDistance: 3000 // 3KM
+      // A: Spatial Query (Primary)
+      let spatialResults = [];
+      try {
+        const spatialQuery = { ...query };
+        spatialQuery["location.coordinates"] = {
+          $near: {
+            $geometry: { type: "Point", coordinates: [numericLng, numericLat] },
+            $maxDistance: 5000 // Fixed 5KM range for hybrid merge
+          }
+        };
+        spatialResults = await Property.find(spatialQuery).limit(20);
+      } catch(e) { console.warn("Spatial search failed", e); }
+
+      // B: Text Match Query (Safety Net for missing/bad coordinates)
+      let textResults = [];
+      try {
+        if (searchStr && searchStr.length > 2) {
+          const textQuery = { ...query };
+          textQuery.$or = [
+            { "location.area": new RegExp(searchStr, "i") },
+            { title: new RegExp(searchStr, "i") },
+            { "location.city": new RegExp(searchStr, "i") }
+          ];
+          textResults = await Property.find(textQuery).limit(20);
         }
-      };
+      } catch(e) { console.warn("Text search failed", e); }
 
-      results = await Property.find(query).limit(20);
-
-      // 3. Fallback: Check 5KM if 3KM yields 0 outcomes
-      if (results.length === 0) {
-        query["location.coordinates"].$near.$maxDistance = 5000; // 5KM
-        results = await Property.find(query).limit(20);
-      }
+      // C: Smart Merge and Deduplication
+      const mergedMap = new Map();
+      spatialResults.forEach(p => mergedMap.set(p._id.toString(), p));
+      textResults.forEach(p => {
+        if (!mergedMap.has(p._id.toString())) {
+          mergedMap.set(p._id.toString(), p);
+        }
+      });
+      
+      results = Array.from(mergedMap.values());
     } 
-    // 4. Ultimate String Fallback (if user typed nonsense and OSM broke entirely)
+    // 3. Ultimate String Fallback (if OSM broke entirely)
     else {
-      if (queryText) {
-        // Strip out intent keywords so we only regex search the actual location name
-        const cleanLocationStr = qStr.replace(/\b(pg|boys|girls|rent|house|apartment|bhk|room|flat|villa|mens|womens|in|near|around|for|under|below|max|<|\d+)\b/gi, '').trim();
-        const searchStr = cleanLocationStr || qStr;
-        
+      if (queryText && searchStr.length > 0) {
         query.$or = [
           { "location.area": new RegExp(searchStr, "i") },
           { title: new RegExp(searchStr, "i") },
@@ -115,6 +137,8 @@ const distance = (lat1, lon1, lat2, lon2) => {
          if (pData.location && pData.location.coordinates && pData.location.coordinates.length === 2) {
              const [pLng, pLat] = pData.location.coordinates;
              pData.calculatedDistanceKm = parseFloat(distance(numericLat, numericLng, pLat, pLng).toFixed(2));
+         } else {
+             pData.calculatedDistanceKm = 999; // Text matched properties without valid coords get lowest priority
          }
          return pData;
       });
