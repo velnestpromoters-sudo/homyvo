@@ -53,7 +53,7 @@ exports.verifyListingPayment = async (req, res) => {
 exports.createAccessOrder = async (req, res) => {
   try {
     const options = {
-      amount: 49 * 100, // Rs 49
+      amount: 99 * 100, // Rs 99
       currency: "INR",
     };
     const order = await razorpay.orders.create(options);

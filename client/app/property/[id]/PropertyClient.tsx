@@ -425,7 +425,7 @@ export default function PropertyClient({ id, initialProperty }: { id: string, in
                     disabled={isProcessingPayment}
                     className="w-full max-w-[280px] py-3.5 bg-[#801786] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all flex justify-center items-center"
                  >
-                    {isProcessingPayment ? 'Processing...' : 'Pay ₹49 to Unlock'}
+                    {isProcessingPayment ? 'Processing...' : 'Pay ₹99 to Unlock'}
                  </button>
              </div>
          )}

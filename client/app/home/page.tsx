@@ -65,6 +65,7 @@ export default function HomeReelPage() {
   const { locationName, setLocation, coordinates } = useLocationStore();
   const [properties, setProperties] = useState<PropertyFeedData[]>([]);
   const [baseProperties, setBaseProperties] = useState<PropertyFeedData[]>([]);
+  const [rawFetchedProperties, setRawFetchedProperties] = useState<PropertyFeedData[]>([]);
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
 
   // Sync API Properties
@@ -85,9 +86,7 @@ export default function HomeReelPage() {
             }
           }
           
-          // Shuffle the properties so the reel feed is random
-          setBaseProperties([...fetched]);
-          setProperties(fetched.sort(() => Math.random() - 0.5));
+          setRawFetchedProperties(fetched);
         }
       } catch (err) {
         console.error("Failed to load property feed", err);
@@ -97,6 +96,36 @@ export default function HomeReelPage() {
     };
     loadFeed();
   }, []);
+
+  // Filter and shuffle properties when coordinates or rawFetchedProperties change
+  useEffect(() => {
+    if (rawFetchedProperties.length === 0) return;
+
+    let filtered = [...rawFetchedProperties];
+
+    if (coordinates && coordinates.lat && coordinates.lng) {
+      const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371; // Earth radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      };
+
+      filtered = filtered.filter(p => {
+        if (!p.location?.lat || !p.location?.lng) return false;
+        const dist = getDistance(coordinates.lat, coordinates.lng, p.location.lat, p.location.lng);
+        return dist <= 20;
+      });
+    }
+
+    setBaseProperties(filtered);
+    setProperties(filtered.sort(() => Math.random() - 0.5));
+  }, [rawFetchedProperties, coordinates]);
 
   // 1a. Tracking Organic Reel Interactions tightly bridging Property Growth Metrics natively
   useEffect(() => {

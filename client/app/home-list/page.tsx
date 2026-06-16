@@ -46,7 +46,7 @@ export default function HomeListPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const logout = useAuthStore(state => state.logout);
-  const { locationName } = useLocationStore();
+  const { locationName, coordinates, setLocation } = useLocationStore();
   const { openModal } = useAuthModalStore();
   
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
@@ -60,10 +60,18 @@ export default function HomeListPage() {
   const [showTrendingSearchInput, setShowTrendingSearchInput] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [isLocatingNearMe, setIsLocatingNearMe] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [osmSuggestions, setOsmSuggestions] = useState<{name: string, lat: number, lng: number}[]>([]);
   const [isSearchingOSM, setIsSearchingOSM] = useState(false);
   const [searchedCoordinates, setSearchedCoordinates] = useState<{lat: number, lng: number} | null>(null);
+
+  // Sync global coordinates to local userLocation state for Trending "Near Me"
+  useEffect(() => {
+    if (coordinates) {
+      setUserLocation(coordinates);
+    }
+  }, [coordinates]);
 
   useEffect(() => {
     if (!trendingSearchText || trendingSearchText.trim() === '') {
@@ -207,9 +215,31 @@ export default function HomeListPage() {
     setIsLocating(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-           setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-           setIsLocating(false);
+        async (pos) => {
+           const { latitude, longitude } = pos.coords;
+           try {
+             let detected = null;
+             try {
+               const mapplsRes = await fetch(`/api/location?lat=${latitude}&lng=${longitude}`);
+               const mapplsData = await mapplsRes.json();
+               if (mapplsData.success && mapplsData.location) {
+                 detected = mapplsData.location;
+               }
+             } catch (proxyErr) {
+                console.warn("Mappls proxy failed.", proxyErr);
+             }
+
+             if (!detected) {
+                const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+                const bdcData = await bdcRes.json();
+                detected = bdcData.locality || bdcData.city || bdcData.principalSubdivision;
+             }
+             setLocation(detected || 'Detected Area', { lat: latitude, lng: longitude });
+           } catch (e) {
+             setLocation('Detected Area', { lat: latitude, lng: longitude });
+           } finally {
+             setIsLocating(false);
+           }
         },
         (err) => {
            alert("Could not get location. Please enable location services.");
@@ -221,6 +251,62 @@ export default function HomeListPage() {
       setIsLocating(false);
     }
   };
+
+  const handleEnableLocation = () => {
+    if ('geolocation' in navigator) {
+      setIsLocatingNearMe(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            let detected = null;
+            try {
+              const mapplsRes = await fetch(`/api/location?lat=${latitude}&lng=${longitude}`);
+              const mapplsData = await mapplsRes.json();
+              if (mapplsData.success && mapplsData.location) {
+                detected = mapplsData.location;
+              }
+            } catch (proxyErr) {
+               console.warn("Mappls proxy failed.", proxyErr);
+            }
+
+            if (!detected) {
+               const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+               const bdcData = await bdcRes.json();
+               detected = bdcData.locality || bdcData.city || bdcData.principalSubdivision;
+            }
+            setLocation(detected || 'Detected Area', { lat: latitude, lng: longitude });
+          } catch (e) {
+            setLocation('Detected Area', { lat: latitude, lng: longitude });
+          } finally {
+            setIsLocatingNearMe(false);
+          }
+        },
+        (err) => {
+          console.error(err);
+          alert("Location permission denied or failed. Please enable location in your browser settings.");
+          setIsLocatingNearMe(false);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
+  const nearMeProperties = React.useMemo(() => {
+    if (!coordinates) return [];
+    
+    return allRawProperties
+      .map(p => {
+        if (!p.coordinates || p.coordinates.length < 2) return { ...p, distance: Infinity };
+        const pLng = p.coordinates[0];
+        const pLat = p.coordinates[1];
+        const dist = getDistance(coordinates.lat, coordinates.lng, pLat, pLng);
+        return { ...p, distance: dist };
+      })
+      .filter(p => p.distance <= 20)
+      .sort((a, b) => a.distance - b.distance);
+  }, [allRawProperties, coordinates]);
 
 
 
@@ -537,6 +623,55 @@ export default function HomeListPage() {
                </div>
              )}
           </div>
+        </section>
+
+        {/* NEAR ME */}
+        <section className="mt-2">
+          <div className="mb-3">
+            <h2 className="text-lg font-bold text-[#111827] flex items-center gap-1.5">
+              <MapPin className="w-5 h-5 text-[#801786]" />
+              Near Me
+            </h2>
+            <p className="text-sm text-[#6B7280]">Properties within 20km of your location</p>
+          </div>
+          
+          {!coordinates ? (
+            <div className="w-full bg-gradient-to-r from-purple-50/70 to-indigo-50/70 border border-purple-100/80 rounded-2xl p-6 flex flex-col items-center text-center shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200/20 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md mb-3 border border-purple-100">
+                <MapPin className="w-6 h-6 text-[#801786]" />
+              </div>
+              <h3 className="font-extrabold text-slate-800 text-sm mb-1">Find Homes Near You</h3>
+              <p className="text-xs text-slate-500 mb-4 max-w-xs leading-relaxed">Enable location access to instantly discover apartments, rooms, and PGs within a 20km radius.</p>
+              <button 
+                onClick={handleEnableLocation}
+                disabled={isLocatingNearMe}
+                className="px-6 py-2.5 bg-[#801786] text-white text-xs font-bold rounded-full shadow-lg active:scale-95 transition-transform disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isLocatingNearMe ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Locating...
+                  </>
+                ) : 'Use Current Location'}
+              </button>
+            </div>
+          ) : isLocatingNearMe ? (
+            <div className="w-full bg-slate-50 border border-slate-100 rounded-2xl h-[150px] flex flex-col items-center justify-center text-center">
+              <div className="w-6 h-6 border-2 border-[#801786] border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p className="text-xs text-slate-500 font-medium">Detecting your coordinates...</p>
+            </div>
+          ) : nearMeProperties.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4 snap-x min-h-[150px]">
+              <HorizontalScrollCards items={nearMeProperties} router={router} />
+            </div>
+          ) : (
+            <div className="w-full bg-slate-50 border border-slate-200/60 rounded-2xl p-6 flex flex-col items-center text-center">
+              <MapPin className="w-8 h-8 text-slate-400 mb-2" />
+              <h3 className="font-bold text-slate-700 text-sm mb-1">No Properties Found Nearby</h3>
+              <p className="text-xs text-slate-500 max-w-xs">We couldn't find any listings within 20km of your current location ({locationName}). Try selecting a different area.</p>
+            </div>
+          )}
         </section>
 
         {/* 6. STUDENT & BACHELOR */}
