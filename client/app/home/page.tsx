@@ -40,6 +40,23 @@ interface PropertyFeedData {
   };
 }
 
+const getPropertyCoords = (p: any) => {
+  if (p.location?.coordinates?.coordinates && p.location.coordinates.coordinates.length >= 2) {
+    return {
+      lng: p.location.coordinates.coordinates[0],
+      lat: p.location.coordinates.coordinates[1]
+    };
+  }
+  const link = p.location?.googleMapLink;
+  if (link) {
+    const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (match) return { lng: parseFloat(match[2]), lat: parseFloat(match[1]) };
+    const matchQ = link.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (matchQ) return { lng: parseFloat(matchQ[2]), lat: parseFloat(matchQ[1]) };
+  }
+  return null;
+};
+
 export default function HomeReelPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
@@ -117,8 +134,9 @@ export default function HomeReelPage() {
       };
 
       filtered = filtered.filter(p => {
-        if (!p.location?.lat || !p.location?.lng) return false;
-        const dist = getDistance(coordinates.lat, coordinates.lng, p.location.lat, p.location.lng);
+        const coords = getPropertyCoords(p);
+        if (!coords) return false;
+        const dist = getDistance(coordinates.lat, coordinates.lng, coords.lat, coords.lng);
         return dist <= 20;
       });
     }
@@ -235,12 +253,13 @@ export default function HomeReelPage() {
           properties.map((reel, index) => {
             // Calculate Haversine Distance if both coords exist
             let distance = undefined;
-            if (coordinates && coordinates.lat && reel.location?.lat && reel.location?.lng) {
+            const coords = getPropertyCoords(reel);
+            if (coordinates && coordinates.lat && coords) {
                const R = 6371; // Earth radius in km
-               const dLat = (reel.location.lat - coordinates.lat) * Math.PI / 180;
-               const dLon = (reel.location.lng - coordinates.lng) * Math.PI / 180;
+               const dLat = (coords.lat - coordinates.lat) * Math.PI / 180;
+               const dLon = (coords.lng - coordinates.lng) * Math.PI / 180;
                const lat1 = coordinates.lat * Math.PI / 180;
-               const lat2 = reel.location.lat * Math.PI / 180;
+               const lat2 = coords.lat * Math.PI / 180;
                const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
                distance = R * c;
