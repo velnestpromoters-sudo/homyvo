@@ -242,9 +242,29 @@ export default function AboutPage() {
               <h3 className="text-3xl font-black text-white mb-8 tracking-tighter">Connect with Homyvo</h3>
               
               <div className="flex flex-col items-center justify-center gap-4 w-full max-w-sm mb-12">
-                 <a href="#" className="flex items-center gap-3 text-[#D1D5DB] hover:text-white transition-colors w-full bg-white/5 border border-white/5 p-4 rounded-2xl hover:bg-white/10 active:scale-95">
-                    <AtSign className="w-5 h-5 text-purple-400" />
-                    <span className="font-semibold tracking-wide">@homyvo</span>
+                 <a 
+                    href="https://www.instagram.com/homyvoindia?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center gap-3 text-[#D1D5DB] hover:text-white transition-colors w-full bg-white/5 border border-white/5 p-4 rounded-2xl hover:bg-white/10 active:scale-95"
+                 >
+                    <svg
+                       xmlns="http://www.w3.org/2000/svg"
+                       width="20"
+                       height="20"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       strokeWidth="2"
+                       strokeLinecap="round"
+                       strokeLinejoin="round"
+                       className="w-5 h-5 text-pink-400"
+                    >
+                       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                       <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                    </svg>
+                    <span className="font-semibold tracking-wide">@homyvoindia</span>
                  </a>
                  <a href="tel:+916369269611" className="flex items-center gap-3 text-[#D1D5DB] hover:text-white transition-colors w-full bg-white/5 border border-white/5 p-4 rounded-2xl hover:bg-white/10 active:scale-95">
                     <Phone className="w-5 h-5 text-emerald-400" />
