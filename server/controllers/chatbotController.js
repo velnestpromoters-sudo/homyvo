@@ -3,7 +3,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 exports.askChatbot = async (req, res) => {
     try {
-        const { messages, userMessage } = req.body;
+        const { messages, userMessage, language } = req.body;
         
         // Track Quota
         const today = new Date().toISOString().split('T')[0];
@@ -31,7 +31,9 @@ exports.askChatbot = async (req, res) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        const systemPrompt = `You are the Homyvo Support Assistant. You answer questions strictly about the Homyvo rental platform in Tamil Nadu. Be highly concise (2-3 sentences max) and friendly. 
+        const selectedLanguage = language === 'tamil' ? 'Tamil' : 'English';
+        const systemPrompt = `You are the Homyvo Support Assistant. You answer questions strictly about the Homyvo rental platform in Tamil Nadu. Be highly concise (2-3 sentences max) and friendly.
+You MUST reply strictly in ${selectedLanguage}. Do not reply in any other language.
 Here is your knowledge base:
 - Homyvo is a premium rental platform in Tamil Nadu connecting tenants directly with verified property owners with ZERO brokerage.
 - We focus on PGs, Apartments, and Commercial Spaces.

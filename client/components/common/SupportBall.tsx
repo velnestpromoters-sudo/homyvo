@@ -10,12 +10,39 @@ export default function SupportBall() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { user } = useAuthStore();
+  const [language, setLanguage] = useState<'english' | 'tamil'>('english');
   const [messages, setMessages] = useState<{sender: 'bot'|'user', text: string}[]>([
     { sender: 'bot', text: 'Hi there! 👋 I am the Homyvo Assistant. How can I help you today?' }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [input, setInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('chatbot_lang') as 'english' | 'tamil';
+    if (savedLang && (savedLang === 'english' || savedLang === 'tamil')) {
+      setLanguage(savedLang);
+      if (savedLang === 'tamil') {
+        setMessages([
+          { sender: 'bot', text: 'வணக்கம்! Homyvo உதவியாளர் உங்களை வரவேற்கிறார். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்? 👋' }
+        ]);
+      }
+    }
+  }, []);
+
+  const handleLanguageChange = (lang: 'english' | 'tamil') => {
+    setLanguage(lang);
+    localStorage.setItem('chatbot_lang', lang);
+    if (lang === 'tamil') {
+      setMessages([
+        { sender: 'bot', text: 'வணக்கம்! Homyvo உதவியாளர் உங்களை வரவேற்கிறார். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்? 👋' }
+      ]);
+    } else {
+      setMessages([
+        { sender: 'bot', text: 'Hi there! 👋 I am the Homyvo Assistant. How can I help you today?' }
+      ]);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -52,7 +79,8 @@ Here is your knowledge base:
 
        const response = await api.post('/chatbot/ask', {
            messages: messages.slice(-4).map(m => `${m.sender === 'bot' ? 'Assistant' : 'User'}: ${m.text}`),
-           userMessage: userMessage
+           userMessage: userMessage,
+           language: language
        });
 
        const data = response.data;
@@ -129,6 +157,35 @@ Here is your knowledge base:
                   <p className="font-black text-gray-900">+91 {supportNumber}</p>
                 </div>
               </a>
+            </div>
+
+            {/* Language Selector */}
+            <div className="px-5 py-2 flex items-center justify-between border-b border-slate-100 bg-slate-50/50 shrink-0">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Assistant Language</span>
+              <div className="flex gap-1.5 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => handleLanguageChange('english')}
+                  className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${
+                    language === 'english'
+                      ? 'bg-white text-[#801786] shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLanguageChange('tamil')}
+                  className={`px-3 py-1 rounded-md text-[10px] font-black transition-all ${
+                    language === 'tamil'
+                      ? 'bg-white text-[#801786] shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  தமிழ்
+                </button>
+              </div>
             </div>
 
             {/* Chat Messages */}
