@@ -14,7 +14,7 @@ export default function LocationTracker() {
   const { setLocation, coordinates } = useLocationStore();
   
   // Tracking the needle's physical coordinate on the map
-  const [needlePosition, setNeedlePosition] = useState<[number, number]>(coordinates ? [coordinates.lat, coordinates.lng] : [11.0168, 76.9558]);
+  const [needlePosition, setNeedlePosition] = useState<[number, number]>(coordinates ? [coordinates.lat, coordinates.lng] : [22.5937, 78.9629]);
   // State to force map to organically fly to the physical GPS location
   const [forceFlyTo, setForceFlyTo] = useState<[number, number] | null>(null);
   

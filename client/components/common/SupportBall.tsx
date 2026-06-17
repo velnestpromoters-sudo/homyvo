@@ -3,13 +3,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, PhoneCall, Send } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
+import { useLocationStore } from '@/store/locationStore';
 import api from '@/lib/api';
 
 export default function SupportBall() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { user } = useAuthStore();
+  const router = useRouter();
+  const { coordinates, locationName } = useLocationStore();
   const [language, setLanguage] = useState<'english' | 'tamil'>('english');
   const [messages, setMessages] = useState<{sender: 'bot'|'user', text: string}[]>([
     { sender: 'bot', text: 'Hi there! 👋 I am the Homyvo Assistant. How can I help you today?' }
@@ -80,7 +84,9 @@ Here is your knowledge base:
        const response = await api.post('/chatbot/ask', {
            messages: messages.slice(-4).map(m => `${m.sender === 'bot' ? 'Assistant' : 'User'}: ${m.text}`),
            userMessage: userMessage,
-           language: language
+           language: language,
+           coordinates: coordinates,
+           locationName: locationName
        });
 
        const data = response.data;
@@ -96,6 +102,71 @@ Here is your knowledge base:
     } finally {
        setIsTyping(false);
     }
+  };
+
+  const renderMessageText = (text: string, msgSender: 'bot' | 'user') => {
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    const regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    let match;
+
+    const linkClass = msgSender === 'user' 
+      ? "underline text-pink-200 hover:text-white font-bold transition-colors"
+      : "underline text-[#801786] hover:text-[#ec38b7] font-bold transition-colors";
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      
+      const url = match[2];
+      const isRelative = url.startsWith('/') || url.includes('homyvo.com/property') || url.includes('localhost:3000/property') || url.includes('localhost:5000/property');
+      
+      if (isRelative) {
+        let relativePath = url;
+        const matchProp = url.match(/\/property\/[a-zA-Z0-9_-]+/);
+        if (matchProp) {
+          relativePath = matchProp[0];
+        } else {
+          relativePath = url.replace(/^https?:\/\/[^\/]+/, '');
+        }
+
+        parts.push(
+          <button
+            key={match.index}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsOpen(false);
+              router.push(relativePath);
+            }}
+            className="underline text-left inline font-bold text-[#801786] hover:text-[#ec38b7] transition-colors cursor-pointer bg-transparent border-0 p-0"
+          >
+            {match[1]}
+          </button>
+        );
+      } else {
+        parts.push(
+          <a 
+            key={match.index} 
+            href={url} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={linkClass}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {match[1]}
+          </a>
+        );
+      }
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
   };
 
   const supportNumber = "63692 69611";
@@ -197,7 +268,7 @@ Here is your knowledge base:
                       ? 'bg-[#801786] text-white rounded-tr-sm' 
                       : 'bg-slate-100 text-slate-800 rounded-tl-sm'
                   }`}>
-                    {msg.text}
+                    {renderMessageText(msg.text, msg.sender)}
                   </div>
                 </div>
               ))}

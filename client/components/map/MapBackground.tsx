@@ -40,6 +40,14 @@ function CenterTracker({ onCenterChange, forcePosition }: { onCenterChange: (pos
     }
   }, [forcePosition, map, onCenterChange]);
 
+  // Invalidate map size on mount to correct grey tiles / wrong viewport initialization inside animated modals/containers
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [map]);
+
   return null;
 }
 
@@ -53,9 +61,13 @@ export default function InteractiveMap({
     onLocationUpdate: (lat: number, lng: number) => void
 }) {
   const indiaCenter: [number, number] = [22.5937, 78.9629]; // Full India view
-  // Always lock initial map view to the entire country at Zoom 5
-  const position: [number, number] = indiaCenter;
-  const initialZoom = 5;
+  const isDefaultOrNull = !initialCoordinates || 
+                          (initialCoordinates.lat === 22.5937 && initialCoordinates.lng === 78.9629);
+  
+  const position: [number, number] = isDefaultOrNull 
+    ? indiaCenter 
+    : [initialCoordinates.lat, initialCoordinates.lng];
+  const initialZoom = isDefaultOrNull ? 5 : 15;
 
   const handleCenterUpdate = (pos: [number, number]) => {
       onLocationUpdate(pos[0], pos[1]);
