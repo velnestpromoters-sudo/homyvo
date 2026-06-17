@@ -10,12 +10,14 @@ import {
 } from 'lucide-react';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { useAuthStore } from '@/store/authStore';
+import { useLocationStore } from '@/store/locationStore';
 
 export default function PropertyClient({ id, initialProperty }: { id: string, initialProperty: any }) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const role = user?.role;
   const { openModal } = useAuthModalStore();
+  const { coordinates } = useLocationStore();
   
   const [activeImage, setActiveImage] = useState(0);
   const [showGallery, setShowGallery] = useState(false);
@@ -26,6 +28,41 @@ export default function PropertyClient({ id, initialProperty }: { id: string, in
   const [paymentUnlocked, setPaymentUnlocked] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showCookieBar, setShowCookieBar] = useState(true);
+
+  const getPropertyCoords = (p: any) => {
+    if (!p) return null;
+    if (p.location?.coordinates?.coordinates && p.location.coordinates.coordinates.length >= 2) {
+      return {
+        lng: p.location.coordinates.coordinates[0],
+        lat: p.location.coordinates.coordinates[1]
+      };
+    }
+    const link = p.location?.googleMapLink;
+    if (link) {
+      const match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (match) return { lng: parseFloat(match[2]), lat: parseFloat(match[1]) };
+      const matchQ = link.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (matchQ) return { lng: parseFloat(matchQ[2]), lat: parseFloat(matchQ[1]) };
+    }
+    return null;
+  };
+
+  const distanceText = React.useMemo(() => {
+    if (!coordinates || !coordinates.lat || !coordinates.lng || !property) return null;
+    const pCoords = getPropertyCoords(property);
+    if (!pCoords) return null;
+
+    const R = 6371; // Earth radius in km
+    const dLat = (pCoords.lat - coordinates.lat) * Math.PI / 180;
+    const dLon = (pCoords.lng - coordinates.lng) * Math.PI / 180;
+    const lat1 = coordinates.lat * Math.PI / 180;
+    const lat2 = pCoords.lat * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const dist = R * c;
+
+    return dist < 1 ? `${(dist * 1000).toFixed(0)}m away` : `${dist.toFixed(1)}km away`;
+  }, [coordinates, property]);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -210,6 +247,13 @@ export default function PropertyClient({ id, initialProperty }: { id: string, in
                 ))}
             </div>
         )}
+        {/* Distance Overlay */}
+        {distanceText && (
+            <div className="absolute bottom-10 right-4 bg-black/50 backdrop-blur-md px-2.5 py-1.5 rounded-lg text-white text-[11px] font-bold flex items-center gap-1 z-10 border border-white/10 shadow-sm">
+                <MapPin className="w-3.5 h-3.5 text-pink-400" />
+                <span>{distanceText}</span>
+            </div>
+        )}
       </div>
 
       {/* SECTION 2: PRICE & QUICK SUMMARY CARD */}
@@ -244,7 +288,15 @@ export default function PropertyClient({ id, initialProperty }: { id: string, in
       <div className="px-5 py-6 bg-white">
          <p className="text-[13px] text-[#666666] mb-1 font-medium">{propertyTitlePrefix}</p>
          <h1 className="text-[22px] font-extrabold text-[#111111] leading-tight mb-1.5">{property.title}</h1>
-         <p className="text-sm text-[#666666] font-medium">{property.location?.area}, {property.location?.city}</p>
+         <div className="flex flex-wrap items-center gap-2 text-sm text-[#666666] font-medium">
+            <span>{property.location?.area}, {property.location?.city}</span>
+            {distanceText && (
+               <span className="text-[#801786] font-bold text-[11px] bg-[#801786]/5 px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-[#801786]/10 shadow-sm shrink-0">
+                  <MapPin className="w-3 h-3" />
+                  {distanceText}
+               </span>
+            )}
+         </div>
       </div>
 
       {/* SECTION 5: ICON DATA GRID */}
