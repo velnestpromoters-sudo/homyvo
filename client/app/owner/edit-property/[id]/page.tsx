@@ -43,6 +43,7 @@ export default function EditPropertyPage() {
   const [isLocating, setIsLocating] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapPickerCoords, setMapPickerCoords] = useState<{ lat: number, lng: number } | null>(null);
+  const [forceFlyTo, setForceFlyTo] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -123,6 +124,7 @@ export default function EditPropertyPage() {
               }
             }));
             setMapPickerCoords({ lat: latitude, lng: longitude });
+            setForceFlyTo([latitude, longitude]);
           } catch (e) {
             setFormData(prev => ({
               ...prev,
@@ -144,6 +146,15 @@ export default function EditPropertyPage() {
     } else {
       alert("Geolocation is not supported by your browser.");
     }
+  };
+
+  const handleOpenMapModal = () => {
+     if (mapPickerCoords) {
+        setForceFlyTo([mapPickerCoords.lat, mapPickerCoords.lng]);
+     } else {
+        setForceFlyTo([11.0168, 76.9558]);
+     }
+     setShowMapModal(true);
   };
 
   const handleConfirmMapLocation = async () => {
@@ -298,7 +309,7 @@ export default function EditPropertyPage() {
                       </button>
                       <button 
                          type="button"
-                         onClick={() => setShowMapModal(true)}
+                         onClick={handleOpenMapModal}
                          className="flex-1 py-2.5 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors active:scale-95"
                       >
                          <MapPin className="w-3.5 h-3.5" />
@@ -516,7 +527,7 @@ export default function EditPropertyPage() {
                 <div className="flex-1 relative bg-slate-100">
                    <MapInteractive 
                       initialCoordinates={mapPickerCoords}
-                      forceLocation={mapPickerCoords ? [mapPickerCoords.lat, mapPickerCoords.lng] : null}
+                      forceLocation={forceFlyTo}
                       onLocationUpdate={(lat, lng) => setMapPickerCoords({ lat, lng })}
                    />
                 </div>
