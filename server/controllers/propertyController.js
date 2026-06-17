@@ -53,7 +53,12 @@ exports.getProperty = async (req, res) => {
       const limitedProperty = {
         _id: property._id,
         title: property.title,
-        location: { area: property.location.area, city: property.location.city },
+        location: { 
+          area: property.location.area, 
+          city: property.location.city,
+          coordinates: property.location.coordinates,
+          googleMapLink: property.location.googleMapLink
+        },
         rent: property.rent,
         deposit: property.deposit,
         bhkType: property.bhkType,
