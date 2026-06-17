@@ -88,7 +88,12 @@ export default function EditPropertyPage() {
              const matchQ = link.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
              if (matchQ) initialCoords = { lat: parseFloat(matchQ[1]), lng: parseFloat(matchQ[2]) };
            }
-           setMapPickerCoords(initialCoords || { lat: 11.0168, lng: 76.9558 });
+
+           const isWithinIndia = initialCoords && 
+                                 initialCoords.lat >= 8 && initialCoords.lat <= 38 && 
+                                 initialCoords.lng >= 68 && initialCoords.lng <= 98;
+
+           setMapPickerCoords(isWithinIndia ? initialCoords : { lat: 22.5937, lng: 78.9629 });
         } else {
            alert("Failed to load property.");
            router.back();
@@ -149,10 +154,16 @@ export default function EditPropertyPage() {
   };
 
   const handleOpenMapModal = () => {
-     if (mapPickerCoords) {
+     const isDefaultOrOutsideIndia = !mapPickerCoords ||
+                                     (mapPickerCoords.lat === 22.5937 && mapPickerCoords.lng === 78.9629) ||
+                                     mapPickerCoords.lat < 8 || mapPickerCoords.lat > 38 ||
+                                     mapPickerCoords.lng < 68 || mapPickerCoords.lng > 98;
+                           
+     if (!isDefaultOrOutsideIndia) {
         setForceFlyTo([mapPickerCoords.lat, mapPickerCoords.lng]);
      } else {
-        setForceFlyTo([11.0168, 76.9558]);
+        setMapPickerCoords({ lat: 22.5937, lng: 78.9629 });
+        setForceFlyTo(null);
      }
      setShowMapModal(true);
   };

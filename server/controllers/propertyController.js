@@ -1,6 +1,118 @@
 const Property = require('../models/Property');
 const Access = require('../models/Access');
 
+const extractCoordinatesAndStandardize = async (location) => {
+  if (!location) return location;
+
+  let lat = location.lat || null;
+  let lng = location.lng || null;
+
+  // 1. Try to extract from googleMapLink first if it exists
+  if (location.googleMapLink) {
+    let finalUrl = location.googleMapLink;
+
+    // Intercept short links natively bypassing structural failures
+    if (finalUrl.includes('goo.gl')) {
+      try {
+        const resp = await fetch(finalUrl, { 
+          method: 'HEAD', 
+          redirect: 'manual',
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+        });
+        
+        const locHeader = resp.headers.get('location');
+        if (locHeader) finalUrl = locHeader;
+      } catch(e) { 
+        console.error("URL redirect extraction failed:", e); 
+      }
+    }
+
+    const regStandard = finalUrl.match(/q=([\d.-]+),([\d.-]+)/);
+    const searchMatch = finalUrl.match(/search\/(-?\d+\.\d+)(?:,|%2C)[+ ]*(-?\d+\.\d+)/);
+    const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const placeMatch = finalUrl.match(/place\/.*?\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+
+    if (regStandard) {
+      lat = Number(regStandard[1]);
+      lng = Number(regStandard[2]);
+    } else if (searchMatch) {
+      lat = Number(searchMatch[1]);
+      lng = Number(searchMatch[2]);
+    } else if (placeMatch) {
+      lat = Number(placeMatch[1]);
+      lng = Number(placeMatch[2]);
+    } else if (atMatch) {
+      lat = Number(atMatch[1]);
+      lng = Number(atMatch[2]);
+    } else {
+      // Geocoding Fallback for Text-based redirects
+      try {
+        const qTextMatch = finalUrl.match(/q=([^&]+)/);
+        let searchText = "";
+        if (qTextMatch && !qTextMatch[1].match(/^[\d.-]+,[\d.-]+$/)) {
+          searchText = decodeURIComponent(qTextMatch[1].replace(/\+/g, ' '));
+        } else if (location.area && location.city) {
+          searchText = `${location.area}, ${location.city}`;
+        }
+
+        let geoData = [];
+        if (searchText) {
+          const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=1&countrycodes=in`;
+          const geoRes = await fetch(nominatimUrl, { headers: { 'User-Agent': 'bnest-geo-engine' } });
+          geoData = await geoRes.json();
+        }
+
+        // Fallback 1: Try area + city
+        if ((!geoData || geoData.length === 0) && location.area && location.city) {
+          const fallbackText = `${location.area}, ${location.city}`;
+          const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackText)}&limit=1&countrycodes=in`;
+          const geoRes = await fetch(nominatimUrl, { headers: { 'User-Agent': 'bnest-geo-engine' } });
+          geoData = await geoRes.json();
+        }
+
+        // Fallback 2: Try city only
+        if ((!geoData || geoData.length === 0) && location.city) {
+          const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location.city)}&limit=1&countrycodes=in`;
+          const geoRes = await fetch(nominatimUrl, { headers: { 'User-Agent': 'bnest-geo-engine' } });
+          geoData = await geoRes.json();
+        }
+
+        if (geoData && geoData.length > 0) {
+          lat = Number(geoData[0].lat);
+          lng = Number(geoData[0].lon);
+        }
+      } catch(e) { 
+        console.error("Geocoding fallback failed", e); 
+      }
+    }
+  }
+
+  // 2. If no lat/lng could be extracted/geocoded, fallback to existing coordinates if present
+  if ((!lat || !lng) && location.coordinates && Array.isArray(location.coordinates.coordinates) && location.coordinates.coordinates.length >= 2) {
+    lng = location.coordinates.coordinates[0];
+    lat = location.coordinates.coordinates[1];
+  }
+
+  // 3. Standardize and save
+  if (lat && lng) {
+    location.googleMapLink = `https://maps.google.com/?q=${lat},${lng}`;
+    location.coordinates = {
+      type: "Point",
+      coordinates: [Number(lng), Number(lat)]
+    };
+  } else {
+    // If coordinate mapping entirely fails, sanitize object to prevent structural 2dsphere DB crash
+    delete location.coordinates;
+  }
+
+  // Clean up temporary fields
+  delete location.lat;
+  delete location.lng;
+
+  return location;
+};
+
+
 exports.getAllProperties = async (req, res) => {
   try {
     const properties = await Property.find({ isActive: true }).select('title location rent images matchScore moveInReady isVerified ownerId bhkType preferences propertyType pgDetails tenantNotes boostExpiresAt');
@@ -148,85 +260,8 @@ exports.createProperty = async (req, res) => {
     try {
         if (req.body.location) {
             parsedLocation = JSON.parse(req.body.location);
-            
-            // Failsafe: If no frontend latitude, extract securely from Map link natively
-            if ((!parsedLocation.lat || !parsedLocation.lng) && parsedLocation.googleMapLink) {
-                 let finalUrl = parsedLocation.googleMapLink;
-                 
-                 // Intercept short links natively bypassing structural failures
-                 if (finalUrl.includes('goo.gl')) {
-                     try {
-                        const resp = await fetch(finalUrl, { 
-                           method: 'HEAD', 
-                           redirect: 'manual',
-                           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-                        });
-                        
-                        const locHeader = resp.headers.get('location');
-                        if (locHeader) finalUrl = locHeader;
-                     } catch(e) { console.error("URL redirect extraction failed:", e); }
-                 }
-
-                 // Only run secondary string evaluations if deep HTML decryption failed
-                 if (!parsedLocation.lat || !parsedLocation.lng) {
-                     const regStandard = finalUrl.match(/q=([\d.-]+),([\d.-]+)/);
-                     const searchMatch = finalUrl.match(/search\/(-?\d+\.\d+)(?:,|%2C)[+ ]*(-?\d+\.\d+)/);
-                     const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-                     const placeMatch = finalUrl.match(/place\/.*?\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-
-                 if (regStandard) {
-                     parsedLocation.lat = Number(regStandard[1]);
-                     parsedLocation.lng = Number(regStandard[2]);
-                 } else if (searchMatch) {
-                     parsedLocation.lat = Number(searchMatch[1]);
-                     parsedLocation.lng = Number(searchMatch[2]);
-                 } else if (placeMatch) {
-                     parsedLocation.lat = Number(placeMatch[1]);
-                     parsedLocation.lng = Number(placeMatch[2]);
-                 } else if (atMatch) {
-                     parsedLocation.lat = Number(atMatch[1]);
-                     parsedLocation.lng = Number(atMatch[2]);
-                 } else {
-                     // Geocoding Fallback for Text-based redirects
-                     try {
-                         const qTextMatch = finalUrl.match(/q=([^&]+)/);
-                         let searchText = "";
-                         if (qTextMatch && !qTextMatch[1].match(/^[\d.-]+,[\d.-]+$/)) {
-                             searchText = decodeURIComponent(qTextMatch[1].replace(/\+/g, ' '));
-                         } else if (parsedLocation.area && parsedLocation.city) {
-                             searchText = `${parsedLocation.area}, ${parsedLocation.city}`;
-                         }
-
-                         if (searchText) {
-                             const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}&limit=1`;
-                             const geoRes = await fetch(nominatimUrl, { headers: { 'User-Agent': 'bnest-geo-engine' } });
-                             const geoData = await geoRes.json();
-                             if (geoData && geoData.length > 0) {
-                                 parsedLocation.lat = Number(geoData[0].lat);
-                                 parsedLocation.lng = Number(geoData[0].lon);
-                             }
-                         }
-                     } catch(e) { console.error("Geocoding fallback failed", e); }
-                 }
-                 } // closes secondary evaluation
-             } // closes main map link extraction block
-             
-             // Standardize the link format to the exact explicit coordinate tracking mapping
-             if (parsedLocation.lat && parsedLocation.lng) {
-                 parsedLocation.googleMapLink = `https://maps.google.com/?q=${parsedLocation.lat},${parsedLocation.lng}`;
-             }
-
-             // Native Map to GeoJSON Schema
-             if (parsedLocation.lat && parsedLocation.lng) {
-                 parsedLocation.coordinates = {
-                    type: "Point",
-                    coordinates: [Number(parsedLocation.lng), Number(parsedLocation.lat)]
-                 };
-             } else {
-                 // If coordinate mapping entirely fails, sanitize object to prevent structural 2dsphere DB crash
-                 delete parsedLocation.coordinates;
-             }
-         } // closes if (req.body.location)
+            parsedLocation = await extractCoordinatesAndStandardize(parsedLocation);
+        }
         if (req.body.preferences) parsedPreferences = JSON.parse(req.body.preferences);
         if (req.body.pgDetails) parsedPgDetails = JSON.parse(req.body.pgDetails);
         if (req.body.contactNumbers) parsedContactNumbers = JSON.parse(req.body.contactNumbers);
@@ -388,7 +423,9 @@ exports.updateProperty = async (req, res) => {
           property.markModified('contactNumbers');
       }
       if (req.body.location) {
-          property.location = { ...property.location, ...req.body.location };
+          const currentLoc = property.location ? (property.location.toObject ? property.location.toObject() : property.location) : {};
+          const mergedLoc = { ...currentLoc, ...req.body.location };
+          property.location = await extractCoordinatesAndStandardize(mergedLoc);
           property.markModified('location');
       }
 
