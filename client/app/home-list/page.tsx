@@ -507,7 +507,7 @@ export default function HomeListPage() {
           </div>
           <div 
              onClick={() => router.push('/category/commercial')}
-             className="rounded-xl bg-white p-2.5 md:p-3 flex flex-col md:flex-row items-start md:items-center gap-2.5 md:gap-3 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group col-span-2 md:col-span-1"
+             className="rounded-xl bg-white p-2.5 md:p-3 flex flex-col md:flex-row items-start md:items-center gap-2.5 md:gap-3 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group"
           >
              <div className="bg-teal-50 p-2 rounded-lg group-hover:scale-110 transition-transform duration-300 shrink-0">
               <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5 text-teal-600" />
@@ -515,6 +515,18 @@ export default function HomeListPage() {
             <div>
               <h3 className="font-bold text-[#111827] text-[12px] md:text-sm leading-tight">Commercial Spaces</h3>
               <p className="text-[9px] md:text-[11px] text-[#6B7280] mt-0.5 font-medium">{commercialProperties.length}+ Offices & Shops</p>
+            </div>
+          </div>
+          <div 
+             onClick={() => router.push('/category/near-me')}
+             className="rounded-xl bg-white p-2.5 md:p-3 flex flex-col md:flex-row items-start md:items-center gap-2.5 md:gap-3 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:-translate-y-0.5 transition-all cursor-pointer border border-gray-100 group"
+          >
+             <div className="bg-rose-50 p-2 rounded-lg group-hover:scale-110 transition-transform duration-300 shrink-0">
+              <MapPin className="w-4 h-4 md:w-5 md:h-5 text-rose-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-[#111827] text-[12px] md:text-sm leading-tight">Near Me</h3>
+              <p className="text-[9px] md:text-[11px] text-[#6B7280] mt-0.5 font-medium">{nearMeProperties.length}+ Properties nearby</p>
             </div>
           </div>
         </div>

@@ -2,13 +2,48 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, Home, GraduationCap, LayoutDashboard } from 'lucide-react';
+import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, Home, GraduationCap, LayoutDashboard, MapPin } from 'lucide-react';
+import { useLocationStore } from '@/store/locationStore';
 import { PropertyCard } from '@/components/property/PropertyCard';
 
 export default function CategoryPage() {
   const router = useRouter();
   const params = useParams();
   const type = params.type as string; // 'student' or 'family'
+
+  const { coordinates, setLocation } = useLocationStore();
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleEnableLocation = () => {
+    if ('geolocation' in navigator) {
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            let detected = null;
+            try {
+              const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+              const bdcData = await bdcRes.json();
+              detected = bdcData.locality || bdcData.city || bdcData.principalSubdivision;
+            } catch (e) {}
+            setLocation(detected || 'Detected Area', { lat: latitude, lng: longitude });
+          } catch (e) {
+            setLocation('Detected Area', { lat: latitude, lng: longitude });
+          } finally {
+            setIsLocating(false);
+          }
+        },
+        (err) => {
+          console.error(err);
+          alert("Location permission denied or failed. Please enable location in your browser settings.");
+          setIsLocating(false);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
 
   const [properties, setProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,14 +73,16 @@ export default function CategoryPage() {
            const fetched = data.data;
            const filtered = fetched.filter((p: any) => {
               const isPg = p.propertyType === 'pg';
-              if (type === 'student') {
-                 return p.preferences?.bachelorAllowed || isPg;
-              } else if (type === 'commercial') {
-                 return p.propertyType === 'commercial';
-              } else {
-                 return !(p.preferences?.bachelorAllowed || isPg) && p.propertyType !== 'commercial';
-              }
-           }).map((p: any) => ({ ...p, randomSeed: Math.random() }));
+               if (type === 'student') {
+                  return p.preferences?.bachelorAllowed || isPg;
+               } else if (type === 'commercial') {
+                  return p.propertyType === 'commercial';
+               } else if (type === 'near-me') {
+                  return true;
+               } else {
+                  return !(p.preferences?.bachelorAllowed || isPg) && p.propertyType !== 'commercial';
+               }
+            }).map((p: any) => ({ ...p, randomSeed: Math.random() }));
            setProperties(filtered);
         }
       } catch (err) {
@@ -62,7 +99,17 @@ export default function CategoryPage() {
 
   const filteredResults = React.useMemo(() => {
       let res = [...properties];
-      if (isStudent && localFilters.type !== 'all') {
+      if (type === 'near-me') {
+          if (!coordinates) return [];
+          res = res.map(r => {
+             const coords = r.location?.coordinates?.coordinates;
+             if (!coords || coords.length < 2) return { ...r, distance: Infinity };
+             const dist = getDistance(coordinates.lat, coordinates.lng, coords[1], coords[0]);
+             return { ...r, distance: dist };
+          })
+          .filter(r => r.distance <= 20)
+          .sort((a, b) => a.distance - b.distance);
+      } else if (isStudent && localFilters.type !== 'all') {
           res = res.filter(r => {
              if (r.propertyType !== 'pg') return true; 
              if (localFilters.type === 'boys') return ['boys', 'co-living'].includes(r.pgDetails?.gender);
@@ -75,25 +122,28 @@ export default function CategoryPage() {
           if (localFilters.type === 'warehouse') res = res.filter(r => r.bhkType === 'Warehouse');
           if (localFilters.type === 'shop') res = res.filter(r => r.bhkType === 'Rental Shop');
       } else if (!isStudent && !isCommercial && localFilters.type !== 'all') {
-          if (localFilters.type === '1bhk') res = res.filter(r => r.bhkType === '1bhk');
-          if (localFilters.type === '2bhk') res = res.filter(r => r.bhkType === '2bhk');
-          if (localFilters.type === '3bhk') res = res.filter(r => r.bhkType === '3bhk');
+          if (localFilters.type === '1bhk') res = res.filter(r => r.bhkType?.toLowerCase() === '1bhk');
+          if (localFilters.type === '2bhk') res = res.filter(r => r.bhkType?.toLowerCase() === '2bhk');
+          if (localFilters.type === '3bhk') res = res.filter(r => r.bhkType?.toLowerCase() === '3bhk');
       }
       
-      if (localFilters.sort === 'none') {
+      if (localFilters.sort === 'none' && type !== 'near-me') {
           res.sort((a,b) => a.randomSeed - b.randomSeed);
       }
       if (localFilters.sort === 'price_low') res.sort((a,b) => a.rent - b.rent);
       if (localFilters.sort === 'price_high') res.sort((a,b) => b.rent - a.rent);
-      if (localFilters.sort === 'nearest' && userLocation) {
-          res.sort((a,b) => {
-              const distA = getDistance(userLocation.lat, userLocation.lng, a.location?.coordinates?.coordinates?.[1], a.location?.coordinates?.coordinates?.[0]);
-              const distB = getDistance(userLocation.lat, userLocation.lng, b.location?.coordinates?.coordinates?.[1], b.location?.coordinates?.coordinates?.[0]);
-              return distA - distB;
-          });
+      if (localFilters.sort === 'nearest' && (userLocation || coordinates)) {
+          const refLoc = userLocation || coordinates;
+          if (refLoc) {
+              res.sort((a,b) => {
+                  const distA = getDistance(refLoc.lat, refLoc.lng, a.location?.coordinates?.coordinates?.[1], a.location?.coordinates?.coordinates?.[0]);
+                  const distB = getDistance(refLoc.lat, refLoc.lng, b.location?.coordinates?.coordinates?.[1], b.location?.coordinates?.coordinates?.[0]);
+                  return distA - distB;
+              });
+          }
       }
       return res;
-  }, [properties, localFilters, isStudent, isCommercial, userLocation]);
+  }, [properties, localFilters, isStudent, isCommercial, userLocation, coordinates, type]);
 
   const handleSortSelect = (val: string) => {
       if (val === 'nearest' && !userLocation) {
@@ -124,25 +174,27 @@ export default function CategoryPage() {
            >
              <ArrowLeftLucide className="w-6 h-6 text-slate-700" />
            </button>
-           <div className="flex items-center gap-2.5">
-              <div className={`p-2 rounded-lg ${isStudent ? 'bg-purple-50' : isCommercial ? 'bg-teal-50' : 'bg-indigo-50'}`}>
-                 {isStudent ? (
-                    <GraduationCap className="w-5 h-5 text-[#801786]" />
-                 ) : isCommercial ? (
-                    <LayoutDashboard className="w-5 h-5 text-teal-600" />
-                 ) : (
-                    <Home className="w-5 h-5 text-indigo-600" />
-                 )}
-              </div>
-              <div>
-                 <h1 className="text-lg font-black text-slate-900 leading-none">
-                    {isStudent ? 'Student & Bachelor' : isCommercial ? 'Commercial Spaces' : 'Family Residences'}
-                 </h1>
-                 <p className="text-[11px] font-semibold text-slate-500 mt-1">
-                    {properties.length} Premium {isStudent ? 'Stays' : isCommercial ? 'Spaces' : 'Homes'}
-                 </p>
-              </div>
-           </div>
+            <div className="flex items-center gap-2.5">
+               <div className={`p-2 rounded-lg ${isStudent ? 'bg-purple-50' : isCommercial ? 'bg-teal-50' : type === 'near-me' ? 'bg-rose-50' : 'bg-indigo-50'}`}>
+                  {isStudent ? (
+                     <GraduationCap className="w-5 h-5 text-[#801786]" />
+                  ) : isCommercial ? (
+                     <LayoutDashboard className="w-5 h-5 text-teal-600" />
+                  ) : type === 'near-me' ? (
+                     <MapPin className="w-5 h-5 text-rose-600" />
+                  ) : (
+                     <Home className="w-5 h-5 text-indigo-600" />
+                  )}
+               </div>
+               <div>
+                  <h1 className="text-lg font-black text-slate-900 leading-none">
+                     {isStudent ? 'Student & Bachelor' : isCommercial ? 'Commercial Spaces' : type === 'near-me' ? 'Near Me' : 'Family Residences'}
+                  </h1>
+                  <p className="text-[11px] font-semibold text-slate-500 mt-1">
+                     {type === 'near-me' ? filteredResults.length : properties.length} Premium {isStudent ? 'Stays' : isCommercial ? 'Spaces' : 'Homes'}
+                  </p>
+               </div>
+            </div>
         </div>
       </header>
 
@@ -153,6 +205,27 @@ export default function CategoryPage() {
            <div className="flex flex-col items-center justify-center h-40">
               <div className="w-8 h-8 border-4 border-slate-200 border-t-[#801786] rounded-full animate-spin"></div>
               <p className="text-slate-400 text-sm font-semibold mt-4">Curating the best options...</p>
+           </div>
+        ) : type === 'near-me' && !coordinates ? (
+           <div className="w-full max-w-md mx-auto bg-gradient-to-r from-purple-50/70 to-indigo-50/70 border border-purple-100/80 rounded-2xl p-8 flex flex-col items-center text-center shadow-sm relative overflow-hidden my-6">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200/20 rounded-full blur-2xl pointer-events-none"></div>
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md mb-3 border border-purple-100">
+                <MapPin className="w-6 h-6 text-[#801786]" />
+              </div>
+              <h3 className="font-extrabold text-slate-800 text-base mb-1">Find Homes Near You</h3>
+              <p className="text-xs text-slate-500 mb-5 max-w-xs leading-relaxed">Enable location access to instantly discover apartments, rooms, and PGs within a 20km radius.</p>
+              <button 
+                onClick={handleEnableLocation}
+                disabled={isLocating}
+                className="px-6 py-2.5 bg-[#801786] text-white text-xs font-bold rounded-full shadow-lg active:scale-95 transition-transform disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              >
+                {isLocating ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Locating...
+                  </>
+                ) : 'Use Current Location'}
+              </button>
            </div>
         ) : (
            <div className="space-y-4 max-w-7xl mx-auto">
@@ -251,9 +324,9 @@ export default function CategoryPage() {
                        <SearchLucide className="w-8 h-8 text-slate-300" />
                     </div>
                     <h3 className="text-slate-800 font-extrabold text-lg mb-1">No matches found</h3>
-                    <p className="text-slate-500 text-sm max-w-[250px] mx-auto leading-relaxed">
-                       We couldn't find any {isStudent ? 'student' : isCommercial ? 'commercial' : 'family'} properties matching your criteria.
-                    </p>
+                     <p className="text-slate-500 text-sm max-w-[250px] mx-auto leading-relaxed">
+                        We couldn't find any {isStudent ? 'student' : isCommercial ? 'commercial' : type === 'near-me' ? 'nearby' : 'family'} properties matching your criteria.
+                     </p>
                  </div>
               )}
            </div>
