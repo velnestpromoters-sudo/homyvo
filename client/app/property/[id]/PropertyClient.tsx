@@ -17,7 +17,7 @@ export default function PropertyClient({ id, initialProperty }: { id: string, in
   const { isAuthenticated, user } = useAuthStore();
   const role = user?.role;
   const { openModal } = useAuthModalStore();
-  const { coordinates } = useLocationStore();
+  const { coordinates, setLocation } = useLocationStore();
   
   const [activeImage, setActiveImage] = useState(0);
   const [showGallery, setShowGallery] = useState(false);
@@ -63,6 +63,45 @@ export default function PropertyClient({ id, initialProperty }: { id: string, in
 
     return dist < 1 ? `${(dist * 1000).toFixed(0)}m away` : `${dist.toFixed(1)}km away`;
   }, [coordinates, property]);
+
+  // Auto-detect user coordinates on mount if not available
+  useEffect(() => {
+    if (!coordinates && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            let detected = null;
+
+            // Strategy 1: Attempt highly-accurate Mappls via secure Backend Proxy
+            try {
+              const mapplsRes = await fetch(`/api/location?lat=${latitude}&lng=${longitude}`);
+              const mapplsData = await mapplsRes.json();
+              if (mapplsData.success && mapplsData.location) {
+                detected = mapplsData.location;
+              }
+            } catch (proxyErr) {
+               console.warn("Mappls proxy failed.", proxyErr);
+            }
+
+            // Strategy 2: Fallback to BigDataCloud
+            if (!detected) {
+               const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+               const bdcData = await bdcRes.json();
+               detected = bdcData.locality || bdcData.city || bdcData.principalSubdivision;
+            }
+
+            setLocation(detected || 'Detected Area', { lat: latitude, lng: longitude });
+          } catch (error) {
+            console.error('Geocoding failure:', error);
+          }
+        },
+        (err) => {
+          console.warn('Geolocation permission denied or failed:', err);
+        }
+      );
+    }
+  }, [coordinates, setLocation]);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
