@@ -48,6 +48,7 @@ export default function HomeListPage() {
   const logout = useAuthStore(state => state.logout);
   const { locationName, coordinates, setLocation } = useLocationStore();
   const { openModal } = useAuthModalStore();
+  const wishlist = useWishlistStore(state => state.wishlist);
   
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [studentProperties, setStudentProperties] = useState<any[]>([]);
@@ -643,7 +644,7 @@ export default function HomeListPage() {
               </button>
             )}
 
-            {/* Conditional Tenant Profile Dropdown */}
+            {/* Conditional Tenant Profile Dropdown (Mobile/Tablet Only) */}
             {isAuthenticated && user?.role === 'tenant' && (
               <div className="relative lg:hidden">
                  <button 
@@ -682,9 +683,39 @@ export default function HomeListPage() {
               </div>
             )}
 
-            {/* Conditional Owner Dashboard Button */}
+            {/* Premium Saved Stays Tracker (Tenant Only - Desktop Only) */}
+            {isAuthenticated && user?.role === 'tenant' && (
+              <button 
+                onClick={() => router.push('/wishlist')}
+                className="hidden lg:flex items-center bg-white border border-[#E5E7EB] rounded-full h-[52px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98] shrink-0"
+              >
+                <Heart className="w-4 h-4 fill-[#ec38b7] text-[#ec38b7] shrink-0" />
+                <div className="ml-2.5 flex flex-col justify-center text-left">
+                  <span className="text-xs font-bold text-slate-800 leading-tight">My Wishlist</span>
+                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#ec38b7] mt-0.5">
+                    {wishlist.length} Stays Saved
+                  </span>
+                </div>
+              </button>
+            )}
+
+            {/* Premium Owner Dashboard Button (Owner Only - Desktop Only) */}
             {isAuthenticated && user?.role === 'owner' && (
-              <Link href="/owner/dashboard" className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95">
+              <Link 
+                href="/owner/dashboard" 
+                className="hidden lg:flex items-center bg-white border border-[#E5E7EB] rounded-full h-[52px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98] shrink-0"
+              >
+                <LayoutDashboard className="w-4 h-4 text-indigo-600 shrink-0" />
+                <div className="ml-2.5 flex flex-col justify-center text-left">
+                  <span className="text-xs font-bold text-slate-800 leading-tight">Owner Space</span>
+                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-indigo-500 mt-0.5">Dashboard</span>
+                </div>
+              </Link>
+            )}
+
+            {/* Conditional Owner Dashboard Button (Mobile/Tablet Only) */}
+            {isAuthenticated && user?.role === 'owner' && (
+              <Link href="/owner/dashboard" className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 hover:bg-indigo-100 transition-colors shadow-sm active:scale-95 lg:hidden">
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="text-xs font-bold">Owner Dashboard</span>
               </Link>
