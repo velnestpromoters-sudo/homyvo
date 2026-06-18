@@ -71,6 +71,21 @@ export default function HomeListPage() {
   const [districtSuggestions, setDistrictSuggestions] = useState<any[]>([]);
   const [isSearchingDistrict, setIsSearchingDistrict] = useState(false);
 
+  const [currentPromo, setCurrentPromo] = useState(0);
+  const desktopPromos = [
+    { text: "✨ Owner? List stays for FREE & get leads!", link: "/owner/dashboard" },
+    { text: "🏡 Premium Family Homes with Zero Brokerage", link: "/category/family" },
+    { text: "🎓 Safe & Verified Student PGs Near Colleges", link: "/category/student" },
+    { text: "⚡ Boost your property listing for 10x views!", link: "/owner/dashboard" }
+  ];
+
+  useEffect(() => {
+    const promoTimer = setInterval(() => {
+      setCurrentPromo((prev) => (prev + 1) % desktopPromos.length);
+    }, 4500);
+    return () => clearInterval(promoTimer);
+  }, []);
+
   const TAMIL_NADU_DISTRICTS = [
     { name: "Coimbatore", state: "Tamil Nadu", lat: 11.0168, lng: 76.9558 },
     { name: "Chennai", state: "Tamil Nadu", lat: 13.0827, lng: 80.2707 },
@@ -488,14 +503,33 @@ export default function HomeListPage() {
             </div>
 
             {/* Desktop Search Bar */}
-            <div className="hidden md:block w-full max-w-[400px] lg:max-w-[480px]">
+            <div className="hidden md:block w-full max-w-[400px] lg:max-w-[440px]">
               <div onClick={() => router.push('/search')} className="flex items-center bg-white border border-[#E5E7EB] rounded-full h-[52px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]">
-              <Search className="w-5 h-5 text-[#111827] shrink-0" />
-              <div className="flex-1 px-4 flex flex-col justify-center">
-                <span className="text-sm font-semibold text-[#111827] leading-tight">Search on Homyvo</span>
-                <span className="text-[11px] text-[#6B7280] leading-tight mt-0.5">Anywhere • Any week</span>
+                <Search className="w-5 h-5 text-[#111827] shrink-0" />
+                <div className="flex-1 px-4 flex flex-col justify-center">
+                  <span className="text-sm font-semibold text-[#111827] leading-tight">Search on Homyvo</span>
+                  <span className="text-[11px] text-[#6B7280] leading-tight mt-0.5">Anywhere • Any week</span>
+                </div>
               </div>
             </div>
+
+            {/* Animated Shimmer Promo Banner (Desktop Only) */}
+            <div 
+              onClick={() => router.push(desktopPromos[currentPromo].link)}
+              className="hidden lg:flex flex-1 max-w-[320px] xl:max-w-[400px] h-[52px] items-center border border-purple-100 rounded-full px-4 relative overflow-hidden cursor-pointer shadow-sm hover:shadow transition-shadow group promo-gradient"
+            >
+              {/* Shimmer Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+              
+              <div className="flex items-center gap-2.5 w-full relative z-10">
+                <span className="flex h-2 w-2 relative shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#801786] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#801786]"></span>
+                </span>
+                <span className="text-[11px] xl:text-xs font-black text-slate-800 tracking-tight truncate select-none">
+                  {desktopPromos[currentPromo].text}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -994,6 +1028,31 @@ export default function HomeListPage() {
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
+        }
+        @keyframes shimmer {
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        @keyframes pulseGlow {
+          0%, 100% {
+            background-color: #faf5ff;
+            border-color: #f3e8ff;
+          }
+          33% {
+            background-color: #fdf2f8;
+            border-color: #fce7f3;
+          }
+          66% {
+            background-color: #f0fdf4;
+            border-color: #dcfce7;
+          }
+        }
+        .promo-gradient {
+          animation: pulseGlow 8s ease infinite;
+        }
+        .group:hover .group-hover\:animate-shimmer {
+          animation: shimmer 1.5s infinite;
         }
       `}</style>
     </div>
