@@ -593,13 +593,13 @@ export default function HomeListPage() {
                       <button 
                          onClick={(e) => {
                             e.stopPropagation();
-                            router.push(user?.role === 'owner' ? '/owner/dashboard' : '/tenant/profile');
+                            router.push(user?.role === 'owner' ? '/owner/profile' : '/tenant/profile');
                             setShowLogoutMenu(false);
                          }}
                          className="flex items-center w-full px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors gap-2"
                       >
                          <UserCircle className="w-4 h-4 text-slate-500" />
-                         <span>{user?.role === 'owner' ? 'Dashboard' : 'Profile'}</span>
+                         <span>Profile</span>
                       </button>
                       <div className="h-px bg-slate-100 w-full" />
                       <button 

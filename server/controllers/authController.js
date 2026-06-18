@@ -114,3 +114,20 @@ exports.loginWithPassword = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, mobile, gender } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    user.name = name !== undefined ? name : user.name;
+    user.mobile = mobile !== undefined ? mobile : user.mobile;
+    user.gender = gender !== undefined ? gender : user.gender;
+    await user.save();
+
+    res.json({ success: true, data: user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
