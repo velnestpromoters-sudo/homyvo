@@ -311,34 +311,20 @@ export default function VideoCard({
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <defs>
-                  <linearGradient id="doubleTapHeartGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#FED03B" />   {/* Yellow */}
-                    <stop offset="25%" stopColor="#FF7B40" />  {/* Orange */}
-                    <stop offset="55%" stopColor="#E61C7C" />  {/* Pink/Magenta */}
-                    <stop offset="80%" stopColor="#8536CF" />  {/* Purple */}
-                    <stop offset="100%" stopColor="#515FF7" /> {/* Indigo/Blue */}
-                  </linearGradient>
+                  <clipPath id="heartClip">
+                    <path d="M50 90 C20 65 5 45 5 28 C5 15 15 5 28 5 C36 5 44 9 50 16 C56 9 64 5 72 5 C85 5 95 15 95 28 C95 45 80 65 50 90 Z" />
+                  </clipPath>
                 </defs>
 
-                {/* Heart Shape */}
-                <path 
-                  d="M50 90 C20 65 5 45 5 28 C5 15 15 5 28 5 C36 5 44 9 50 16 C56 9 64 5 72 5 C85 5 95 15 95 28 C95 45 80 65 50 90 Z" 
-                  fill="url(#doubleTapHeartGrad)"
+                {/* Render the image clipped to the heart shape to remove the white outer circle */}
+                <image 
+                  href="/heart.png" 
+                  x="-2.5" 
+                  y="-2.5" 
+                  width="105" 
+                  height="105" 
+                  clipPath="url(#heartClip)"
                 />
-
-                {/* Homyvo House Logo overlay (dark violet/purple) */}
-                <g fill="none" stroke="#37123d" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8">
-                  {/* Roof and Chimney */}
-                  <path d="M30 50 L50 31 L70 50" />
-                  <path d="M59 39.5 L59 34 L63 34 L63 43.5" strokeWidth="5" />
-                  
-                  {/* House Walls */}
-                  <path d="M36.5 50 L36.5 71 L63.5 71 L63.5 50" />
-                  
-                  {/* Curved Door & Arrow */}
-                  <path d="M41 71 C41 66, 42 61, 48 59 C54 57, 59 61, 59 66 C59 71, 55 71, 50 71 L50 48" />
-                  <path d="M46 52 L50 48 L54 52" />
-                </g>
               </svg>
             </div>
           </motion.div>
