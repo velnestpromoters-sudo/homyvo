@@ -304,28 +304,12 @@ export default function VideoCard({
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
           >
-            <div className="drop-shadow-[0_10px_25px_rgba(0,0,0,0.4)]">
-              <svg 
-                viewBox="0 0 100 100" 
-                className="w-36 h-36"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <defs>
-                  <clipPath id="heartClip">
-                    <path d="M50 90 C20 65 5 45 5 28 C5 15 15 5 28 5 C36 5 44 9 50 16 C56 9 64 5 72 5 C85 5 95 15 95 28 C95 45 80 65 50 90 Z" />
-                  </clipPath>
-                </defs>
-
-                {/* Render the image clipped to the heart shape to remove the white outer circle */}
-                <image 
-                  href="/heart.png" 
-                  x="-2.5" 
-                  y="-2.5" 
-                  width="105" 
-                  height="105" 
-                  clipPath="url(#heartClip)"
-                />
-              </svg>
+            <div className="drop-shadow-[0_10px_25px_rgba(0,0,0,0.45)]">
+              <img 
+                src="/heart.png" 
+                alt="Heart Favorite" 
+                className="w-36 h-36 object-contain"
+              />
             </div>
           </motion.div>
         )}
