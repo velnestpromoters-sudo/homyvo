@@ -416,6 +416,27 @@ export default function HomeListPage() {
     }
   };
 
+  const handleBannerClick = () => {
+    const activePromo = desktopPromos[currentPromo];
+    if (activePromo.title === "List Your Stay" || activePromo.title === "Premium Boost") {
+      if (!isAuthenticated) {
+        openModal();
+        return;
+      }
+      if (user?.role === 'tenant') {
+        const confirmLogout = window.confirm(
+          "You are currently logged in as a Tenant. To list your stays or access the Owner Dashboard, you must use an Owner account. Would you like to log out now to switch accounts?"
+        );
+        if (confirmLogout) {
+          logout();
+          openModal();
+        }
+        return;
+      }
+    }
+    router.push(activePromo.link);
+  };
+
   const nearMeProperties = React.useMemo(() => {
     if (!coordinates) return [];
     
@@ -515,7 +536,7 @@ export default function HomeListPage() {
 
             {/* Animated Shimmer Promo Banner (Desktop Only) */}
             <div 
-              onClick={() => router.push(desktopPromos[currentPromo].link)}
+              onClick={handleBannerClick}
               className="hidden lg:flex items-center bg-white border border-[#E5E7EB] rounded-full h-[52px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98] flex-1 max-w-[320px] xl:max-w-[400px] relative overflow-hidden group"
             >
               {/* Shimmer Overlay */}
