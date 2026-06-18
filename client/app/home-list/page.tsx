@@ -558,6 +558,77 @@ export default function HomeListPage() {
                 </div>
               </div>
             </div>
+
+            {/* Profile Bio Card (Desktop Only) */}
+            <div 
+              onClick={() => {
+                if (!isAuthenticated) {
+                  openModal();
+                } else {
+                  setShowLogoutMenu(!showLogoutMenu);
+                }
+              }}
+              className="hidden lg:flex items-center bg-white border border-[#E5E7EB] rounded-full h-[52px] px-3.5 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98] max-w-[200px] xl:max-w-[240px] shrink-0 relative"
+            >
+              {isAuthenticated ? (
+                <>
+                  <img 
+                    src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=801786&color=fff&size=80`} 
+                    alt="profile" 
+                    className="w-8 h-8 rounded-full object-cover border border-slate-100 shrink-0"
+                  />
+                  <div className="ml-2.5 flex flex-col justify-center min-w-0 pr-1 text-left">
+                    <span className="text-xs font-bold text-slate-800 leading-tight truncate">
+                      {user?.name || 'User'}
+                    </span>
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#801786] mt-0.5">
+                      {user?.role === 'owner' ? 'Verified Owner' : 'Tenant Profile'}
+                    </span>
+                  </div>
+
+                  {/* Absolute Dropdown for Desktop logout/profile */}
+                  {showLogoutMenu && (
+                    <div className="absolute top-14 right-0 z-50 bg-white border border-gray-100 shadow-xl rounded-xl w-36 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <button 
+                         onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(user?.role === 'owner' ? '/owner/dashboard' : '/tenant/profile');
+                            setShowLogoutMenu(false);
+                         }}
+                         className="flex items-center w-full px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors gap-2"
+                      >
+                         <UserCircle className="w-4 h-4 text-slate-500" />
+                         <span>{user?.role === 'owner' ? 'Dashboard' : 'Profile'}</span>
+                      </button>
+                      <div className="h-px bg-slate-100 w-full" />
+                      <button 
+                         onClick={(e) => {
+                            e.stopPropagation();
+                            logout();
+                            setShowLogoutMenu(false);
+                         }}
+                         className="flex items-center w-full px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors gap-2"
+                      >
+                         <LogOut className="w-4 h-4" />
+                         <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <UserCircle className="w-8 h-8 text-slate-400 shrink-0" />
+                  <div className="ml-2.5 flex flex-col justify-center text-left">
+                    <span className="text-xs font-bold text-slate-800 leading-tight">
+                      Guest Account
+                    </span>
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 mt-0.5">
+                      Log In / Sign Up
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Top Right Controls */}
@@ -565,7 +636,7 @@ export default function HomeListPage() {
             {!isAuthenticated && (
               <button 
                 onClick={openModal}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#801786]/10 border border-[#801786]/20 rounded-full text-[#801786] hover:bg-[#801786]/20 transition-colors shadow-sm active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#801786]/10 border border-[#801786]/20 rounded-full text-[#801786] hover:bg-[#801786]/20 transition-colors shadow-sm active:scale-95 lg:hidden"
               >
                 <UserCircle className="w-4 h-4" />
                 <span className="text-sm font-bold">Sign In</span>
@@ -574,7 +645,7 @@ export default function HomeListPage() {
 
             {/* Conditional Tenant Profile Dropdown */}
             {isAuthenticated && user?.role === 'tenant' && (
-              <div className="relative">
+              <div className="relative lg:hidden">
                  <button 
                    onClick={() => setShowLogoutMenu(!showLogoutMenu)}
                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-full text-gray-800 hover:bg-gray-200 transition-colors shadow-sm active:scale-95"
