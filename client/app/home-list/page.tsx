@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import BottomBar from '@/components/common/BottomBar';
 import FAQ from '@/components/FAQ';
-import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle, LogOut, Heart } from 'lucide-react';
+import { Search, SlidersHorizontal, MapPin, GraduationCap, Home, Star, LayoutDashboard, Clock, UserCircle, LogOut, Heart, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
@@ -65,6 +65,114 @@ export default function HomeListPage() {
   const [osmSuggestions, setOsmSuggestions] = useState<{name: string, lat: number, lng: number}[]>([]);
   const [isSearchingOSM, setIsSearchingOSM] = useState(false);
   const [searchedCoordinates, setSearchedCoordinates] = useState<{lat: number, lng: number} | null>(null);
+  
+  const [isDistrictDropdownOpen, setIsDistrictDropdownOpen] = useState(false);
+  const [districtSearchQuery, setDistrictSearchQuery] = useState('');
+  const [districtSuggestions, setDistrictSuggestions] = useState<any[]>([]);
+  const [isSearchingDistrict, setIsSearchingDistrict] = useState(false);
+
+  const TAMIL_NADU_DISTRICTS = [
+    { name: "Coimbatore", state: "Tamil Nadu", lat: 11.0168, lng: 76.9558 },
+    { name: "Chennai", state: "Tamil Nadu", lat: 13.0827, lng: 80.2707 },
+    { name: "Madurai", state: "Tamil Nadu", lat: 9.9252, lng: 78.1198 },
+    { name: "Salem", state: "Tamil Nadu", lat: 11.6643, lng: 78.1460 },
+    { name: "Tiruchirappalli", state: "Tamil Nadu", lat: 10.7905, lng: 78.7047 },
+    { name: "Tiruppur", state: "Tamil Nadu", lat: 11.1085, lng: 77.3411 },
+    { name: "Erode", state: "Tamil Nadu", lat: 11.3410, lng: 77.7172 },
+    { name: "Vellore", state: "Tamil Nadu", lat: 12.9165, lng: 79.1325 },
+    { name: "Tirunelveli", state: "Tamil Nadu", lat: 8.7139, lng: 77.7567 },
+    { name: "Thanjavur", state: "Tamil Nadu", lat: 10.7870, lng: 79.1378 },
+    { name: "Dindigul", state: "Tamil Nadu", lat: 10.3673, lng: 77.9803 },
+    { name: "Thoothukudi", state: "Tamil Nadu", lat: 8.7642, lng: 78.1348 },
+    { name: "Kanchipuram", state: "Tamil Nadu", lat: 12.8387, lng: 79.7016 },
+    { name: "Cuddalore", state: "Tamil Nadu", lat: 11.7480, lng: 79.7714 },
+    { name: "Karur", state: "Tamil Nadu", lat: 10.9601, lng: 78.0766 },
+    { name: "Krishnagiri", state: "Tamil Nadu", lat: 12.5266, lng: 78.2148 },
+    { name: "Namakkal", state: "Tamil Nadu", lat: 11.2189, lng: 78.1673 },
+    { name: "Pudukkottai", state: "Tamil Nadu", lat: 10.3797, lng: 78.8208 },
+    { name: "Ramanathapuram", state: "Tamil Nadu", lat: 9.3639, lng: 78.8395 },
+    { name: "Sivaganga", state: "Tamil Nadu", lat: 9.8433, lng: 78.4809 },
+    { name: "Tenkasi", state: "Tamil Nadu", lat: 8.9592, lng: 77.3138 },
+    { name: "Theni", state: "Tamil Nadu", lat: 10.0104, lng: 77.4768 },
+    { name: "Tiruvallur", state: "Tamil Nadu", lat: 13.1384, lng: 79.9073 },
+    { name: "Tiruvannamalai", state: "Tamil Nadu", lat: 12.2253, lng: 79.0747 },
+    { name: "Tiruvarur", state: "Tamil Nadu", lat: 10.7722, lng: 79.6361 },
+    { name: "The Nilgiris", state: "Tamil Nadu", lat: 11.4102, lng: 76.6950 },
+    { name: "Nagapattinam", state: "Tamil Nadu", lat: 10.7672, lng: 79.8444 },
+    { name: "Ariyalur", state: "Tamil Nadu", lat: 11.1401, lng: 79.0786 },
+    { name: "Dharmapuri", state: "Tamil Nadu", lat: 12.1254, lng: 78.1579 },
+    { name: "Kallakurichi", state: "Tamil Nadu", lat: 11.7383, lng: 78.9639 },
+    { name: "Mayiladuthurai", state: "Tamil Nadu", lat: 11.1018, lng: 79.6521 },
+    { name: "Perambalur", state: "Tamil Nadu", lat: 11.2342, lng: 78.8821 },
+    { name: "Ranipet", state: "Tamil Nadu", lat: 12.9272, lng: 79.3328 },
+    { name: "Tirupathur", state: "Tamil Nadu", lat: 12.4934, lng: 78.5678 },
+    { name: "Virudhunagar", state: "Tamil Nadu", lat: 9.5680, lng: 77.9624 },
+    { name: "Chengalpattu", state: "Tamil Nadu", lat: 12.6841, lng: 79.9836 },
+    { name: "Viluppuram", state: "Tamil Nadu", lat: 11.9398, lng: 79.4860 },
+    { name: "Karaikal", state: "Tamil Nadu", lat: 10.9254, lng: 79.8380 }
+  ];
+
+  // Dynamic District Search Hook for other Indian states
+  useEffect(() => {
+    if (!districtSearchQuery || districtSearchQuery.trim() === '') {
+      setDistrictSuggestions([]);
+      return;
+    }
+    
+    const term = districtSearchQuery.trim().toLowerCase();
+    
+    // Check local Tamil Nadu list first
+    const localMatches = TAMIL_NADU_DISTRICTS.filter(d => 
+      d.name.toLowerCase().includes(term)
+    );
+    
+    if (localMatches.length > 0) {
+      setDistrictSuggestions(localMatches);
+      return;
+    }
+
+    // Call geocoding API to dynamically find other Indian districts
+    setIsSearchingDistrict(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const query = encodeURIComponent(`${districtSearchQuery.trim()}, India`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&addressdetails=1&countrycodes=in&limit=5`);
+        const data = await res.json();
+        
+        if (data && Array.isArray(data)) {
+          const results = data.map((item: any) => {
+            const district = item.address?.state_district || item.address?.county || item.address?.city || item.name;
+            const state = item.address?.state;
+            return {
+              name: district,
+              state: state || 'India',
+              lat: parseFloat(item.lat),
+              lng: parseFloat(item.lon)
+            };
+          }).filter((item: any) => item.name);
+          
+          // Deduplicate
+          const uniqueResults: any[] = [];
+          const seen = new Set();
+          results.forEach((r: any) => {
+            const key = `${r.name.toLowerCase()}, ${r.state.toLowerCase()}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              uniqueResults.push(r);
+            }
+          });
+          
+          setDistrictSuggestions(uniqueResults);
+        }
+      } catch (err) {
+        console.error("OSM district geocoding failed", err);
+      } finally {
+        setIsSearchingDistrict(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [districtSearchQuery]);
 
   // Sync global coordinates to local userLocation state for Trending "Near Me"
   useEffect(() => {
@@ -743,21 +851,131 @@ export default function HomeListPage() {
           </div>
         </section>
 
-        {/* 8. POPULAR LOCATIONS */}
+        {/* 8. DISTRICT SELECTOR (DROPDOWN CARD) */}
         <section className="mb-4">
-           <div className="bg-[#F3F4F6] rounded-2xl p-2">
-             {['Coimbatore, Tamil Nadu', 'Chennai, Tamil Nadu', 'Madurai, Tamil Nadu'].map((loc, i) => (
-               <div key={i} className="flex items-center gap-4 p-3 border-b border-gray-200/50 last:border-0 active:bg-gray-200 rounded-xl transition-colors cursor-pointer">
-                 <div className="w-10 h-10 bg-white shadow-sm rounded-full flex items-center justify-center shrink-0">
-                   <MapPin className="w-5 h-5 text-[#111827]" />
-                 </div>
-                 <div className="flex-1">
-                   <h3 className="text-sm font-semibold text-[#111827]">{loc}</h3>
-                   <p className="text-xs text-[#6B7280] mt-0.5">View properties</p>
-                 </div>
-               </div>
-             ))}
-           </div>
+          <div className="mb-3">
+            <h2 className="text-lg font-bold text-[#111827] flex items-center gap-1.5">
+              <MapPin className="w-5 h-5 text-[#801786]" />
+              Explore by District
+            </h2>
+            <p className="text-sm text-[#6B7280]">Select a district in India to view properties</p>
+          </div>
+          
+          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+            {/* Header / Toggle Button */}
+            <button
+              onClick={() => setIsDistrictDropdownOpen(!isDistrictDropdownOpen)}
+              className="w-full flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white shadow-sm rounded-full flex items-center justify-center border border-slate-100">
+                  <MapPin className="w-5 h-5 text-[#801786]" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-semibold text-[#111827]">
+                    {locationName && locationName !== 'Tamil Nadu' ? locationName : 'Select Location'}
+                  </h3>
+                  <p className="text-xs text-[#6B7280] mt-0.5">Click to choose a district or search other states</p>
+                </div>
+              </div>
+              {isDistrictDropdownOpen ? (
+                <ChevronUp className="w-5 h-5 text-[#6B7280]" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-[#6B7280]" />
+              )}
+            </button>
+
+            {/* Dropdown Content */}
+            {isDistrictDropdownOpen && (
+              <div className="p-4 border-t border-slate-100 bg-white">
+                {/* Search Input */}
+                <div className="relative mb-4">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-slate-400" />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search district (e.g. Coimbatore, Bangalore...)"
+                    value={districtSearchQuery}
+                    onChange={(e) => setDistrictSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-9 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#801786]/20 focus:border-[#801786] bg-slate-50/50 text-[#111827]"
+                  />
+                  {districtSearchQuery && (
+                    <button
+                      onClick={() => setDistrictSearchQuery('')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      <X className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+                    </button>
+                  )}
+                </div>
+
+                {/* District List Suggestions / Grid */}
+                <div className="max-h-[250px] overflow-y-auto pr-1 no-scrollbar">
+                  {isSearchingDistrict ? (
+                    <div className="flex items-center justify-center py-6 gap-2 text-slate-500 text-xs">
+                      <div className="w-4 h-4 border-2 border-[#801786] border-t-transparent rounded-full animate-spin"></div>
+                      Searching in India...
+                    </div>
+                  ) : districtSearchQuery ? (
+                    districtSuggestions.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {districtSuggestions.map((dist, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setLocation(`${dist.name}, ${dist.state}`, { lat: dist.lat, lng: dist.lng });
+                              setIsDistrictDropdownOpen(false);
+                              setDistrictSearchQuery('');
+                              const slug = dist.name.toLowerCase().replace(/\s+/g, '-');
+                              router.push(`/district/${slug}?lat=${dist.lat}&lng=${dist.lng}`);
+                            }}
+                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left border border-transparent hover:border-slate-100 w-full"
+                          >
+                            <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                            <div className="truncate">
+                              <div className="text-xs font-semibold text-[#111827] truncate">
+                                {dist.name}, {dist.state}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 text-xs text-slate-400">
+                        No districts found matching "{districtSearchQuery}"
+                      </div>
+                    )
+                  ) : (
+                    <div>
+                      <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Tamil Nadu Districts</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {TAMIL_NADU_DISTRICTS.map((dist, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setLocation(`${dist.name}, ${dist.state}`, { lat: dist.lat, lng: dist.lng });
+                              setIsDistrictDropdownOpen(false);
+                              const slug = dist.name.toLowerCase().replace(/\s+/g, '-');
+                              router.push(`/district/${slug}?lat=${dist.lat}&lng=${dist.lng}`);
+                            }}
+                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-colors text-left border border-transparent hover:border-slate-100 w-full"
+                          >
+                            <MapPin className="w-4 h-4 text-[#801786]/70 shrink-0" />
+                            <div className="truncate">
+                              <div className="text-xs font-semibold text-[#111827] truncate">
+                                {dist.name}, {dist.state}
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* 9. FREQUENTLY ASKED QUESTIONS */}
