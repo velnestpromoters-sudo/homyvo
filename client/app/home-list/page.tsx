@@ -1152,7 +1152,15 @@ export default function HomeListPage() {
 
         {/* SEO BRAND SIGNAL */}
         <div className="py-6 flex justify-center text-center">
-            <span className="text-xs font-medium text-gray-400">Homyvo – Trusted Rental Platform in Tamil Nadu</span>
+            <span className="text-xs font-medium text-gray-400">
+                <span 
+                  onClick={() => router.push('/about')}
+                  className="text-[#801786] font-bold cursor-pointer hover:underline"
+                >
+                  Homyvo
+                </span>
+                {" "}– Trusted Rental Platform in Tamil Nadu
+            </span>
         </div>
 
       </div>
