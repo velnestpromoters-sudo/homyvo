@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, CheckCircle, Percent, Share2, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useWishlistStore } from '@/store/wishlistStore';
@@ -31,6 +32,22 @@ export default function VideoCard({
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlistStore();
+  const [lastTap, setLastTap] = useState<number | null>(null);
+  const [showHeartOverlay, setShowHeartOverlay] = useState(false);
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const DOUBLE_PRESS_DELAY = 300;
+    if (lastTap && (now - lastTap) < DOUBLE_PRESS_DELAY) {
+      if (!isSaved) {
+        toggleWishlist();
+      }
+      setShowHeartOverlay(true);
+      setTimeout(() => setShowHeartOverlay(false), 800);
+    } else {
+      setLastTap(now);
+    }
+  };
 
   // Using exclusively the uploaded images array from the new property system
   const mediaList = images && images.length > 0 ? images : ['/images/placeholder.jpg'];
@@ -157,7 +174,11 @@ export default function VideoCard({
         style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
       >
           {mediaList.map((mediaSrc, idx) => (
-             <div key={idx} className="relative w-full h-full shrink-0 snap-center flex items-center justify-center bg-black">
+             <div 
+               key={idx} 
+               onClick={handleDoubleTap}
+               className="relative w-full h-full shrink-0 snap-center flex items-center justify-center bg-black"
+             >
                 <img 
                     src={mediaSrc} 
                     className="w-full h-full object-cover pointer-events-none" 
@@ -273,6 +294,22 @@ export default function VideoCard({
            </button>
         </div>
       </div>
+      {/* Centered Heart Animation Overlay */}
+      <AnimatePresence>
+        {showHeartOverlay && (
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: [0, 1.2, 1], opacity: [0, 1, 1] }}
+            exit={{ scale: 1.5, opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
+          >
+            <div className="bg-black/20 backdrop-blur-sm rounded-full p-6 shadow-2xl">
+              <Heart className="w-24 h-24 text-[#ec38b7] fill-[#ec38b7] drop-shadow-[0_0_20px_rgba(236,56,183,0.6)]" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
