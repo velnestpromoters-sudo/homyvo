@@ -45,7 +45,7 @@ exports.askChatbot = async (req, res) => {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         // Query active properties from DB
-        const activeProps = await Property.find({ isActive: true }).select('title location.address location.area location.city location.coordinates rent deposit bhkType propertyType amenities furnishing availability');
+        const activeProps = await Property.find({ isActive: true }).select('title location.address location.area location.city location.coordinates rent deposit bhkType propertyType amenities furnishing availability pgDetails');
         
         const propertiesContext = activeProps.map(p => {
             let distance = null;
@@ -68,7 +68,9 @@ exports.askChatbot = async (req, res) => {
                 furnishing: p.furnishing,
                 availability: p.availability,
                 amenities: p.amenities ? p.amenities.join(', ') : '',
-                distanceFromUserKm: distance
+                distanceFromUserKm: distance,
+                pgGender: p.pgDetails?.gender || null,
+                pgSharing: p.pgDetails?.sharingTypes || []
             };
         });
 
@@ -94,11 +96,12 @@ Use this real-time list of available properties on Homyvo to answer recommendati
 ${JSON.stringify(propertiesContext, null, 2)}
 
 When recommending properties:
-1. Always state the REASON for your recommendation clearly (e.g. proximity, budget match, BHK layout, amenities, or furnishing).
-2. Actively match the user's location name (either locationName above or any location name mentioned by the user in the text, e.g. "Sitra", "Kalapatti", "Peelamedu", "Coimbatore") against property listings.
-3. If user coordinates are known, prioritize suggesting properties with the smallest "distanceFromUserKm" and explicitly mention how far they are (e.g., "This home is only 1.2 km away from you...").
-4. Provide the link to view the property details page using this exact format: [View Property](http://homyvo.com/property/[id]) where [id] is the property's real database ID from the database above (e.g. [View Property](http://homyvo.com/property/6a01502445a652aff6a3d7e1)).
-5. Respond in a highly natural, engaging, and friendly live-chat manner (keep answers to 2-4 sentences max so it remains clean).`;
+1. Always state the REASON for your recommendation clearly (e.g. proximity, budget match, BHK layout matching user's specific request like "1 BHK", "2 BHK", or PG gender preference like "boys PG" or "girls PG", amenities, or furnishing).
+2. Actively match specific user filters (e.g. if the user asks for a "boys PG" or "stay for boys pg", ONLY recommend properties where "propertyType" is "pg" and "pgGender" is "boys" or "co-living". If the user asks for a "1 BHK", ONLY recommend properties where "bhkType" is "1BHK").
+3. Actively match the user's location name (either locationName above or any location name mentioned by the user in the text, e.g. "Sitra", "Kalapatti", "Peelamedu", "Coimbatore") against property listings.
+4. If user coordinates are known, prioritize suggesting properties with the smallest "distanceFromUserKm" and explicitly mention how far they are (e.g., "This home is only 1.2 km away from you...").
+5. Provide the link to view the property details page using this exact format: [View Property](http://homyvo.com/property/[id]) where [id] is the property's real database ID from the database above (e.g. [View Property](http://homyvo.com/property/6a01502445a652aff6a3d7e1)).
+6. Respond in a highly natural, engaging, and friendly live-chat manner (keep answers to 2-4 sentences max so it remains clean).`;
 
         // Combine into one large prompt string
         const historyText = messages && messages.length > 0 ? messages.join('\n') : '';
