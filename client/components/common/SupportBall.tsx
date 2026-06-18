@@ -79,11 +79,19 @@ Here is your knowledge base:
 - To search nearby, use the 'Nearest to Me' sort option and grant location access.
 - Browsing is free. There is no brokerage. Contacting owners might require a small platform fee.
 - Verified properties have a blue badge. Owners must submit trust verification documents.
-- If a user asks something unrelated, inappropriate, or needing complex human help, kindly redirect them to call our support line at +91 63692 69611.`;
+- If a user asks something unrelated, inappropriate, or needing complex human help, kindly redirect them to call our support line at +91 63692 69611.
+- Creators / Team of Homyvo:
+  * Senthil: Product Manager & Founder
+  * Deepak: Project Manager & Business Analyst
+  * Mahesh: UI/UX Designer
+  * Sudharsan: Full Stack Developer
+  * Sathya: Digital Marketing
+  * Sanjeevi: CFO`;
 
        const response = await api.post('/chatbot/ask', {
            messages: messages.slice(-4).map(m => `${m.sender === 'bot' ? 'Assistant' : 'User'}: ${m.text}`),
            userMessage: userMessage,
+           systemPrompt: systemPrompt,
            language: language,
            coordinates: coordinates,
            locationName: locationName
