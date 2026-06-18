@@ -73,10 +73,10 @@ export default function HomeListPage() {
 
   const [currentPromo, setCurrentPromo] = useState(0);
   const desktopPromos = [
-    { text: "✨ Owner? List stays for FREE & get leads!", link: "/owner/dashboard" },
-    { text: "🏡 Premium Family Homes with Zero Brokerage", link: "/category/family" },
-    { text: "🎓 Safe & Verified Student PGs Near Colleges", link: "/category/student" },
-    { text: "⚡ Boost your property listing for 10x views!", link: "/owner/dashboard" }
+    { title: "List Your Stay", text: "Owner? List stays for FREE & get leads!", link: "/owner/dashboard" },
+    { title: "Family Stays", text: "Premium Family Homes with Zero Brokerage", link: "/category/family" },
+    { title: "Student Stays", text: "Safe & Verified Student PGs Near Colleges", link: "/category/student" },
+    { title: "Premium Boost", text: "Boost your property listing for 10x views!", link: "/owner/dashboard" }
   ];
 
   useEffect(() => {
@@ -516,19 +516,25 @@ export default function HomeListPage() {
             {/* Animated Shimmer Promo Banner (Desktop Only) */}
             <div 
               onClick={() => router.push(desktopPromos[currentPromo].link)}
-              className="hidden lg:flex flex-1 max-w-[320px] xl:max-w-[400px] h-[52px] items-center border border-purple-100 rounded-full px-4 relative overflow-hidden cursor-pointer shadow-sm hover:shadow transition-shadow group promo-gradient"
+              className="hidden lg:flex items-center bg-white border border-[#E5E7EB] rounded-full h-[52px] px-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98] flex-1 max-w-[320px] xl:max-w-[400px] relative overflow-hidden group"
             >
               {/* Shimmer Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-100/40 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
               
-              <div className="flex items-center gap-2.5 w-full relative z-10">
-                <span className="flex h-2 w-2 relative shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#801786] opacity-75"></span>
+              <div className="flex items-center gap-3 w-full relative z-10">
+                <span className="flex h-4 w-4 relative shrink-0 items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-[#801786] opacity-40"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#801786]"></span>
                 </span>
-                <span className="text-[11px] xl:text-xs font-black text-slate-800 tracking-tight truncate select-none">
-                  {desktopPromos[currentPromo].text}
-                </span>
+                
+                <div className="flex-1 flex flex-col justify-center min-w-0">
+                  <span className="text-sm font-semibold text-[#111827] leading-tight select-none truncate">
+                    {desktopPromos[currentPromo].title}
+                  </span>
+                  <span className="text-[11px] text-[#6B7280] leading-tight mt-0.5 select-none truncate">
+                    {desktopPromos[currentPromo].text}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
