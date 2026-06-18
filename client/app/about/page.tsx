@@ -78,12 +78,6 @@ function TeamMemberBox({ member, scrollYProgress, range, heightClass, gradientFr
     [0, 1]
   );
 
-  const avatarScale = useTransform(
-    scrollYProgress,
-    [range[0] - 0.01, range[0]],
-    [0.8, 1.1]
-  );
-
   const nameWords = member.name.split(" ");
   const roleWords = member.role.split(" ");
   const totalWords = nameWords.length + roleWords.length;
@@ -97,32 +91,24 @@ function TeamMemberBox({ member, scrollYProgress, range, heightClass, gradientFr
         borderColor: useTransform(scrollYProgress, [range[0] - 0.01, range[0], range[1]], ["rgba(255, 255, 255, 0.1)", "rgba(200, 78, 254, 0.8)", "rgba(123, 138, 243, 0.5)"]),
         borderWidth: "1px",
       }}
-      className={`w-full ${heightClass} bg-gradient-to-b ${gradientFrom} ${gradientTo} rounded-3xl backdrop-blur-xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300`}
+      className={`w-full ${heightClass} bg-gradient-to-b ${gradientFrom} ${gradientTo} rounded-2xl md:rounded-3xl backdrop-blur-xl p-3 sm:p-4 md:p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300`}
     >
       {/* Glow shadow inside active card */}
       <motion.div
         style={{
           opacity: useTransform(scrollYProgress, [range[0] - 0.01, range[0], range[1]], [0, 0.2, 0.05])
         }}
-        className="absolute inset-0 bg-[#C84EFE] blur-[30px] rounded-3xl -z-20 pointer-events-none"
+        className="absolute inset-0 bg-[#C84EFE] blur-[30px] rounded-2xl md:rounded-3xl -z-20 pointer-events-none"
       />
 
-      {/* Initials Avatar */}
-      <motion.div
-        style={{ scale: avatarScale }}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-[#7B8AF3]/90 to-[#C84EFE]/90 flex items-center justify-center text-white font-black text-2xl mb-4 shadow-[0_0_20px_rgba(200,78,254,0.4)]"
-      >
-        {member.initials}
-      </motion.div>
-
       {/* Name word-by-word */}
-      <div className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-100 tracking-tight mb-2 flex flex-wrap justify-center">
+      <div className="text-xs sm:text-base md:text-xl lg:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-100 tracking-tight mb-1.5 flex flex-wrap justify-center leading-tight">
         {nameWords.map((word, idx) => {
           const start = idx / totalWords;
           const end = (idx + 0.85) / totalWords;
           const wordOpacity = useTransform(boxScrollProgress, [start, end], [0.15, 1]);
           return (
-            <motion.span key={idx} style={{ opacity: wordOpacity }} className="mr-1.5 inline-block">
+            <motion.span key={idx} style={{ opacity: wordOpacity }} className="mx-0.5 inline-block">
               {word}
             </motion.span>
           );
@@ -130,14 +116,14 @@ function TeamMemberBox({ member, scrollYProgress, range, heightClass, gradientFr
       </div>
 
       {/* Role word-by-word */}
-      <div className="text-xs md:text-sm font-semibold text-slate-400 leading-relaxed uppercase tracking-wider flex flex-wrap justify-center">
+      <div className="text-[8px] sm:text-[10px] md:text-xs lg:text-sm font-semibold text-slate-400 leading-normal uppercase tracking-wider flex flex-wrap justify-center">
         {roleWords.map((word, idx) => {
           const actualIdx = nameWords.length + idx;
           const start = actualIdx / totalWords;
           const end = (actualIdx + 0.85) / totalWords;
           const wordOpacity = useTransform(boxScrollProgress, [start, end], [0.15, 1]);
           return (
-            <motion.span key={idx} style={{ opacity: wordOpacity }} className="mr-1 inline-block">
+            <motion.span key={idx} style={{ opacity: wordOpacity }} className="mx-0.5 inline-block">
               {word}
             </motion.span>
           );
@@ -344,14 +330,14 @@ export default function AboutPage() {
            </h2>
            
             {/* Abstract Parallax Background Reels showcasing the Homyvo Team */}
-            <div className="absolute inset-0 w-full h-full flex items-center justify-center gap-4 select-none overflow-hidden">
+            <div className="absolute inset-0 w-full h-full flex items-center justify-center gap-1.5 sm:gap-3 md:gap-4 select-none overflow-hidden px-2">
                {/* Left Column: Member 1 (Top Left) & Member 2 (Bottom Left) */}
-               <motion.div style={{ y: expReelY }} className="w-48 md:w-64 space-y-4">
+               <motion.div style={{ y: expReelY }} className="w-[31%] max-w-[220px] md:w-64 space-y-2.5 md:space-y-4">
                   <TeamMemberBox
                     member={TEAM_MEMBERS[0]}
                     scrollYProgress={scrollYProgress}
                     range={[0.75, 0.78]}
-                    heightClass="h-80"
+                    heightClass="h-44 sm:h-64 md:h-80"
                     gradientFrom="from-blue-500/20"
                     gradientTo="to-purple-500/20"
                   />
@@ -359,19 +345,19 @@ export default function AboutPage() {
                     member={TEAM_MEMBERS[1]}
                     scrollYProgress={scrollYProgress}
                     range={[0.78, 0.81]}
-                    heightClass="h-80"
+                    heightClass="h-44 sm:h-64 md:h-80"
                     gradientFrom="from-blue-500/20"
                     gradientTo="to-purple-500/20"
                   />
                </motion.div>
 
                {/* Middle Column: Member 3 (Top Middle) & Member 4 (Bottom Middle) */}
-               <motion.div style={{ y: useTransform(scrollYProgress, [0.75, 0.95], ["-20vh", "30vh"]) }} className="w-48 md:w-64 space-y-4 hidden md:block">
+               <motion.div style={{ y: useTransform(scrollYProgress, [0.75, 0.95], ["-20vh", "30vh"]) }} className="w-[31%] max-w-[220px] md:w-64 space-y-2.5 md:space-y-4">
                   <TeamMemberBox
                     member={TEAM_MEMBERS[2]}
                     scrollYProgress={scrollYProgress}
                     range={[0.81, 0.84]}
-                    heightClass="h-96"
+                    heightClass="h-52 sm:h-76 md:h-96"
                     gradientFrom="from-purple-500/20"
                     gradientTo="to-emerald-500/20"
                   />
@@ -379,19 +365,19 @@ export default function AboutPage() {
                     member={TEAM_MEMBERS[3]}
                     scrollYProgress={scrollYProgress}
                     range={[0.84, 0.87]}
-                    heightClass="h-96"
+                    heightClass="h-52 sm:h-76 md:h-96"
                     gradientFrom="from-purple-500/20"
                     gradientTo="to-emerald-500/20"
                   />
                </motion.div>
 
                {/* Right Column: Member 5 (Top Right) & Member 6 (Bottom Right) */}
-               <motion.div style={{ y: expReelY }} className="w-48 md:w-64 space-y-4">
+               <motion.div style={{ y: expReelY }} className="w-[31%] max-w-[220px] md:w-64 space-y-2.5 md:space-y-4">
                   <TeamMemberBox
                     member={TEAM_MEMBERS[4]}
                     scrollYProgress={scrollYProgress}
                     range={[0.87, 0.90]}
-                    heightClass="h-64"
+                    heightClass="h-36 sm:h-52 md:h-64"
                     gradientFrom="from-blue-500/20"
                     gradientTo="to-purple-500/20"
                   />
@@ -399,7 +385,7 @@ export default function AboutPage() {
                     member={TEAM_MEMBERS[5]}
                     scrollYProgress={scrollYProgress}
                     range={[0.90, 0.93]}
-                    heightClass="h-64"
+                    heightClass="h-36 sm:h-52 md:h-64"
                     gradientFrom="from-blue-500/20"
                     gradientTo="to-purple-500/20"
                   />
