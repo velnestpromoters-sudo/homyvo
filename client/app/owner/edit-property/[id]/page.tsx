@@ -12,7 +12,7 @@ export default function EditPropertyPage() {
   const router = useRouter();
   const params = useParams();
   const propertyId = params.id as string;
-  const token = useAuthStore(state => state.token);
+  const { token, hasHydrated } = useAuthStore();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -47,7 +47,8 @@ export default function EditPropertyPage() {
 
   useEffect(() => {
     const fetchProperty = async () => {
-      if (!token) return router.push('/owner');
+      if (!hasHydrated) return;
+      if (!token) return router.push('/home-list');
       try {
         const res = await fetch(`/api/properties/${propertyId}`, {
            headers: { 'Authorization': `Bearer ${token}` }
@@ -235,7 +236,7 @@ export default function EditPropertyPage() {
      }
   };
 
-  if (isLoading) {
+  if (isLoading || !hasHydrated) {
       return (
          <div className="flex items-center justify-center min-h-[100dvh]">
              <Loader2 className="w-10 h-10 animate-spin text-[#801786]" />

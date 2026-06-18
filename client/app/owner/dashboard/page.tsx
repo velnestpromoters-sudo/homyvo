@@ -38,7 +38,7 @@ const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
 
 export default function OwnerDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, hasHydrated } = useAuth();
   const logout = useAuthStore(state => state.logout);
   const [properties, setProperties] = useState([]);
   const [analytics, setAnalytics] = useState<any[]>([]);
@@ -107,6 +107,7 @@ export default function OwnerDashboard() {
   };
 
   useEffect(() => {
+    if (!hasHydrated) return;
     // Basic auth wrap
     if (!isAuthenticated) {
       router.push('/home');
@@ -163,6 +164,14 @@ export default function OwnerDashboard() {
          console.error("Toggle error:", err);
       }
   };
+
+  if (!hasHydrated) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-10 h-10 border-4 border-[#801786] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">

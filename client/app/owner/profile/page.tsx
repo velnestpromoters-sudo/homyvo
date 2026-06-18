@@ -8,7 +8,7 @@ import api from '@/lib/api';
 
 export default function OwnerProfilePage() {
   const router = useRouter();
-  const { user, token, login } = useAuthStore();
+  const { user, token, login, hasHydrated } = useAuthStore();
   
   // Form states
   const [name, setName] = useState(user?.name || '');
@@ -21,8 +21,18 @@ export default function OwnerProfilePage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [stats, setStats] = useState({ listings: 0, views: 0, unlocks: 0 });
 
+  // Sync state once user is rehydrated / loaded
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setMobile(user.mobile || '');
+      setGender(user.gender || '');
+    }
+  }, [user]);
+
   // Redirect if not logged in or role is not owner
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!token) {
       router.push('/home-list');
       return;
@@ -80,6 +90,14 @@ export default function OwnerProfilePage() {
   };
 
   const userAvatar = user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Owner')}&background=801786&color=fff&size=150`;
+
+  if (!hasHydrated) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-10 h-10 border-4 border-[#801786] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] pb-24 font-sans text-gray-900 overflow-x-hidden">

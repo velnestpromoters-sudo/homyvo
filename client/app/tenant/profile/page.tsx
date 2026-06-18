@@ -8,13 +8,14 @@ import { useWishlistStore } from '@/store/wishlistStore';
 
 export default function TenantProfilePage() {
   const router = useRouter();
-  const { user, token } = useAuthStore();
+  const { user, token, hasHydrated } = useAuthStore();
   const { wishlist } = useWishlistStore();
   
   const [interactions, setInteractions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!token) {
        router.push('/home'); // Security redirect
        return;
@@ -43,6 +44,14 @@ export default function TenantProfilePage() {
   
   // Dynamic UI Avatar Generator
   const userAvatar = user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Tenant')}&background=random&size=150`;
+
+  if (!hasHydrated) {
+    return (
+      <div className="w-full min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-10 h-10 border-4 border-[#801786] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-[#F8FAFC] pb-24 font-sans text-gray-900 overflow-x-hidden">
