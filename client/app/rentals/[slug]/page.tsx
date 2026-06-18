@@ -120,12 +120,72 @@ export default async function RentalsPage({ params }: PageProps) {
      console.error("Failed to fetch rentals properties on server:", error);
   }
 
+  const categoryLabel = category === 'pg' 
+    ? 'PG Stays & Hostels' 
+    : category === 'commercial' 
+      ? 'Commercial Spaces' 
+      : category === 'student' 
+        ? 'Student & Bachelor Stays' 
+        : category === 'family' 
+          ? 'Family Rental Houses' 
+          : 'Rental Properties';
+
+  const schemaTitle = cityName 
+    ? `${categoryLabel} in ${cityName}` 
+    : `${categoryLabel}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": schemaTitle,
+    "description": `Verified listings of ${categoryLabel.toLowerCase()} with zero brokerage on Homyvo.`,
+    "numberOfItems": properties.length,
+    "itemListElement": properties.map((p, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": category === 'pg' ? "Accommodation" : "SingleFamilyResidence",
+        "name": p.title,
+        "image": p.images?.[0] || 'https://www.homyvo.com/icon.png',
+        "url": `https://www.homyvo.com/property/${p._id}`,
+        "description": `Rent: ₹${p.rent}/month. Location: ${p.location?.area || ''}, ${p.location?.city || ''}.`,
+        "offers": {
+          "@type": "Offer",
+          "priceCurrency": "INR",
+          "price": p.rent,
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": p.rent,
+            "priceCurrency": "INR",
+            "referenceQuantity": {
+              "@type": "QuantitativeValue",
+              "value": 1,
+              "unitCode": "MON"
+            }
+          }
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": p.location?.city || '',
+          "addressRegion": "Tamil Nadu",
+          "addressCountry": "IN"
+        }
+      }
+    }))
+  };
+
   return (
-    <RentalsClient 
-      initialProperties={properties}
-      category={category}
-      cityRaw={cityRaw}
-      cityName={cityName}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <RentalsClient 
+        initialProperties={properties}
+        category={category}
+        cityRaw={cityRaw}
+        cityName={cityName}
+      />
+    </>
   );
 }
