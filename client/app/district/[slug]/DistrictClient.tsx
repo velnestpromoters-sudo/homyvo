@@ -244,7 +244,9 @@ export default function DistrictClient({ slug, initialLat, initialLng }: Distric
               const num = parseInt(bhk.replace(/\D/g, ''));
               return num >= 4;
             }
-            return bhk.toLowerCase().includes(selectedBhk.toLowerCase());
+            const normalizedBhk = bhk.replace(/\s+/g, '').toLowerCase();
+            const normalizedSelected = selectedBhk.replace(/\s+/g, '').toLowerCase();
+            return normalizedBhk.includes(normalizedSelected);
           });
         });
       }
