@@ -5,6 +5,148 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, AtSign, Phone, Mail, ShieldCheck, Clock, MapPin } from 'lucide-react';
 
+interface TeamMember {
+  name: string;
+  role: string;
+  initials: string;
+}
+
+const TEAM_MEMBERS: TeamMember[] = [
+  {
+    name: "Senthil",
+    role: "Product manager & Founder of homyvo",
+    initials: "S"
+  },
+  {
+    name: "Deepak",
+    role: "Project Manager & Business Analyst",
+    initials: "D"
+  },
+  {
+    name: "Mahesh",
+    role: "UI/UX Designer",
+    initials: "M"
+  },
+  {
+    name: "Sudharsan",
+    role: "Full Stack Developer",
+    initials: "S"
+  },
+  {
+    name: "Sathya",
+    role: "Digital Marketing",
+    initials: "S"
+  },
+  {
+    name: "Sanjeevi",
+    role: "CFO",
+    initials: "S"
+  }
+];
+
+interface TeamMemberBoxProps {
+  member: TeamMember;
+  scrollYProgress: any;
+  range: [number, number];
+  heightClass: string;
+  gradientFrom: string;
+  gradientTo: string;
+}
+
+function TeamMemberBox({ member, scrollYProgress, range, heightClass, gradientFrom, gradientTo }: TeamMemberBoxProps) {
+  const cardOpacity = useTransform(
+    scrollYProgress,
+    [range[0] - 0.02, range[0], range[1], range[1] + 0.02],
+    [0.15, 1, 1, 0.5]
+  );
+
+  const borderOpacity = useTransform(
+    scrollYProgress,
+    [range[0] - 0.01, range[0], range[1], range[1] + 0.01],
+    [0.1, 0.8, 0.8, 0.3]
+  );
+  
+  const cardScale = useTransform(
+    scrollYProgress,
+    [range[0] - 0.02, range[0], range[1]],
+    [0.96, 1.04, 1.0]
+  );
+
+  const boxScrollProgress = useTransform(
+    scrollYProgress,
+    [range[0], range[1]],
+    [0, 1]
+  );
+
+  const avatarScale = useTransform(
+    scrollYProgress,
+    [range[0] - 0.01, range[0]],
+    [0.8, 1.1]
+  );
+
+  const nameWords = member.name.split(" ");
+  const roleWords = member.role.split(" ");
+  const totalWords = nameWords.length + roleWords.length;
+
+  return (
+    <motion.div
+      style={{
+        opacity: cardOpacity,
+        scale: cardScale,
+        boxShadow: useTransform(scrollYProgress, [range[0] - 0.01, range[0], range[1]], ["0 0 0 rgba(0,0,0,0)", "0 0 35px rgba(200, 78, 254, 0.25)", "0 0 10px rgba(123, 138, 243, 0.05)"]),
+        borderColor: useTransform(scrollYProgress, [range[0] - 0.01, range[0], range[1]], ["rgba(255, 255, 255, 0.1)", "rgba(200, 78, 254, 0.8)", "rgba(123, 138, 243, 0.5)"]),
+        borderWidth: "1px",
+      }}
+      className={`w-full ${heightClass} bg-gradient-to-b ${gradientFrom} ${gradientTo} rounded-3xl backdrop-blur-xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-300`}
+    >
+      {/* Glow shadow inside active card */}
+      <motion.div
+        style={{
+          opacity: useTransform(scrollYProgress, [range[0] - 0.01, range[0], range[1]], [0, 0.2, 0.05])
+        }}
+        className="absolute inset-0 bg-[#C84EFE] blur-[30px] rounded-3xl -z-20 pointer-events-none"
+      />
+
+      {/* Initials Avatar */}
+      <motion.div
+        style={{ scale: avatarScale }}
+        className="w-14 h-14 rounded-full bg-gradient-to-br from-[#7B8AF3]/90 to-[#C84EFE]/90 flex items-center justify-center text-white font-black text-2xl mb-4 shadow-[0_0_20px_rgba(200,78,254,0.4)]"
+      >
+        {member.initials}
+      </motion.div>
+
+      {/* Name word-by-word */}
+      <div className="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-100 tracking-tight mb-2 flex flex-wrap justify-center">
+        {nameWords.map((word, idx) => {
+          const start = idx / totalWords;
+          const end = (idx + 0.85) / totalWords;
+          const wordOpacity = useTransform(boxScrollProgress, [start, end], [0.15, 1]);
+          return (
+            <motion.span key={idx} style={{ opacity: wordOpacity }} className="mr-1.5 inline-block">
+              {word}
+            </motion.span>
+          );
+        })}
+      </div>
+
+      {/* Role word-by-word */}
+      <div className="text-xs md:text-sm font-semibold text-slate-400 leading-relaxed uppercase tracking-wider flex flex-wrap justify-center">
+        {roleWords.map((word, idx) => {
+          const actualIdx = nameWords.length + idx;
+          const start = actualIdx / totalWords;
+          const end = (actualIdx + 0.85) / totalWords;
+          const wordOpacity = useTransform(boxScrollProgress, [start, end], [0.15, 1]);
+          return (
+            <motion.span key={idx} style={{ opacity: wordOpacity }} className="mr-1 inline-block">
+              {word}
+            </motion.span>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function AboutPage() {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,11 +200,11 @@ export default function AboutPage() {
   const aiBar3Width = useTransform(scrollYProgress, [0.68, 0.75], ["0%", "65%"]);
 
   // ==============================
-  // SECTION 5: EXPERIENCE (0.75 - 0.9)
+  // SECTION 5: EXPERIENCE (0.75 - 0.95)
   // ==============================
-  const expOpacity = useTransform(scrollYProgress, [0.73, 0.78, 0.9], [0, 1, 0]);
-  const expReelY = useTransform(scrollYProgress, [0.75, 0.95], ["30vh", "-40vh"]);
-  const expBlur = useTransform(scrollYProgress, [0.85, 0.95], ["blur(0px)", "blur(10px)"]);
+  const expOpacity = useTransform(scrollYProgress, [0.73, 0.78, 0.94, 0.98], [0, 1, 1, 0]);
+  const expReelY = useTransform(scrollYProgress, [0.75, 0.96], ["25vh", "-45vh"]);
+  const expBlur = useTransform(scrollYProgress, [0.93, 0.97], ["blur(0px)", "blur(10px)"]);
 
   // ==============================
   // SECTION 6 & 7: CTA + FOOTER (0.9 - 1)
@@ -201,21 +343,68 @@ export default function AboutPage() {
               Scroll. Discover. Decide.
            </h2>
            
-           {/* Abstract Parallax Background Reels */}
-           <div className="absolute inset-0 w-full h-full flex items-center justify-center gap-4 opacity-30 select-none overflow-hidden">
-              <motion.div style={{ y: expReelY }} className="w-48 md:w-64 space-y-4">
-                 <div className="w-full h-80 bg-gradient-to-b from-blue-500/20 to-purple-500/20 rounded-3xl border border-white/10"></div>
-                 <div className="w-full h-80 bg-gradient-to-b from-blue-500/20 to-purple-500/20 rounded-3xl border border-white/10"></div>
-              </motion.div>
-              <motion.div style={{ y: useTransform(scrollYProgress, [0.75, 0.95], ["-20vh", "30vh"]) }} className="w-48 md:w-64 space-y-4 hidden md:block">
-                 <div className="w-full h-96 bg-gradient-to-b from-purple-500/20 to-emerald-500/20 rounded-3xl border border-white/10"></div>
-                 <div className="w-full h-96 bg-gradient-to-b from-purple-500/20 to-emerald-500/20 rounded-3xl border border-white/10"></div>
-              </motion.div>
-              <motion.div style={{ y: expReelY }} className="w-48 md:w-64 space-y-4">
-                 <div className="w-full h-64 bg-gradient-to-b from-blue-500/20 to-purple-500/20 rounded-3xl border border-white/10"></div>
-                 <div className="w-full h-64 bg-gradient-to-b from-blue-500/20 to-purple-500/20 rounded-3xl border border-white/10"></div>
-              </motion.div>
-           </div>
+            {/* Abstract Parallax Background Reels showcasing the Homyvo Team */}
+            <div className="absolute inset-0 w-full h-full flex items-center justify-center gap-4 select-none overflow-hidden">
+               {/* Left Column: Member 1 (Top Left) & Member 2 (Bottom Left) */}
+               <motion.div style={{ y: expReelY }} className="w-48 md:w-64 space-y-4">
+                  <TeamMemberBox
+                    member={TEAM_MEMBERS[0]}
+                    scrollYProgress={scrollYProgress}
+                    range={[0.75, 0.78]}
+                    heightClass="h-80"
+                    gradientFrom="from-blue-500/20"
+                    gradientTo="to-purple-500/20"
+                  />
+                  <TeamMemberBox
+                    member={TEAM_MEMBERS[1]}
+                    scrollYProgress={scrollYProgress}
+                    range={[0.78, 0.81]}
+                    heightClass="h-80"
+                    gradientFrom="from-blue-500/20"
+                    gradientTo="to-purple-500/20"
+                  />
+               </motion.div>
+
+               {/* Middle Column: Member 3 (Top Middle) & Member 4 (Bottom Middle) */}
+               <motion.div style={{ y: useTransform(scrollYProgress, [0.75, 0.95], ["-20vh", "30vh"]) }} className="w-48 md:w-64 space-y-4 hidden md:block">
+                  <TeamMemberBox
+                    member={TEAM_MEMBERS[2]}
+                    scrollYProgress={scrollYProgress}
+                    range={[0.81, 0.84]}
+                    heightClass="h-96"
+                    gradientFrom="from-purple-500/20"
+                    gradientTo="to-emerald-500/20"
+                  />
+                  <TeamMemberBox
+                    member={TEAM_MEMBERS[3]}
+                    scrollYProgress={scrollYProgress}
+                    range={[0.84, 0.87]}
+                    heightClass="h-96"
+                    gradientFrom="from-purple-500/20"
+                    gradientTo="to-emerald-500/20"
+                  />
+               </motion.div>
+
+               {/* Right Column: Member 5 (Top Right) & Member 6 (Bottom Right) */}
+               <motion.div style={{ y: expReelY }} className="w-48 md:w-64 space-y-4">
+                  <TeamMemberBox
+                    member={TEAM_MEMBERS[4]}
+                    scrollYProgress={scrollYProgress}
+                    range={[0.87, 0.90]}
+                    heightClass="h-64"
+                    gradientFrom="from-blue-500/20"
+                    gradientTo="to-purple-500/20"
+                  />
+                  <TeamMemberBox
+                    member={TEAM_MEMBERS[5]}
+                    scrollYProgress={scrollYProgress}
+                    range={[0.90, 0.93]}
+                    heightClass="h-64"
+                    gradientFrom="from-blue-500/20"
+                    gradientTo="to-purple-500/20"
+                  />
+               </motion.div>
+            </div>
         </motion.div>
 
 
