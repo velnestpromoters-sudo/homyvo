@@ -35,15 +35,20 @@ export default function VideoCard({
   const [lastTap, setLastTap] = useState<number | null>(null);
   const [showHeartOverlay, setShowHeartOverlay] = useState(false);
 
+  const triggerHeartOverlay = () => {
+    setShowHeartOverlay(true);
+    setTimeout(() => setShowHeartOverlay(false), 800);
+  };
+
   const handleDoubleTap = () => {
     const now = Date.now();
     const DOUBLE_PRESS_DELAY = 300;
     if (lastTap && (now - lastTap) < DOUBLE_PRESS_DELAY) {
       if (!isSaved) {
         toggleWishlist();
+      } else {
+        triggerHeartOverlay();
       }
-      setShowHeartOverlay(true);
-      setTimeout(() => setShowHeartOverlay(false), 800);
     } else {
       setLastTap(now);
     }
@@ -68,6 +73,7 @@ export default function VideoCard({
         img: mediaList[0],
         typeStr: typeStr
       });
+      triggerHeartOverlay();
     }
   };
 
