@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Navigation, Search, MapPin, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Navigation, Search, MapPin, ChevronRight, AlertTriangle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocationStore } from '@/store/locationStore';
 import { getCurrentPrecisePosition, isWithinTamilNadu } from '@/utils/geolocation';
@@ -21,6 +21,11 @@ export default function LocationTracker() {
   
   const [isConfirming, setIsConfirming] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  
+  // GPS activation modal states
+  const [showGPSModal, setShowGPSModal] = useState(false);
+  const [isModalLocating, setIsModalLocating] = useState(false);
+  const [gpsModalError, setGpsModalError] = useState<string | null>(null);
   
   // Auto-Complete Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,6 +118,61 @@ export default function LocationTracker() {
       } finally {
           setIsSearching(false);
       }
+  };
+
+  const handleModalGPSDetect = () => {
+    setIsModalLocating(true);
+    setGpsModalError(null);
+    
+    getCurrentPrecisePosition(
+      (pos) => {
+         const { latitude, longitude } = pos.coords;
+         if (!isWithinTamilNadu(latitude, longitude)) {
+            setGpsModalError(
+               "Location detected is outside Tamil Nadu. Homyvo is only available in Tamil Nadu. Please select a city manually."
+            );
+            setIsModalLocating(false);
+            return;
+         }
+         // Set map position
+         setNeedlePosition([latitude, longitude]);
+         setForceFlyTo([latitude, longitude]);
+         
+         // Close modal and stop locating
+         setIsModalLocating(false);
+         setShowGPSModal(false);
+      },
+      (err) => {
+         console.warn("GPS Permission Denied inside modal:", err);
+         if (err.code === 1) {
+            setGpsModalError(
+               "Location permission denied. Please allow location access in your browser settings (click the lock icon next to the URL) and turn on GPS."
+            );
+         } else if (err.code === 2) {
+            setGpsModalError(
+               "Location information unavailable. Please make sure Location Services / GPS is turned ON in your device settings."
+            );
+         } else if (err.code === 3) {
+            setGpsModalError(
+               "Location request timed out. Please verify that your device GPS is enabled and try again."
+            );
+         } else {
+            setGpsModalError(
+               "Could not detect location. Please ensure GPS is enabled and permissions are granted."
+            );
+         }
+         setIsModalLocating(false);
+      }
+    );
+  };
+
+  const handleConfirmClick = () => {
+    const [lat, lng] = needlePosition;
+    if (!isWithinTamilNadu(lat, lng)) {
+      setShowGPSModal(true);
+      return;
+    }
+    confirmCoordinates(lat, lng);
   };
 
   // Native GPS triangulation (Satellite Ping)
@@ -224,7 +284,7 @@ export default function LocationTracker() {
       {/* 3. Locator FAB & Explicit Bottom Confirm Overlay */}
       <div className="absolute bottom-6 left-6 right-6 z-30 pointer-events-none flex items-end justify-between">
           <button 
-              onClick={() => confirmCoordinates(needlePosition[0], needlePosition[1])}
+              onClick={handleConfirmClick}
               disabled={isConfirming || isLocating}
               className="bg-[#ec38b7] text-white px-7 py-3.5 rounded-full font-black text-[15px] shadow-[0_8px_30px_rgba(236,56,183,0.3)] pointer-events-auto active:scale-95 transition-all flex items-center gap-1.5 border-2 border-white/20"
           >
@@ -244,6 +304,73 @@ export default function LocationTracker() {
               )}
           </button>
       </div>
+
+      {/* 4. GPS Activation Guidance Modal (Glassmorphic & Premium UI) */}
+      {showGPSModal && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white/95 backdrop-blur-xl border border-white/20 rounded-[32px] w-full max-w-sm p-6 shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200 pointer-events-auto">
+            
+            {/* Warning Icon Banner */}
+            <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-4 text-amber-500 border border-amber-200">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+
+            <h3 className="text-xl font-black text-slate-900 mb-2">
+              GPS Location Required
+            </h3>
+            
+            <p className="text-sm text-slate-600 font-medium leading-relaxed mb-6">
+              To list or browse homes near you, please turn on your mobile GPS and grant location access permissions in your browser.
+            </p>
+
+            {/* Error Message & Step-by-Step Instructions */}
+            {gpsModalError && (
+              <div className="w-full text-left bg-rose-50 border border-rose-100 rounded-2xl p-3.5 mb-6 text-xs text-rose-700 font-semibold leading-relaxed">
+                <p className="font-black mb-1">Troubleshooting Settings:</p>
+                <p className="font-medium text-[11px] mb-2 text-rose-600">{gpsModalError}</p>
+                <ul className="list-disc pl-4 space-y-1 text-rose-800">
+                  <li>Android: Go to Settings → Location → Google Location Accuracy (Turn ON).</li>
+                  <li>iPhone: Go to Settings → Privacy → Location Services → Safari/Chrome (Set to "While Using").</li>
+                  <li>Browser: Click the lock icon 🔒 next to the web address to verify "Location" is allowed.</li>
+                </ul>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3.5 w-full">
+              <button
+                onClick={handleModalGPSDetect}
+                disabled={isModalLocating}
+                className="w-full py-4 bg-[#ec38b7] text-white rounded-full font-black text-sm tracking-wider uppercase shadow-lg shadow-[#ec38b7]/30 hover:bg-[#ff5522] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                {isModalLocating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Locating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-4 h-4 fill-white/20" />
+                    <span>Enable GPS & Locate Me</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowGPSModal(false);
+                  setGpsModalError(null);
+                }}
+                disabled={isModalLocating}
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-extrabold text-xs tracking-wider uppercase active:scale-[0.98] transition-all"
+              >
+                Enter Location Manually
+              </button>
+            </div>
+            
+          </div>
+        </div>
+      )}
 
     </div>
   );
