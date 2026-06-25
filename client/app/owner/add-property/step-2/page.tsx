@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { usePropertyFormStore } from '@/store/usePropertyFormStore';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
 export default function Step2() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function Step2() {
 
   const handleGPSDetect = () => {
     if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
+        getCurrentPrecisePosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
                 const mapURL = `https://maps.google.com/?q=${latitude},${longitude}`;

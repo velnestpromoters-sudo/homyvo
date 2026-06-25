@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, TrendingUp, Navigation } from 'lucide-react';
 import { useLocationStore } from '@/store/locationStore';
 import { PropertyCard } from '@/components/property/PropertyCard';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -87,7 +88,7 @@ export default function SearchPage() {
     }
     
     setIsSearching(true);
-    navigator.geolocation.getCurrentPosition(
+    getCurrentPrecisePosition(
        (pos) => {
           // Store physical coordinates dynamically protecting against duplicate town names
           setLocation("Validated GPS", { lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -103,8 +104,7 @@ export default function SearchPage() {
              alert("Failed to get location. Please try again.");
           }
           setIsSearching(false);
-       },
-       { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+       }
     );
   };
 

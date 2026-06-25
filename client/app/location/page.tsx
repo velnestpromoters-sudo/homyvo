@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Navigation, Search, MapPin, ChevronRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocationStore } from '@/store/locationStore';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
 // Disable SSR for Leaflet interactive maps
 const MapInteractive = dynamic(() => import('@/components/map/MapBackground'), { ssr: false });
@@ -119,7 +120,7 @@ export default function LocationTracker() {
     if (!('geolocation' in navigator)) return alert("GPS not supported on this device.");
     setIsLocating(true);
     
-    navigator.geolocation.getCurrentPosition(
+    getCurrentPrecisePosition(
       (pos) => {
          const { latitude, longitude } = pos.coords;
          setForceFlyTo([latitude, longitude]); 
@@ -136,8 +137,7 @@ export default function LocationTracker() {
             alert("Location request failed. Please try again.");
          }
          setIsLocating(false);
-      },
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
+      }
     );
   };
 

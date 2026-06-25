@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useAuthModalStore } from '@/store/authModalStore';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
 import api from '@/lib/api';
 
@@ -169,7 +170,7 @@ export default function HomeReelPage() {
     if (locationName === 'Select Location' && 'geolocation' in navigator) {
       setLocation('Locating...');
       
-      navigator.geolocation.getCurrentPosition(
+      getCurrentPrecisePosition(
         async (pos) => {
           try {
             const { latitude, longitude } = pos.coords;

@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { useWishlistStore } from '@/store/wishlistStore';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 import api from '@/lib/api';
 
 const slides = [
@@ -342,7 +343,7 @@ export default function HomeListPage() {
     if (userLocation) return;
     setIsLocating(true);
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      getCurrentPrecisePosition(
         async (pos) => {
            const { latitude, longitude } = pos.coords;
            try {
@@ -383,7 +384,7 @@ export default function HomeListPage() {
   const handleEnableLocation = () => {
     if ('geolocation' in navigator) {
       setIsLocatingNearMe(true);
-      navigator.geolocation.getCurrentPosition(
+      getCurrentPrecisePosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
           try {

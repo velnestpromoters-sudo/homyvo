@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, SlidersHorizontal, MapPin, Search, Compass } from 'lucide-react';
 import { useLocationStore } from '@/store/locationStore';
 import { PropertyCard } from '@/components/property/PropertyCard';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface RentalsClientProps {
@@ -47,7 +48,7 @@ export default function RentalsClient({
   const handleEnableLocation = () => {
     if ('geolocation' in navigator) {
       setIsLocating(true);
-      navigator.geolocation.getCurrentPosition(
+      getCurrentPrecisePosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
           try {

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { ArrowLeft, Save, Loader2, MapPin, Navigation, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
 const MapInteractive = dynamic(() => import('@/components/map/MapBackground'), { ssr: false });
 
@@ -111,7 +112,7 @@ export default function EditPropertyPage() {
   const handleGetCurrentLocation = () => {
     if ('geolocation' in navigator) {
       setIsLocating(true);
-      navigator.geolocation.getCurrentPosition(
+      getCurrentPrecisePosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
           try {

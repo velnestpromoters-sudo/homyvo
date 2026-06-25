@@ -11,6 +11,7 @@ import {
 import { useAuthModalStore } from '@/store/authModalStore';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
 export default function PropertyClient({ id, initialProperty }: { id: string, initialProperty: any }) {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function PropertyClient({ id, initialProperty }: { id: string, in
   // Auto-detect user coordinates on mount if not available
   useEffect(() => {
     if (!coordinates && 'geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
+      getCurrentPrecisePosition(
         async (pos) => {
           try {
             const { latitude, longitude } = pos.coords;

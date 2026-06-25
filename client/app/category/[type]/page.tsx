@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, Home, GraduationCap, LayoutDashboard, MapPin } from 'lucide-react';
 import { useLocationStore } from '@/store/locationStore';
 import { PropertyCard } from '@/components/property/PropertyCard';
+import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function CategoryPage() {
   const handleEnableLocation = () => {
     if ('geolocation' in navigator) {
       setIsLocating(true);
-      navigator.geolocation.getCurrentPosition(
+      getCurrentPrecisePosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
           try {
@@ -147,8 +148,8 @@ export default function CategoryPage() {
 
   const handleSortSelect = (val: string) => {
       if (val === 'nearest' && !userLocation) {
-          if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(
+          if ('geolocation' in navigator) {
+              getCurrentPrecisePosition(
                   pos => {
                       setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                       setLocalFilters(prev => ({ ...prev, sort: 'nearest' }));
