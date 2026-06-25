@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { ArrowLeft, Save, Loader2, MapPin, Navigation, X } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, MapPin, Navigation, X, Search } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { getCurrentPrecisePosition } from '@/utils/geolocation';
 
@@ -45,6 +45,74 @@ export default function EditPropertyPage() {
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapPickerCoords, setMapPickerCoords] = useState<{ lat: number, lng: number } | null>(null);
   const [forceFlyTo, setForceFlyTo] = useState<[number, number] | null>(null);
+
+  // Modal Autocomplete Search States
+  const [modalSearchQuery, setModalSearchQuery] = useState('');
+  const [isSearchingModal, setIsSearchingModal] = useState(false);
+  const [modalSearchResults, setModalSearchResults] = useState<any[]>([]);
+
+  // Modal Autocomplete Search Effect
+  useEffect(() => {
+     if (!modalSearchQuery.trim()) {
+         setModalSearchResults([]);
+         setIsSearchingModal(false);
+         return;
+     }
+
+     const timer = setTimeout(async () => {
+         setIsSearchingModal(true);
+         try {
+             const baseLat = mapPickerCoords?.lat || 22.5937;
+             const baseLng = mapPickerCoords?.lng || 78.9629;
+             const res = await fetch(`/api/search?q=${encodeURIComponent(modalSearchQuery)}&lat=${baseLat}&lng=${baseLng}`);
+             const data = await res.json();
+             if (data.success) {
+                 setModalSearchResults(data.features || []);
+             }
+         } catch (err) {
+             console.error("Modal Auto-Complete failed", err);
+         } finally {
+             setIsSearchingModal(false);
+         }
+     }, 300);
+
+     return () => clearTimeout(timer);
+  }, [modalSearchQuery, mapPickerCoords]);
+
+  const handleSelectModalResult = (result: any) => {
+      const [lon, lat] = result.geometry.coordinates; // GeoJSON
+      setForceFlyTo([lat, lon]);
+      setMapPickerCoords({ lat, lng: lon });
+      setModalSearchQuery('');
+      setModalSearchResults([]);
+  };
+
+  const handleModalManualSearchSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!modalSearchQuery.trim()) return;
+      
+      setIsSearchingModal(true);
+      try {
+          const baseLat = mapPickerCoords?.lat || 22.5937;
+          const baseLng = mapPickerCoords?.lng || 78.9629;
+          const res = await fetch(`/api/search?q=${encodeURIComponent(modalSearchQuery)}&lat=${baseLat}&lng=${baseLng}`);
+          const data = await res.json();
+          if (data.success && data.features.length > 0) {
+              const bestResult = data.features[0];
+              const [lon, lat] = bestResult.geometry.coordinates;
+              setForceFlyTo([lat, lon]);
+              setMapPickerCoords({ lat, lng: lon });
+              setModalSearchQuery('');
+              setModalSearchResults([]);
+          } else {
+              alert("Location not found! Try searching a nearby neighborhood.");
+          }
+      } catch (err) {
+          console.error("Modal Search failed", err);
+      } finally {
+          setIsSearchingModal(false);
+      }
+  };
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -538,6 +606,65 @@ export default function EditPropertyPage() {
                 
                 {/* Map Container */}
                 <div className="flex-1 relative bg-slate-100">
+                    
+                    {/* Floating Search Bar inside Modal */}
+                    <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-2">
+                       <form onSubmit={handleModalManualSearchSubmit} className="relative flex items-center bg-white shadow-lg rounded-xl border border-slate-200 focus-within:border-purple-500 transition-colors">
+                          <div className="pl-3 pr-1 text-slate-400">
+                             {isSearchingModal ? (
+                                <div className="w-4 h-4 border-2 border-slate-400 border-t-purple-600 rounded-full animate-spin"></div>
+                             ) : (
+                                <Search className="w-4 h-4" />
+                             )}
+                          </div>
+                          
+                          <input 
+                             type="text" 
+                             value={modalSearchQuery}
+                             onChange={(e) => setModalSearchQuery(e.target.value)}
+                             placeholder="Search area, neighborhood, city..." 
+                             className="flex-1 bg-transparent text-sm font-bold text-slate-800 outline-none placeholder:font-medium placeholder:text-slate-400 py-3"
+                          />
+                          
+                          {modalSearchQuery && (
+                             <button 
+                                type="button" 
+                                onClick={() => {
+                                   setModalSearchQuery('');
+                                   setModalSearchResults([]);
+                                }}
+                                className="p-2 mr-1 hover:bg-slate-100 rounded-full text-slate-400"
+                             >
+                                <X className="w-4 h-4" />
+                             </button>
+                          )}
+                       </form>
+
+                       {/* Autocomplete Dropdown */}
+                       {modalSearchResults.length > 0 && (
+                          <div className="bg-white border border-slate-200 shadow-xl rounded-2xl overflow-hidden py-1 max-h-60 overflow-y-auto">
+                             {modalSearchResults.map((res: any, idx: number) => {
+                                const name = res.properties.name || "Unknown Place";
+                                const street = res.properties.street || res.properties.city || res.properties.state || "Exact Location";
+                                return (
+                                   <button 
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => handleSelectModalResult(res)}
+                                      className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-center gap-3 active:scale-95"
+                                   >
+                                      <MapPin className="w-4 h-4 text-purple-600 shrink-0" />
+                                      <div className="flex flex-col min-w-0">
+                                         <span className="text-slate-900 font-extrabold text-sm truncate">{name}</span>
+                                         <span className="text-slate-500 font-medium text-xs truncate">{street}</span>
+                                      </div>
+                                   </button>
+                                );
+                             })}
+                          </div>
+                       )}
+                    </div>
+
                    <MapInteractive 
                       initialCoordinates={mapPickerCoords}
                       forceLocation={forceFlyTo}

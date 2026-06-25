@@ -88,14 +88,23 @@ export default function InteractiveMap({
         <CenterTracker onCenterChange={handleCenterUpdate} forcePosition={forceLocation} />
       </MapContainer>
 
-      {/* FIXED CENTER NEEDLE (Uber Style) */}
-      <div className="absolute top-1/2 left-1/2 -mt-10 -ml-5 z-10 pointer-events-none drop-shadow-xl flex flex-col items-center animate-bounce">
-         <div className="bg-[#ec38b7] text-white p-2.5 rounded-full shadow-lg border-2 border-white">
-            <MapPin className="w-6 h-6 fill-white stroke-[#ec38b7]" />
-         </div>
-         {/* The literal Needle Tip */}
-         <div className="w-1 h-3 bg-black/80 rounded-b-full"></div>
-         <div className="w-3 h-1 bg-black/40 rounded-[100%] blur-[2px] mt-0.5" />
+      {/* FIXED CENTER AIM POINT / RETICLE */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] pointer-events-none drop-shadow-lg flex items-center justify-center">
+         {/* Center Target Dot */}
+         <div className="w-2.5 h-2.5 bg-[#ec38b7] rounded-full border border-white shadow-md"></div>
+         
+         {/* Outer Target Circle */}
+         <div className="absolute w-10 h-10 rounded-full border-2 border-[#ec38b7] bg-[#ec38b7]/10 animate-pulse"></div>
+         
+         {/* Crosshair Ticks */}
+         {/* Top Tick */}
+         <div className="absolute top-[-6px] w-0.5 h-2 bg-[#ec38b7]"></div>
+         {/* Bottom Tick */}
+         <div className="absolute bottom-[-6px] w-0.5 h-2 bg-[#ec38b7]"></div>
+         {/* Left Tick */}
+         <div className="absolute left-[-6px] w-2 h-0.5 bg-[#ec38b7]"></div>
+         {/* Right Tick */}
+         <div className="absolute right-[-6px] w-2 h-0.5 bg-[#ec38b7]"></div>
       </div>
     </div>
   );
