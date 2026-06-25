@@ -19,7 +19,7 @@ export const getCurrentPrecisePosition = (
   const defaultOptions: PositionOptions = {
     enableHighAccuracy: true,
     timeout: 15000,
-    maximumAge: 300000, // 5 minutes cache lookup
+    maximumAge: 0, // Force fresh location query (bypasses cache)
     ...options
   };
 
