@@ -25,7 +25,7 @@ export default function BottomBar({ location, viewMode }: BottomBarProps) {
     : 'bg-black/50 backdrop-blur-md border border-white/10 text-white shadow-lg';
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 px-5 pt-8 pb-6 ${bgClass} z-40 pointer-events-none`}>
+    <div className={`fixed bottom-0 left-0 right-0 px-5 pt-8 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] ${bgClass} z-40 pointer-events-none`}>
       <div className="flex justify-between items-center max-w-md mx-auto pointer-events-auto">
         
         {/* Toggle Mode Button */}

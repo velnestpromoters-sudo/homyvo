@@ -23,20 +23,28 @@ export default function SupportBall() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const savedLang = localStorage.getItem('chatbot_lang') as 'english' | 'tamil';
-    if (savedLang && (savedLang === 'english' || savedLang === 'tamil')) {
-      setLanguage(savedLang);
-      if (savedLang === 'tamil') {
-        setMessages([
-          { sender: 'bot', text: 'வணக்கம்! Homyvo உதவியாளர் உங்களை வரவேற்கிறார். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்? 👋' }
-        ]);
+    try {
+      const savedLang = localStorage.getItem('chatbot_lang') as 'english' | 'tamil';
+      if (savedLang && (savedLang === 'english' || savedLang === 'tamil')) {
+        setLanguage(savedLang);
+        if (savedLang === 'tamil') {
+          setMessages([
+            { sender: 'bot', text: 'வணக்கம்! Homyvo உதவியாளர் உங்களை வரவேற்கிறார். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்? 👋' }
+          ]);
+        }
       }
+    } catch (error) {
+      console.warn("localStorage is not available:", error);
     }
   }, []);
 
   const handleLanguageChange = (lang: 'english' | 'tamil') => {
     setLanguage(lang);
-    localStorage.setItem('chatbot_lang', lang);
+    try {
+      localStorage.setItem('chatbot_lang', lang);
+    } catch (error) {
+      console.warn("localStorage is not writeable:", error);
+    }
     if (lang === 'tamil') {
       setMessages([
         { sender: 'bot', text: 'வணக்கம்! Homyvo உதவியாளர் உங்களை வரவேற்கிறார். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்? 👋' }
@@ -185,16 +193,22 @@ Here is your knowledge base:
       ? 'Tenant Support' 
       : 'Customer Support';
 
+  if (!mounted) return null;
+
+  const dragConstraints = typeof window !== 'undefined'
+    ? { left: -window.innerWidth + 80, right: 0, top: -window.innerHeight + 80, bottom: 0 }
+    : { left: 0, right: 0, top: 0, bottom: 0 };
+
   return (
     <>
       <motion.div
         drag
-        dragConstraints={mounted ? { left: -window.innerWidth + 80, right: 0, top: -window.innerHeight + 80, bottom: 0 } : { left: 0, right: 0, top: 0, bottom: 0 }}
+        dragConstraints={dragConstraints}
         dragElastic={0.1}
         dragMomentum={false}
         onDragEnd={handleDragEnd}
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-[90px] right-6 z-[999] w-12 h-12 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-slate-100 flex items-center justify-center cursor-pointer active:scale-95 transition-transform ${mounted ? 'visible' : 'invisible'}`}
+        className="fixed bottom-[calc(90px+env(safe-area-inset-bottom,0px))] right-6 z-[999] w-12 h-12 bg-white rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-slate-100 flex items-center justify-center cursor-pointer touch-none"
         whileTap={{ scale: 0.9 }}
       >
         <MessageCircle className="w-6 h-6 text-[#ec38b7]" />
@@ -207,7 +221,7 @@ Here is your knowledge base:
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed bottom-[160px] right-6 z-[998] w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[500px]"
+            className="fixed bottom-[calc(160px+env(safe-area-inset-bottom,0px))] right-6 z-[998] w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[500px]"
           >
             <div className="bg-gradient-to-r from-[#ec38b7] to-[#801786] p-4 flex justify-between items-center shrink-0">
               <div>
