@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, Home, GraduationCap, LayoutDashboard, MapPin } from 'lucide-react';
 import { useLocationStore } from '@/store/locationStore';
 import { PropertyCard } from '@/components/property/PropertyCard';
-import { getCurrentPrecisePosition } from '@/utils/geolocation';
+import { getCurrentPrecisePosition, isWithinTamilNadu } from '@/utils/geolocation';
 
 export default function CategoryPage() {
   const router = useRouter();
@@ -21,6 +21,11 @@ export default function CategoryPage() {
       getCurrentPrecisePosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
+          if (!isWithinTamilNadu(latitude, longitude)) {
+             alert("Precise location could not be detected. Please enable 'Precise Location' in your browser/device settings or search manually.");
+             setIsLocating(false);
+             return;
+          }
           try {
             let detected = null;
             try {
@@ -151,7 +156,12 @@ export default function CategoryPage() {
           if ('geolocation' in navigator) {
               getCurrentPrecisePosition(
                   pos => {
-                      setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                      const { latitude, longitude } = pos.coords;
+                      if (!isWithinTamilNadu(latitude, longitude)) {
+                         alert("Precise location could not be detected. Please enable 'Precise Location' in your browser/device settings or search manually.");
+                         return;
+                      }
+                      setUserLocation({ lat: latitude, lng: longitude });
                       setLocalFilters(prev => ({ ...prev, sort: 'nearest' }));
                   },
                   () => alert("Location access required for Nearest sort.")

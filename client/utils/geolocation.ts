@@ -29,3 +29,7 @@ export const getCurrentPrecisePosition = (
     defaultOptions
   );
 };
+
+export const isWithinTamilNadu = (lat: number, lng: number) => {
+  return lat >= 8.0 && lat <= 14.5 && lng >= 75.0 && lng <= 81.0;
+};

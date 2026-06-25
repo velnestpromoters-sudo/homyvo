@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useAuthModalStore } from '@/store/authModalStore';
-import { getCurrentPrecisePosition } from '@/utils/geolocation';
+import { getCurrentPrecisePosition, isWithinTamilNadu } from '@/utils/geolocation';
 
 import api from '@/lib/api';
 
@@ -174,6 +174,11 @@ export default function HomeReelPage() {
         async (pos) => {
           try {
             const { latitude, longitude } = pos.coords;
+            if (!isWithinTamilNadu(latitude, longitude)) {
+               console.warn("Location outside Tamil Nadu boundary, skipping auto-locate:", latitude, longitude);
+               setLocation('Select Location');
+               return;
+            }
             let detected = null;
 
             // Strategy 1: Attempt highly-accurate Mappls via secure Backend Proxy

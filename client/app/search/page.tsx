@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft as ArrowLeftLucide, Search as SearchLucide, SlidersHorizontal, TrendingUp, Navigation } from 'lucide-react';
 import { useLocationStore } from '@/store/locationStore';
 import { PropertyCard } from '@/components/property/PropertyCard';
-import { getCurrentPrecisePosition } from '@/utils/geolocation';
+import { getCurrentPrecisePosition, isWithinTamilNadu } from '@/utils/geolocation';
 
 export default function SearchPage() {
   const router = useRouter();
@@ -90,8 +90,14 @@ export default function SearchPage() {
     setIsSearching(true);
     getCurrentPrecisePosition(
        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          if (!isWithinTamilNadu(latitude, longitude)) {
+             alert("Precise location could not be detected. Please enable 'Precise Location' in your browser/device settings or search manually.");
+             setIsSearching(false);
+             return;
+          }
           // Store physical coordinates dynamically protecting against duplicate town names
-          setLocation("Validated GPS", { lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setLocation("Validated GPS", { lat: latitude, lng: longitude });
           setSearchQuery("Properties Near Me"); 
        },
        (err) => {

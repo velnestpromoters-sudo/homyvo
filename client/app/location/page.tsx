@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Navigation, Search, MapPin, ChevronRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useLocationStore } from '@/store/locationStore';
-import { getCurrentPrecisePosition } from '@/utils/geolocation';
+import { getCurrentPrecisePosition, isWithinTamilNadu } from '@/utils/geolocation';
 
 // Disable SSR for Leaflet interactive maps
 const MapInteractive = dynamic(() => import('@/components/map/MapBackground'), { ssr: false });
@@ -123,6 +123,11 @@ export default function LocationTracker() {
     getCurrentPrecisePosition(
       (pos) => {
          const { latitude, longitude } = pos.coords;
+         if (!isWithinTamilNadu(latitude, longitude)) {
+            alert("Precise location could not be detected. Please enable 'Precise Location' in your browser/device settings or search manually.");
+            setIsLocating(false);
+            return;
+         }
          setForceFlyTo([latitude, longitude]); 
          
          setIsLocating(false); // Stop tracking spin instantly natively!

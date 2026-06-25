@@ -12,7 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useLocationStore } from '@/store/locationStore';
 import { useAuthModalStore } from '@/store/authModalStore';
 import { useWishlistStore } from '@/store/wishlistStore';
-import { getCurrentPrecisePosition } from '@/utils/geolocation';
+import { getCurrentPrecisePosition, isWithinTamilNadu } from '@/utils/geolocation';
 import api from '@/lib/api';
 
 const slides = [
@@ -346,6 +346,11 @@ export default function HomeListPage() {
       getCurrentPrecisePosition(
         async (pos) => {
            const { latitude, longitude } = pos.coords;
+           if (!isWithinTamilNadu(latitude, longitude)) {
+              alert("Precise location could not be detected. Please enable 'Precise Location' in your browser/device settings or search manually.");
+              setIsLocating(false);
+              return;
+           }
            try {
              let detected = null;
              try {
@@ -387,6 +392,11 @@ export default function HomeListPage() {
       getCurrentPrecisePosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
+          if (!isWithinTamilNadu(latitude, longitude)) {
+             alert("Precise location could not be detected. Please enable 'Precise Location' in your browser/device settings or search manually.");
+             setIsLocatingNearMe(false);
+             return;
+          }
           try {
             let detected = null;
             try {
