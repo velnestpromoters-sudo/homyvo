@@ -18,25 +18,14 @@ export const getCurrentPrecisePosition = (
 
   const defaultOptions: PositionOptions = {
     enableHighAccuracy: true,
-    timeout: 8000,
-    maximumAge: 10000,
+    timeout: 15000,
+    maximumAge: 300000, // 5 minutes cache lookup
     ...options
   };
 
   navigator.geolocation.getCurrentPosition(
     onSuccess,
-    (err) => {
-      console.warn("High accuracy geolocation failed, trying low accuracy fallback...", err);
-      navigator.geolocation.getCurrentPosition(
-        onSuccess,
-        onError || (() => {}),
-        {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-      );
-    },
+    onError || (() => {}),
     defaultOptions
   );
 };
