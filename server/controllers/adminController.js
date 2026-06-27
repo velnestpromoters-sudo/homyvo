@@ -205,3 +205,87 @@ exports.getCollectionData = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to retrieve collection data' });
   }
 };
+
+exports.getCloudinaryStats = async (req, res) => {
+  try {
+    const cloudinary = require('../config/cloudinary');
+    
+    // Fetch usage details from Cloudinary
+    const usage = await cloudinary.api.usage();
+    
+    // Fetch latest 50 resources
+    const resourcesResponse = await cloudinary.api.resources({
+      max_results: 50,
+      type: 'upload',
+      resource_type: 'image'
+    });
+
+    res.json({
+      success: true,
+      data: {
+        storageLimit: usage.storage.limit, // bytes
+        storageUsed: usage.storage.usage, // bytes
+        usedPercent: usage.storage.used_percent,
+        creditsLimit: usage.credits.limit,
+        creditsUsed: usage.credits.usage,
+        creditsUsedPercent: usage.credits.used_percent,
+        resources: resourcesResponse.resources.map(r => ({
+          public_id: r.public_id,
+          format: r.format,
+          version: r.version,
+          resource_type: r.resource_type,
+          created_at: r.created_at,
+          bytes: r.bytes,
+          width: r.width,
+          height: r.height,
+          url: r.url,
+          secure_url: r.secure_url
+        }))
+      }
+    });
+  } catch (err) {
+    console.error("Cloudinary Stats Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve Cloudinary stats' });
+  }
+};
+
+exports.getCloudinaryResources = async (req, res) => {
+  try {
+    const cloudinary = require('../config/cloudinary');
+    const { nextCursor } = req.query;
+
+    const options = {
+      max_results: 30,
+      type: 'upload',
+      resource_type: 'image'
+    };
+
+    if (nextCursor) {
+      options.next_cursor = nextCursor;
+    }
+
+    const resourcesResponse = await cloudinary.api.resources(options);
+
+    res.json({
+      success: true,
+      data: {
+        resources: resourcesResponse.resources.map(r => ({
+          public_id: r.public_id,
+          format: r.format,
+          version: r.version,
+          resource_type: r.resource_type,
+          created_at: r.created_at,
+          bytes: r.bytes,
+          width: r.width,
+          height: r.height,
+          url: r.url,
+          secure_url: r.secure_url
+        })),
+        nextCursor: resourcesResponse.next_cursor
+      }
+    });
+  } catch (err) {
+    console.error("Cloudinary Resources Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve Cloudinary resources' });
+  }
+};

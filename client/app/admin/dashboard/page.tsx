@@ -78,6 +78,11 @@ export default function AdminDashboard() {
    const [collLoading, setCollLoading] = useState(false);
    const [selectedDocJSON, setSelectedDocJSON] = useState<any | null>(null);
 
+   // Cloudinary explorer states
+   const [clStats, setClStats] = useState<any | null>(null);
+   const [clLoading, setClLoading] = useState(true);
+   const [selectedResource, setSelectedResource] = useState<any | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -146,6 +151,11 @@ export default function AdminDashboard() {
   const balanceSpace = dbStats ? Math.max(0, totalLimit - spaceCovered) : 0;
   const usedPct = dbStats ? (spaceCovered / totalLimit) * 100 : 0;
 
+  const clTotalLimit = clStats ? clStats.storageLimit : 0;
+  const clSpaceCovered = clStats ? clStats.storageUsed : 0;
+  const clBalanceSpace = clStats ? Math.max(0, clTotalLimit - clSpaceCovered) : 0;
+  const clUsedPct = clStats && clTotalLimit > 0 ? (clSpaceCovered / clTotalLimit) * 100 : 0;
+
   const fetchDbStats = async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
@@ -178,9 +188,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchClStats = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await api.get('/admin/cloudinary-stats', { headers });
+      if (res.data.success) {
+        setClStats(res.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Cloudinary stats:", err);
+    } finally {
+      setClLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (token && user?.role === 'admin' && activeTab === 'metrics') {
       fetchDbStats();
+      fetchClStats();
     }
   }, [token, user, activeTab]);
 
@@ -737,6 +762,113 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         )}
+
+        {/* Cloudinary Storage Section */}
+        {clStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.5 }}
+            className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 mt-6 relative overflow-hidden"
+          >
+            <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-pink-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">Cloudinary Storage Allocation</h2>
+                  <p className="text-slate-400 text-sm">Media assets storage, credit utilization, and real-time image files list.</p>
+                </div>
+                <div className="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
+                  Cloud: Active
+                </div>
+              </div>
+
+              {/* Pie/Donut Storage Balance Chart */}
+              <div className="flex flex-col md:flex-row items-center gap-8 mb-8 p-6 bg-slate-950/20 border border-white/5 rounded-2xl animate-fade-in">
+                 {/* Donut Chart */}
+                 <div className="relative w-32 h-32 rounded-full flex items-center justify-center border border-white/5 shadow-inner shrink-0"
+                      style={{
+                         background: `conic-gradient(#ec4899 0% ${clUsedPct.toFixed(4)}%, #f43f5e ${clUsedPct.toFixed(4)}% ${(clUsedPct * 1.5).toFixed(4)}%, #1e293b ${(clUsedPct * 1.5).toFixed(4)}% 100%)`
+                      }}
+                 >
+                    {/* Donut Center Cutout */}
+                    <div className="absolute w-24 h-24 rounded-full bg-[#0f0f13] flex flex-col items-center justify-center shadow-lg border border-white/5">
+                       <span className="text-white font-black text-sm">{clUsedPct.toFixed(3)}%</span>
+                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Used</span>
+                    </div>
+                 </div>
+                 
+                 {/* Storage Balance Details */}
+                 <div className="flex-1 w-full space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Storage Space Balance</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                       <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Total Limit</span>
+                          <span className="text-base font-black text-white">{formatBytes(clTotalLimit)}</span>
+                       </div>
+                       <div className="bg-pink-500/10 p-4 rounded-xl border border-pink-500/20">
+                          <span className="text-[10px] text-pink-400 font-bold uppercase tracking-wider block mb-1">Space Covered</span>
+                          <span className="text-base font-black text-white">{formatBytes(clSpaceCovered)}</span>
+                       </div>
+                       <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                          <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mb-1">Balance Space</span>
+                          <span className="text-base font-black text-white">{formatBytes(clBalanceSpace)}</span>
+                       </div>
+                    </div>
+                    
+                    {/* Linear representation bar */}
+                    <div className="space-y-1.5">
+                       <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                          <div style={{ width: `${Math.max(0.5, clUsedPct)}%` }} className="bg-gradient-to-r from-pink-500 to-rose-500 h-full rounded-full transition-all" />
+                       </div>
+                       <div className="flex justify-between text-[10px] text-slate-500 font-bold">
+                          <span>0%</span>
+                          <span>Remaining Balance: {(100 - clUsedPct).toFixed(3)}% Free</span>
+                          <span>100%</span>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Cloudinary Assets List */}
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Cloudinary Media Resources (Images)</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {clStats.resources.map((res: any) => (
+                    <div
+                      key={res.public_id}
+                      onClick={() => setSelectedResource(res)}
+                      className="bg-slate-950/30 hover:bg-slate-950/60 border border-white/5 hover:border-pink-500/20 rounded-2xl cursor-pointer overflow-hidden transition group"
+                    >
+                      <div className="relative aspect-square w-full bg-slate-950/80 flex items-center justify-center overflow-hidden border-b border-white/5">
+                         <img 
+                            src={res.secure_url} 
+                            alt={res.public_id}
+                            className="object-cover w-full h-full group-hover:scale-105 transition duration-300"
+                            loading="lazy"
+                         />
+                         <div className="absolute top-2 right-2 bg-slate-950/80 border border-white/10 text-[9px] font-bold text-white px-2 py-0.5 rounded-md uppercase">
+                            {res.format}
+                         </div>
+                      </div>
+                      <div className="p-3.5 space-y-1">
+                        <div className="text-white font-bold text-xs truncate group-hover:text-pink-400 transition-colors" title={res.public_id}>
+                          {res.public_id.split('/').pop()}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-500 font-medium">
+                          <span>{res.width}x{res.height}</span>
+                          <span>{formatBytes(res.bytes)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
         </>
         )}
 
@@ -1203,6 +1335,90 @@ export default function AdminDashboard() {
                 <pre className="text-xs text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap select-all leading-relaxed">
                    {JSON.stringify(selectedDocJSON, null, 3)}
                 </pre>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Cloudinary Resource Detail Modal */}
+        {selectedResource && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-[#0f0f13] border border-white/10 rounded-3xl max-w-3xl w-full flex flex-col md:flex-row shadow-2xl overflow-hidden my-8 max-h-[90vh]"
+            >
+              {/* Media Preview Panel */}
+              <div className="flex-1 bg-slate-950/50 border-r border-white/5 flex items-center justify-center p-6 min-h-[300px]">
+                 <img 
+                    src={selectedResource.secure_url} 
+                    alt={selectedResource.public_id} 
+                    className="max-w-full max-h-[60vh] object-contain rounded-xl shadow-lg border border-white/10"
+                 />
+              </div>
+
+              {/* Resource Info Panel */}
+              <div className="w-full md:w-[320px] p-6 flex flex-col justify-between">
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-start">
+                       <div>
+                          <span className="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                             {selectedResource.format} Image
+                          </span>
+                          <h3 className="text-base font-bold text-white mt-2 truncate max-w-[200px]" title={selectedResource.public_id}>
+                             {selectedResource.public_id.split('/').pop()}
+                          </h3>
+                       </div>
+                       <button 
+                          onClick={() => setSelectedResource(null)}
+                          className="text-slate-400 hover:text-white transition-colors p-1 hover:bg-white/5 rounded-full"
+                       >
+                          ✕
+                       </button>
+                    </div>
+
+                    <div className="space-y-3.5 text-xs">
+                       <div>
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Public ID</span>
+                          <span className="text-slate-300 font-mono select-all break-all">{selectedResource.public_id}</span>
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div>
+                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Dimensions</span>
+                             <span className="text-slate-300 font-medium">{selectedResource.width} x {selectedResource.height} px</span>
+                          </div>
+                          <div>
+                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">File Size</span>
+                             <span className="text-slate-300 font-medium">{formatBytes(selectedResource.bytes)}</span>
+                          </div>
+                       </div>
+                       <div>
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Created At</span>
+                          <span className="text-slate-300 font-medium">
+                             {new Date(selectedResource.created_at).toLocaleString()}
+                          </span>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="pt-6 border-t border-white/5 space-y-2">
+                    <a 
+                       href={selectedResource.secure_url} 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       className="w-full bg-[#801786] hover:bg-[#a61c92] text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition duration-200"
+                    >
+                       Open Original URL
+                    </a>
+                    <button 
+                       onClick={() => {
+                          navigator.clipboard.writeText(selectedResource.secure_url);
+                       }}
+                       className="w-full bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold py-3 rounded-xl transition duration-200"
+                    >
+                       Copy Image Link
+                    </button>
+                 </div>
               </div>
             </motion.div>
           </div>
