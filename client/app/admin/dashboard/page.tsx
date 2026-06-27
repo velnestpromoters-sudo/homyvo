@@ -82,7 +82,7 @@ export default function AdminDashboard() {
    const [clStats, setClStats] = useState<any | null>(null);
    const [clLoading, setClLoading] = useState(true);
    const [selectedResource, setSelectedResource] = useState<any | null>(null);
-   const [cloudinaryCollapsed, setCloudinaryCollapsed] = useState(false);
+   const [cloudinaryCollapsed, setCloudinaryCollapsed] = useState(true);
    const [clOwnerQuery, setClOwnerQuery] = useState('');
    const [clSortFilter, setClSortFilter] = useState<'newest' | 'oldest'>('newest');
    const [infraStats, setInfraStats] = useState<any | null>(null);
