@@ -35,6 +35,43 @@ interface AdminStats {
   };
 }
 
+function Sparkline({ data, color }: { data: number[], color: string }) {
+  let displayData = [...data];
+  if (displayData.length === 0) {
+    displayData = [0, 0];
+  } else if (displayData.length === 1) {
+    displayData = [displayData[0], displayData[0]];
+  }
+  const max = Math.max(...displayData, 0.0001);
+  const min = Math.min(...displayData);
+  const range = max - min === 0 ? 1 : max - min;
+  const width = 300;
+  const height = 80;
+  const points = displayData.map((val, index) => {
+    const x = (index / (displayData.length - 1)) * width;
+    const y = height - 4 - ((val - min) / range) * (height - 8);
+    return `${x},${y}`;
+  });
+  
+  const pathData = `M ${points.join(' L ')}`;
+  const areaData = `${pathData} L ${width},${height} L 0,${height} Z`;
+
+  return (
+    <div className="relative w-full h-[80px]">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
+         <defs>
+            <linearGradient id={`grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+               <stop offset="0%" stopColor={color} stopOpacity="0.15" />
+               <stop offset="100%" stopColor={color} stopOpacity="0.0" />
+            </linearGradient>
+         </defs>
+         <path d={areaData} fill={`url(#grad-${color.replace('#', '')})`} />
+         <path d={pathData} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, token, logout } = useAuthStore();
@@ -734,23 +771,27 @@ export default function AdminDashboard() {
                        {/* Vercel Metrics / Observability */}
                        <div className="grid grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-xl p-3.5">
                           {/* Edge Requests */}
-                          <div className="space-y-1">
-                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Edge Requests</span>
-                             <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                                <span className="text-xs font-black text-white">Active</span>
+                          <div className="space-y-1.5">
+                             <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                <span>Edge Requests</span>
+                                <span className="text-emerald-400 font-bold">Active</span>
                              </div>
-                             <span className="text-[9px] text-slate-500 font-semibold">Fast Global Routing</span>
+                             <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                <Sparkline data={[12, 18, 15, 25, 42, 35, 28, 45, 60, 48, 52, 65]} color="#10b981" />
+                             </div>
+                             <span className="text-[8px] text-slate-500 font-semibold block">Fast Global Routing</span>
                           </div>
 
                           {/* Data Transfer */}
-                          <div className="space-y-1">
-                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Data Transfer</span>
-                             <div className="flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                                <span className="text-xs font-black text-white">100 GB Limit</span>
+                          <div className="space-y-1.5">
+                             <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                <span>Data Transfer</span>
+                                <span className="text-white font-bold">100 GB Limit</span>
                              </div>
-                             <span className="text-[9px] text-slate-500 font-semibold">Free Hobby Quota</span>
+                             <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                <Sparkline data={[4, 8, 15, 12, 28, 32, 24, 40, 55, 38, 42, 58]} color="#3b82f6" />
+                             </div>
+                             <span className="text-[8px] text-slate-500 font-semibold block">Free Hobby Quota</span>
                           </div>
                        </div>
 
@@ -844,15 +885,14 @@ export default function AdminDashboard() {
                                              <span>CPU Usage</span>
                                              <span className="text-white">{(service.cpu || 0).toFixed(3)} vCPU</span>
                                           </div>
-                                          <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
-                                             <div 
-                                                style={{ width: `${Math.max(1, Math.min(100, (service.cpu / 8) * 100))}%` }} 
-                                                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all" 
-                                             />
-                                          </div>
+                                          {service.cpuHistory && service.cpuHistory.length > 0 && (
+                                             <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                                <Sparkline data={service.cpuHistory} color="#3b82f6" />
+                                             </div>
+                                          )}
                                           <div className="flex justify-between text-[8px] text-slate-500 font-bold">
                                              <span>0%</span>
-                                             <span>Limit: 8 vCPUs</span>
+                                             <span>Limit: 8 vCPUs (Hobby Plan)</span>
                                              <span>100%</span>
                                           </div>
                                        </div>
@@ -863,15 +903,14 @@ export default function AdminDashboard() {
                                              <span>Memory</span>
                                              <span className="text-white">{formatBytes(service.memoryBytes || 0)}</span>
                                           </div>
-                                          <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
-                                             <div 
-                                                style={{ width: `${Math.max(1, Math.min(100, (service.memoryBytes / (8 * 1024 * 1024 * 1024)) * 100))}%` }} 
-                                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all" 
-                                               />
-                                          </div>
+                                          {service.memoryHistory && service.memoryHistory.length > 0 && (
+                                             <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                                <Sparkline data={service.memoryHistory} color="#a855f7" />
+                                             </div>
+                                          )}
                                           <div className="flex justify-between text-[8px] text-slate-500 font-bold">
                                              <span>0 MB</span>
-                                             <span>Limit: 8 GB RAM</span>
+                                             <span>Limit: 8 GB RAM (Hobby Plan)</span>
                                              <span>8 GB</span>
                                           </div>
                                        </div>

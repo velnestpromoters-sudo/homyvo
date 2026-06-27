@@ -472,10 +472,12 @@ exports.getInfraStats = async (req, res) => {
               const sNode = se.node;
               let cpu = 0;
               let memoryBytes = 0;
+              let cpuHistory = [];
+              let memoryHistory = [];
 
               if (envId && sNode.id) {
                 try {
-                  const startDate = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+                  const startDate = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
                   const metricsQuery = `
                     query {
                       metrics(
@@ -501,14 +503,18 @@ exports.getInfraStats = async (req, res) => {
                   if (mRes.data && mRes.data.data && mRes.data.data.metrics) {
                     const metrics = mRes.data.data.metrics;
                     const cpuMetric = metrics.find(m => m.measurement === 'CPU_USAGE');
-                    if (cpuMetric && cpuMetric.values && cpuMetric.values.length > 0) {
-                      const lastVal = cpuMetric.values[cpuMetric.values.length - 1];
-                      cpu = lastVal ? lastVal.value : 0;
+                    if (cpuMetric && cpuMetric.values) {
+                      cpuHistory = cpuMetric.values.map(v => v.value);
+                      if (cpuMetric.values.length > 0) {
+                        cpu = cpuMetric.values[cpuMetric.values.length - 1].value;
+                      }
                     }
                     const memMetric = metrics.find(m => m.measurement === 'MEMORY_USAGE_GB');
-                    if (memMetric && memMetric.values && memMetric.values.length > 0) {
-                      const lastVal = memMetric.values[memMetric.values.length - 1];
-                      memoryBytes = lastVal ? lastVal.value * 1024 * 1024 * 1024 : 0;
+                    if (memMetric && memMetric.values) {
+                      memoryHistory = memMetric.values.map(v => v.value * 1024 * 1024 * 1024);
+                      if (memMetric.values.length > 0) {
+                        memoryBytes = memMetric.values[memMetric.values.length - 1].value * 1024 * 1024 * 1024;
+                      }
                     }
                   }
                 } catch (mErr) {
@@ -521,6 +527,8 @@ exports.getInfraStats = async (req, res) => {
                 name: sNode.name,
                 cpu,
                 memoryBytes,
+                cpuHistory,
+                memoryHistory,
                 deployments: (sNode.deployments?.edges || []).map(de => ({
                   id: de.node.id,
                   status: de.node.status,
