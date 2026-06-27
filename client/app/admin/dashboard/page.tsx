@@ -821,38 +821,62 @@ export default function AdminDashboard() {
                                    <span>Service: {service.name}</span>
                                 </div>
 
-                                {/* Service Metrics (CPU & RAM) */}
-                                <div className="grid grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-xl p-3.5 my-2">
-                                   {/* CPU Usage */}
-                                   <div className="space-y-1">
-                                      <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                         <span>CPU Usage</span>
-                                         <span className="text-white">{(service.cpu || 0).toFixed(3)} vCPU</span>
-                                      </div>
-                                      <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
-                                         <div 
-                                            style={{ width: `${Math.max(1, Math.min(100, (service.cpu / 8) * 100))}%` }} 
-                                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all" 
-                                         />
-                                      </div>
-                                      <div className="text-[9px] text-slate-500 font-semibold">Limit: 8 vCPUs</div>
-                                   </div>
+                                 {/* Donut Chart & Metrics Grid */}
+                                 <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-slate-950/20 border border-white/5 rounded-xl my-2">
+                                    {/* Memory Donut Chart */}
+                                    <div className="relative w-20 h-20 rounded-full flex items-center justify-center border border-white/5 shadow-inner shrink-0"
+                                         style={{
+                                            background: `conic-gradient(#a855f7 0% ${((service.memoryBytes / (8 * 1024 * 1024 * 1024)) * 100).toFixed(4)}%, #1e293b ${((service.memoryBytes / (8 * 1024 * 1024 * 1024)) * 100).toFixed(4)}% 100%)`
+                                         }}
+                                    >
+                                       {/* Donut Center */}
+                                       <div className="absolute w-15 h-15 rounded-full bg-[#0f0f13] flex flex-col items-center justify-center border border-white/5">
+                                          <span className="text-white font-black text-[10px]">{((service.memoryBytes / (8 * 1024 * 1024 * 1024)) * 100).toFixed(2)}%</span>
+                                          <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider">RAM Used</span>
+                                       </div>
+                                    </div>
 
-                                   {/* Memory Usage */}
-                                   <div className="space-y-1">
-                                      <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                         <span>Memory</span>
-                                         <span className="text-white">{formatBytes(service.memoryBytes || 0)}</span>
-                                      </div>
-                                      <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
-                                         <div 
-                                            style={{ width: `${Math.max(1, Math.min(100, (service.memoryBytes / (8 * 1024 * 1024 * 1024)) * 100))}%` }} 
-                                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all" 
-                                         />
-                                      </div>
-                                      <div className="text-[9px] text-slate-500 font-semibold">Limit: 8 GB RAM</div>
-                                   </div>
-                                </div>
+                                    {/* Resource Stats */}
+                                    <div className="flex-1 w-full space-y-3">
+                                       {/* CPU Usage */}
+                                       <div className="space-y-1">
+                                          <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                             <span>CPU Usage</span>
+                                             <span className="text-white">{(service.cpu || 0).toFixed(3)} vCPU</span>
+                                          </div>
+                                          <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                                             <div 
+                                                style={{ width: `${Math.max(1, Math.min(100, (service.cpu / 8) * 100))}%` }} 
+                                                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all" 
+                                             />
+                                          </div>
+                                          <div className="flex justify-between text-[8px] text-slate-500 font-bold">
+                                             <span>0%</span>
+                                             <span>Limit: 8 vCPUs</span>
+                                             <span>100%</span>
+                                          </div>
+                                       </div>
+
+                                       {/* Memory Usage */}
+                                       <div className="space-y-1">
+                                          <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                             <span>Memory</span>
+                                             <span className="text-white">{formatBytes(service.memoryBytes || 0)}</span>
+                                          </div>
+                                          <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                                             <div 
+                                                style={{ width: `${Math.max(1, Math.min(100, (service.memoryBytes / (8 * 1024 * 1024 * 1024)) * 100))}%` }} 
+                                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all" 
+                                               />
+                                          </div>
+                                          <div className="flex justify-between text-[8px] text-slate-500 font-bold">
+                                             <span>0 MB</span>
+                                             <span>Limit: 8 GB RAM</span>
+                                             <span>8 GB</span>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
                                 
                                 {service.deployments.length === 0 ? (
                                    <div className="text-slate-600 text-xs py-4 text-center">No recent deployments found.</div>
