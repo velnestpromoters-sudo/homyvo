@@ -377,3 +377,120 @@ exports.deleteCloudinaryResource = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to delete asset from Cloudinary' });
   }
 };
+
+exports.getInfraStats = async (req, res) => {
+  try {
+    const axios = require('axios');
+    const VERCEL_API_TOKEN = process.env.VERCEL_API_TOKEN;
+    const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+    const RAILWAY_API_TOKEN = process.env.RAILWAY_API_TOKEN;
+    const TEAM_ID = "team_b3tyUh0NdpT1G2DgfWlA0kba";
+
+    let vercelData = null;
+    let railwayData = null;
+
+    // Fetch Vercel data
+    if (VERCEL_API_TOKEN && VERCEL_PROJECT_ID) {
+      try {
+        const projectRes = await axios.get(`https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}?teamId=${TEAM_ID}`, {
+          headers: { Authorization: `Bearer ${VERCEL_API_TOKEN}` }
+        });
+        const deploymentsRes = await axios.get(`https://api.vercel.com/v6/deployments?projectId=${VERCEL_PROJECT_ID}&teamId=${TEAM_ID}&limit=5`, {
+          headers: { Authorization: `Bearer ${VERCEL_API_TOKEN}` }
+        });
+        vercelData = {
+          projectName: projectRes.data.name,
+          plan: projectRes.data.plan || 'hobby',
+          readyState: projectRes.data.readyState,
+          deployments: (deploymentsRes.data.deployments || []).map(d => ({
+            id: d.uid,
+            url: d.url,
+            createdAt: d.created || d.createdAt,
+            state: d.state || d.readyState,
+            creator: d.creator?.username || d.creator?.email || 'Git Trigger',
+            commitMessage: d.meta?.githubCommitMessage || 'No commit message'
+          }))
+        };
+      } catch (err) {
+        console.error("Vercel stats fetch error:", err.message);
+      }
+    }
+
+    // Fetch Railway data
+    if (RAILWAY_API_TOKEN) {
+      try {
+        const query = `
+          query {
+            projects {
+              edges {
+                node {
+                  id
+                  name
+                  services {
+                    edges {
+                      node {
+                        id
+                        name
+                        deployments {
+                          edges {
+                            node {
+                              id
+                              status
+                              createdAt
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `;
+        const res = await axios.post('https://backboard.railway.app/graphql/v2', { query }, {
+          headers: { 
+            Authorization: `Bearer ${RAILWAY_API_TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (res.data && res.data.data && res.data.data.projects) {
+          const projectEdge = res.data.data.projects.edges[0];
+          if (projectEdge) {
+            const node = projectEdge.node;
+            const services = (node.services?.edges || []).map(se => {
+              const sNode = se.node;
+              return {
+                id: sNode.id,
+                name: sNode.name,
+                deployments: (sNode.deployments?.edges || []).map(de => ({
+                  id: de.node.id,
+                  status: de.node.status,
+                  createdAt: de.node.createdAt
+                })).slice(0, 5)
+              };
+            });
+            railwayData = {
+              projectName: node.name,
+              projectId: node.id,
+              services
+            };
+          }
+        }
+      } catch (err) {
+        console.error("Railway stats fetch error:", err.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        vercel: vercelData,
+        railway: railwayData
+      }
+    });
+  } catch (err) {
+    console.error("Infra Stats Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve cloud infra statistics' });
+  }
+};

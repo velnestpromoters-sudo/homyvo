@@ -85,6 +85,8 @@ export default function AdminDashboard() {
    const [cloudinaryCollapsed, setCloudinaryCollapsed] = useState(false);
    const [clOwnerQuery, setClOwnerQuery] = useState('');
    const [clSortFilter, setClSortFilter] = useState<'newest' | 'oldest'>('newest');
+   const [infraStats, setInfraStats] = useState<any | null>(null);
+   const [infraLoading, setInfraLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -244,10 +246,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchInfraStats = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await api.get('/admin/infra-stats', { headers });
+      if (res.data.success) {
+        setInfraStats(res.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch infra stats:", err);
+    } finally {
+      setInfraLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (token && user?.role === 'admin' && activeTab === 'metrics') {
       fetchDbStats();
       fetchClStats();
+      fetchInfraStats();
     }
   }, [token, user, activeTab]);
 
@@ -648,6 +665,141 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         </div>
+
+        {/* Vercel & Railway Cloud Deployments Section */}
+        {infraStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75, duration: 0.5 }}
+            className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 mt-6 relative overflow-hidden"
+          >
+            <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">Cloud Infrastructure & Deployments</h2>
+                  <p className="text-slate-400 text-sm">Real-time status trackers, deployment success streams, and active web hosting layers.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 {/* Vercel Panel */}
+                 {infraStats.vercel && (
+                    <div className="bg-slate-950/20 border border-white/5 rounded-2xl p-6 space-y-4">
+                       <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                          <div className="flex items-center gap-2">
+                             <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center border border-white/20">
+                                <svg viewBox="0 0 116 100" className="w-3.5 h-3.5 fill-white">
+                                   <path d="M57.5 0L115 100H0L57.5 0Z" />
+                                </svg>
+                             </div>
+                             <div>
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Vercel (Frontend)</h3>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{infraStats.vercel.projectName}</span>
+                             </div>
+                          </div>
+                          <span className="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                             Plan: {infraStats.vercel.plan}
+                          </span>
+                       </div>
+
+                       <div className="space-y-3">
+                          <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Recent Deployments</h4>
+                          {(infraStats.vercel.deployments || []).length === 0 ? (
+                             <div className="text-slate-600 text-xs py-4 text-center">No recent deployments found.</div>
+                          ) : (
+                             <div className="space-y-2">
+                                {infraStats.vercel.deployments.map((d: any) => (
+                                   <div key={d.id} className="bg-slate-950/40 border border-white/5 rounded-xl p-3 flex items-start justify-between gap-3 text-xs">
+                                      <div className="space-y-1 min-w-0 flex-1">
+                                         <div className="flex items-center gap-2">
+                                            <span className="text-slate-300 font-bold truncate block">{d.commitMessage}</span>
+                                         </div>
+                                         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 font-semibold">
+                                            <span>By: {d.creator}</span>
+                                            <span>{new Date(d.createdAt).toLocaleString()}</span>
+                                         </div>
+                                         <a 
+                                            href={`https://${d.url}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-pink-400 hover:underline text-[10px] truncate block font-mono"
+                                         >
+                                            {d.url}
+                                         </a>
+                                      </div>
+                                      
+                                      <div className="shrink-0 flex items-center gap-1.5">
+                                         <span className={`w-2 h-2 rounded-full ${d.state === 'READY' ? 'bg-emerald-500' : d.state === 'BUILDING' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500'}`} />
+                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{d.state}</span>
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          )}
+                       </div>
+                    </div>
+                 )}
+
+                 {/* Railway Panel */}
+                 {infraStats.railway && (
+                    <div className="bg-slate-950/20 border border-white/5 rounded-2xl p-6 space-y-4">
+                       <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                          <div className="flex items-center gap-2">
+                             <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center border border-pink-500/20">
+                                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-pink-500">
+                                   <path d="M0 0h24v24H0z" fill="none"/>
+                                   <path d="M22 2H2v20h20V2zM12 18H6v-2h6v2zm6-4H6v-2h12v2zm0-4H6V8h12v2z"/>
+                                </svg>
+                             </div>
+                             <div>
+                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Railway (Backend)</h3>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{infraStats.railway.projectName}</span>
+                             </div>
+                          </div>
+                          <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                             Plan: Developer
+                          </span>
+                       </div>
+
+                       <div className="space-y-3">
+                          <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Services</h4>
+                          {(infraStats.railway.services || []).map((service: any) => (
+                             <div key={service.id} className="space-y-2">
+                                <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider px-1">
+                                   <span>Service: {service.name}</span>
+                                </div>
+                                
+                                {service.deployments.length === 0 ? (
+                                   <div className="text-slate-600 text-xs py-4 text-center">No recent deployments found.</div>
+                                ) : (
+                                   <div className="space-y-2">
+                                      {service.deployments.map((d: any) => (
+                                         <div key={d.id} className="bg-slate-950/40 border border-white/5 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
+                                            <div className="space-y-0.5">
+                                               <div className="text-slate-300 font-bold">Deployment ID: {d.id.substring(0, 8)}</div>
+                                               <div className="text-[10px] text-slate-500 font-semibold">{new Date(d.createdAt).toLocaleString()}</div>
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5">
+                                               <span className={`w-2 h-2 rounded-full ${d.status === 'SUCCESS' ? 'bg-emerald-500' : d.status === 'FAILED' ? 'bg-rose-500' : 'bg-amber-500'}`} />
+                                               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{d.status}</span>
+                                            </div>
+                                         </div>
+                                      ))}
+                                   </div>
+                                )}
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                 )}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* MongoDB Storage Section */}
         {dbStats && (
