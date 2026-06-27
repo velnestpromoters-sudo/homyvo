@@ -209,6 +209,7 @@ exports.getCollectionData = async (req, res) => {
 exports.getCloudinaryStats = async (req, res) => {
   try {
     const cloudinary = require('../config/cloudinary');
+    const Property = require('../models/Property');
     
     // Fetch usage details from Cloudinary
     const usage = await cloudinary.api.usage();
@@ -218,6 +219,23 @@ exports.getCloudinaryStats = async (req, res) => {
       max_results: 50,
       type: 'upload',
       resource_type: 'image'
+    });
+
+    // Build mapping of image URL to property owner
+    const properties = await Property.find({}).populate('ownerId', 'name');
+    const imageOwnerMap = {};
+    properties.forEach(prop => {
+      const ownerName = (prop.ownerId && prop.ownerId.name) || (prop.contactNumbers && prop.contactNumbers.name) || 'Unknown Owner';
+      if (prop.images && Array.isArray(prop.images)) {
+        prop.images.forEach(imgUrl => {
+          if (imgUrl) {
+            imageOwnerMap[imgUrl] = {
+              ownerName,
+              propertyTitle: prop.title
+            };
+          }
+        });
+      }
     });
 
     res.json({
@@ -231,18 +249,27 @@ exports.getCloudinaryStats = async (req, res) => {
         creditsLimit: usage.credits.limit,
         creditsUsed: usage.credits.usage,
         creditsUsedPercent: usage.credits.used_percent,
-        resources: resourcesResponse.resources.map(r => ({
-          public_id: r.public_id,
-          format: r.format,
-          version: r.version,
-          resource_type: r.resource_type,
-          created_at: r.created_at,
-          bytes: r.bytes,
-          width: r.width,
-          height: r.height,
-          url: r.url,
-          secure_url: r.secure_url
-        }))
+        resources: resourcesResponse.resources.map(r => {
+          const matchingUrlKey = Object.keys(imageOwnerMap).find(urlKey => 
+            urlKey.includes(r.public_id) || r.secure_url.includes(urlKey)
+          );
+          const ownerInfo = matchingUrlKey ? imageOwnerMap[matchingUrlKey] : { ownerName: 'Unknown Owner', propertyTitle: 'Unlinked Asset' };
+          
+          return {
+            public_id: r.public_id,
+            format: r.format,
+            version: r.version,
+            resource_type: r.resource_type,
+            created_at: r.created_at,
+            bytes: r.bytes,
+            width: r.width,
+            height: r.height,
+            url: r.url,
+            secure_url: r.secure_url,
+            ownerName: ownerInfo.ownerName,
+            propertyTitle: ownerInfo.propertyTitle
+          };
+        })
       }
     });
   } catch (err) {
@@ -254,10 +281,11 @@ exports.getCloudinaryStats = async (req, res) => {
 exports.getCloudinaryResources = async (req, res) => {
   try {
     const cloudinary = require('../config/cloudinary');
+    const Property = require('../models/Property');
     const { nextCursor } = req.query;
 
     const options = {
-      max_results: 30,
+      max_results: 50,
       type: 'upload',
       resource_type: 'image'
     };
@@ -268,26 +296,82 @@ exports.getCloudinaryResources = async (req, res) => {
 
     const resourcesResponse = await cloudinary.api.resources(options);
 
+    // Build mapping
+    const properties = await Property.find({}).populate('ownerId', 'name');
+    const imageOwnerMap = {};
+    properties.forEach(prop => {
+      const ownerName = (prop.ownerId && prop.ownerId.name) || (prop.contactNumbers && prop.contactNumbers.name) || 'Unknown Owner';
+      if (prop.images && Array.isArray(prop.images)) {
+        prop.images.forEach(imgUrl => {
+          if (imgUrl) {
+            imageOwnerMap[imgUrl] = {
+              ownerName,
+              propertyTitle: prop.title
+            };
+          }
+        });
+      }
+    });
+
     res.json({
       success: true,
       data: {
-        resources: resourcesResponse.resources.map(r => ({
-          public_id: r.public_id,
-          format: r.format,
-          version: r.version,
-          resource_type: r.resource_type,
-          created_at: r.created_at,
-          bytes: r.bytes,
-          width: r.width,
-          height: r.height,
-          url: r.url,
-          secure_url: r.secure_url
-        })),
+        resources: resourcesResponse.resources.map(r => {
+          const matchingUrlKey = Object.keys(imageOwnerMap).find(urlKey => 
+            urlKey.includes(r.public_id) || r.secure_url.includes(urlKey)
+          );
+          const ownerInfo = matchingUrlKey ? imageOwnerMap[matchingUrlKey] : { ownerName: 'Unknown Owner', propertyTitle: 'Unlinked Asset' };
+
+          return {
+            public_id: r.public_id,
+            format: r.format,
+            version: r.version,
+            resource_type: r.resource_type,
+            created_at: r.created_at,
+            bytes: r.bytes,
+            width: r.width,
+            height: r.height,
+            url: r.url,
+            secure_url: r.secure_url,
+            ownerName: ownerInfo.ownerName,
+            propertyTitle: ownerInfo.propertyTitle
+          };
+        }),
         nextCursor: resourcesResponse.next_cursor
       }
     });
   } catch (err) {
     console.error("Cloudinary Resources Error:", err);
     res.status(500).json({ success: false, message: 'Failed to retrieve Cloudinary resources' });
+  }
+};
+
+exports.deleteCloudinaryResource = async (req, res) => {
+  try {
+    const cloudinary = require('../config/cloudinary');
+    const Property = require('../models/Property');
+    const { public_id } = req.body;
+
+    if (!public_id) {
+      return res.status(400).json({ success: false, message: 'public_id is required' });
+    }
+
+    const result = await cloudinary.uploader.destroy(public_id);
+    
+    if (result.result === 'ok') {
+      // Remove this image reference from any Property document in MongoDB
+      const properties = await Property.find({ images: { $regex: public_id } });
+      for (const prop of properties) {
+        prop.images = prop.images.filter(img => !img.includes(public_id));
+        await prop.save();
+      }
+
+      res.json({ success: true, message: 'Asset deleted successfully from Cloudinary & Property database.' });
+    } else {
+      res.status(400).json({ success: false, message: `Failed to delete from Cloudinary: ${result.result}` });
+    }
+  } catch (err) {
+    console.error("Cloudinary Delete Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to delete asset from Cloudinary' });
   }
 };

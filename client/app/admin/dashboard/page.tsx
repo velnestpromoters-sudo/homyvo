@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import Image from 'next/image';
-import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail, BookOpen, PlusCircle } from 'lucide-react';
+import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail, BookOpen, PlusCircle, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface AdminUser {
   _id: string;
@@ -82,6 +82,9 @@ export default function AdminDashboard() {
    const [clStats, setClStats] = useState<any | null>(null);
    const [clLoading, setClLoading] = useState(true);
    const [selectedResource, setSelectedResource] = useState<any | null>(null);
+   const [cloudinaryCollapsed, setCloudinaryCollapsed] = useState(false);
+   const [clOwnerQuery, setClOwnerQuery] = useState('');
+   const [clSortFilter, setClSortFilter] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
     setMounted(true);
@@ -199,6 +202,54 @@ export default function AdminDashboard() {
       console.error("Failed to fetch Cloudinary stats:", err);
     } finally {
       setClLoading(false);
+    }
+  };
+
+  const clOwnersList = useMemo(() => {
+    if (!clStats || !clStats.resources) return [];
+    const owners = new Set<string>();
+    clStats.resources.forEach((r: any) => {
+      if (r.ownerName) owners.add(r.ownerName);
+    });
+    return Array.from(owners);
+  }, [clStats]);
+
+  const filteredClResources = useMemo(() => {
+    if (!clStats || !clStats.resources) return [];
+    let list = [...clStats.resources];
+
+    // Filter by owner name
+    if (clOwnerQuery) {
+       list = list.filter(r => r.ownerName === clOwnerQuery);
+    }
+
+    // Sort
+    if (clSortFilter === 'newest') {
+       list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (clSortFilter === 'oldest') {
+       list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    }
+
+    return list;
+  }, [clStats, clOwnerQuery, clSortFilter]);
+
+  const handleDeleteResource = async (publicId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this media asset? This will also remove it from any rental listings in the database.")) {
+      return;
+    }
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await api.delete('/admin/cloudinary-resource', {
+        headers,
+        data: { public_id: publicId }
+      });
+      if (res.data.success) {
+        alert(res.data.message);
+        fetchClStats();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to delete asset.");
     }
   };
 
@@ -851,38 +902,100 @@ export default function AdminDashboard() {
               </div>
 
               {/* Cloudinary Assets List */}
-              <div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Cloudinary Media Resources (Images)</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {clStats.resources.map((res: any) => (
-                    <div
-                      key={res.public_id}
-                      onClick={() => setSelectedResource(res)}
-                      className="bg-slate-950/30 hover:bg-slate-950/60 border border-white/5 hover:border-pink-500/20 rounded-2xl cursor-pointer overflow-hidden transition group"
-                    >
-                      <div className="relative aspect-square w-full bg-slate-950/80 flex items-center justify-center overflow-hidden border-b border-white/5">
-                         <img 
-                            src={res.secure_url} 
-                            alt={res.public_id}
-                            className="object-cover w-full h-full group-hover:scale-105 transition duration-300"
-                            loading="lazy"
-                         />
-                         <div className="absolute top-2 right-2 bg-slate-950/80 border border-white/10 text-[9px] font-bold text-white px-2 py-0.5 rounded-md uppercase">
-                            {res.format}
-                         </div>
-                      </div>
-                      <div className="p-3.5 space-y-1">
-                        <div className="text-white font-bold text-xs truncate group-hover:text-pink-400 transition-colors" title={res.public_id}>
-                          {res.public_id.split('/').pop()}
-                        </div>
-                        <div className="flex justify-between text-[10px] text-slate-500 font-medium">
-                          <span>{res.width}x{res.height}</span>
-                          <span>{formatBytes(res.bytes)}</span>
-                        </div>
-                      </div>
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setCloudinaryCollapsed(!cloudinaryCollapsed)}
+                    className="flex items-center gap-2 text-sm font-bold text-slate-300 uppercase tracking-widest hover:text-pink-400 transition-colors outline-none"
+                  >
+                    {cloudinaryCollapsed ? <ChevronDown className="w-4 h-4 text-pink-400" /> : <ChevronUp className="w-4 h-4 text-pink-400" />}
+                    Cloudinary Media Resources (Images) ({filteredClResources.length})
+                  </button>
+
+                  {!cloudinaryCollapsed && (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                       {/* Owner Search Filter */}
+                       <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Owner:</span>
+                          <select
+                            value={clOwnerQuery}
+                            onChange={(e) => setClOwnerQuery(e.target.value)}
+                            className="bg-slate-950/80 border border-white/5 text-[10px] font-bold text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-pink-500 transition-colors w-full sm:w-[160px]"
+                          >
+                            <option value="">All Owners / Listings</option>
+                            {clOwnersList.map(owner => (
+                               <option key={owner} value={owner}>{owner}</option>
+                            ))}
+                          </select>
+                       </div>
+
+                       {/* Sort filter */}
+                       <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Sort:</span>
+                          <select
+                            value={clSortFilter}
+                            onChange={(e: any) => setClSortFilter(e.target.value)}
+                            className="bg-slate-950/80 border border-white/5 text-[10px] font-bold text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-pink-500 transition-colors w-full sm:w-[120px]"
+                          >
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                          </select>
+                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
+
+                {!cloudinaryCollapsed && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 animate-fade-in">
+                    {filteredClResources.map((res: any) => (
+                      <div
+                        key={res.public_id}
+                        onClick={() => setSelectedResource(res)}
+                        className="bg-slate-950/30 hover:bg-slate-950/60 border border-white/5 hover:border-pink-500/20 rounded-2xl cursor-pointer overflow-hidden transition group relative"
+                      >
+                        <div className="relative aspect-square w-full bg-slate-950/80 flex items-center justify-center overflow-hidden border-b border-white/5">
+                           <img 
+                              src={res.secure_url} 
+                              alt={res.public_id}
+                              className="object-cover w-full h-full group-hover:scale-105 transition duration-300"
+                              loading="lazy"
+                           />
+                           
+                           {/* Format tag */}
+                           <div className="absolute top-2 right-2 bg-slate-950/80 border border-white/10 text-[9px] font-bold text-white px-2 py-0.5 rounded-md uppercase">
+                              {res.format}
+                           </div>
+
+                           {/* Delete button (absolute top-left, shows on hover) */}
+                           <button
+                              type="button"
+                              onClick={(e) => handleDeleteResource(res.public_id, e)}
+                              className="absolute top-2 left-2 p-2 bg-rose-500/90 hover:bg-rose-600 text-white rounded-md transition hover:scale-105 active:scale-95 shadow-md opacity-0 group-hover:opacity-100 duration-200"
+                              title="Delete asset from Cloudinary & Database"
+                           >
+                              <Trash2 className="w-3.5 h-3.5" />
+                           </button>
+                        </div>
+                        
+                        <div className="p-3.5 space-y-2">
+                          <div className="space-y-0.5">
+                             <div className="text-white font-bold text-xs truncate group-hover:text-pink-400 transition-colors" title={res.public_id}>
+                               {res.public_id.split('/').pop()}
+                             </div>
+                             <div className="text-[10px] text-slate-500 font-bold truncate" title={`Owner: ${res.ownerName}`}>
+                               Owner: {res.ownerName}
+                             </div>
+                          </div>
+                          <div className="flex justify-between text-[9px] text-slate-600 font-bold border-t border-white/5 pt-1.5">
+                            <span>{res.width}x{res.height}</span>
+                            <span>{formatBytes(res.bytes)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </div>
