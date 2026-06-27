@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
@@ -56,12 +56,14 @@ export default function AdminDashboard() {
   const [showBlogFormModal, setShowBlogFormModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState<any | null>(null);
   const [blogError, setBlogError] = useState('');
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+  const [customCategoryName, setCustomCategoryName] = useState('');
   const [blogForm, setBlogForm] = useState({
      title: '',
      slug: '',
      excerpt: '',
      content: '',
-     category: 'Renting Guides' as 'Renting Guides' | 'SEO & Marketing' | 'Tenant Rights',
+     category: 'Renting Guides',
      author: 'Velnest Admin',
      imageColor: 'from-[#801786] to-[#ec38b7]'
   });
@@ -110,6 +112,16 @@ export default function AdminDashboard() {
     }
   };
 
+  const availableCategories = useMemo(() => {
+    const categoriesSet = new Set<string>(['Renting Guides', 'SEO & Marketing', 'Tenant Rights']);
+    blogsList.forEach(b => {
+      if (b.category && b.category.trim()) {
+        categoriesSet.add(b.category.trim());
+      }
+    });
+    return Array.from(categoriesSet);
+  }, [blogsList]);
+
   useEffect(() => {
     if (token && user?.role === 'admin' && activeTab === 'blogs') {
       fetchBlogs();
@@ -139,10 +151,20 @@ export default function AdminDashboard() {
     try {
       let res;
       const headers = { Authorization: `Bearer ${token}` };
+      const submissionData = { ...blogForm };
+
+      if (showCustomCategoryInput) {
+        if (!customCategoryName.trim()) {
+          setBlogError('Please enter a custom category name.');
+          return;
+        }
+        submissionData.category = customCategoryName.trim();
+      }
+
       if (editingBlog) {
-        res = await api.put(`/blogs/${editingBlog._id}`, blogForm, { headers });
+        res = await api.put(`/blogs/${editingBlog._id}`, submissionData, { headers });
       } else {
-        res = await api.post('/blogs', blogForm, { headers });
+        res = await api.post('/blogs', submissionData, { headers });
       }
       
       if (res.data.success) {
@@ -521,6 +543,8 @@ export default function AdminDashboard() {
                           imageColor: 'from-[#801786] to-[#ec38b7]'
                        });
                        setBlogError('');
+                       setShowCustomCategoryInput(false);
+                       setCustomCategoryName('');
                        setShowBlogFormModal(true);
                     }}
                     className="bg-[#801786] hover:bg-[#a61c92] text-white text-xs font-black uppercase tracking-wider px-5 py-3.5 rounded-xl flex items-center justify-center gap-2 transition active:scale-95 shadow-lg shadow-purple-900/20"
@@ -576,6 +600,8 @@ export default function AdminDashboard() {
                                                imageColor: b.imageColor || 'from-[#801786] to-[#ec38b7]'
                                             });
                                             setBlogError('');
+                                            setShowCustomCategoryInput(false);
+                                            setCustomCategoryName('');
                                             setShowBlogFormModal(true);
                                          }}
                                          className="text-indigo-400 hover:text-indigo-300 font-bold text-xs bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg transition"
@@ -705,14 +731,34 @@ export default function AdminDashboard() {
                          Category *
                       </label>
                       <select
-                         value={blogForm.category}
-                         onChange={(e: any) => setBlogForm(prev => ({ ...prev, category: e.target.value }))}
+                         value={showCustomCategoryInput ? "CUSTOM" : blogForm.category}
+                         onChange={(e: any) => {
+                            if (e.target.value === "CUSTOM") {
+                               setShowCustomCategoryInput(true);
+                            } else {
+                               setShowCustomCategoryInput(false);
+                               setBlogForm(prev => ({ ...prev, category: e.target.value }));
+                            }
+                         }}
                          className="w-full bg-slate-950/90 border border-white/5 focus:border-[#801786] rounded-xl px-4 py-3.5 text-sm text-white outline-none transition-colors"
                       >
-                         <option value="Renting Guides">Renting Guides</option>
-                         <option value="SEO & Marketing">SEO & Marketing</option>
-                         <option value="Tenant Rights">Tenant Rights</option>
+                         {availableCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                         ))}
+                         <option value="CUSTOM">+ Add Custom Category...</option>
                       </select>
+                      {showCustomCategoryInput && (
+                         <div className="mt-2.5">
+                            <input
+                               type="text"
+                               required
+                               value={customCategoryName}
+                               onChange={(e) => setCustomCategoryName(e.target.value)}
+                               placeholder="Enter custom category name (e.g. Legal Info)"
+                               className="w-full bg-slate-950/50 border border-[#801786]/50 focus:border-[#801786] rounded-xl px-4 py-3 text-xs text-white outline-none transition-colors"
+                            />
+                         </div>
+                      )}
                    </div>
 
                    <div>

@@ -58,7 +58,15 @@ export default function BlogHome() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
 
-  const categories = ['All', 'Renting Guides', 'SEO & Marketing', 'Tenant Rights'];
+  const categories = useMemo(() => {
+    const uniqueCats = new Set<string>(['All', 'Renting Guides', 'SEO & Marketing', 'Tenant Rights']);
+    blogs.forEach(post => {
+      if (post.category && post.category.trim()) {
+        uniqueCats.add(post.category.trim());
+      }
+    });
+    return Array.from(uniqueCats);
+  }, [blogs]);
 
   // Fetch blogs dynamically on mount
   useEffect(() => {

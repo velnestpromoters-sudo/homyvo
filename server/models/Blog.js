@@ -5,7 +5,7 @@ const blogSchema = new mongoose.Schema({
   title: { type: String, required: true },
   excerpt: { type: String, required: true },
   content: { type: String, required: true },
-  category: { type: String, required: true, enum: ['Renting Guides', 'SEO & Marketing', 'Tenant Rights'] },
+  category: { type: String, required: true },
   date: { type: String, required: true },
   readTime: { type: String, required: true },
   author: { type: String, required: true },
