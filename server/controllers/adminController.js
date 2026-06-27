@@ -147,6 +147,7 @@ exports.getDatabaseStats = async (req, res) => {
     res.json({
       success: true,
       data: {
+        plan: 'Atlas Shared (M0 Free)',
         dbName: dbStats.db,
         collectionsCount: dbStats.collections,
         documentsCount: dbStats.objects,
@@ -241,6 +242,7 @@ exports.getCloudinaryStats = async (req, res) => {
     res.json({
       success: true,
       data: {
+        plan: usage.plan || 'Free',
         storageUsed: usage.storage.usage, // bytes
         storageLimit: (usage.credits.limit || 25) * 1024 * 1024 * 1024, // bytes (max storage capacity)
         impressions: usage.impressions.usage,

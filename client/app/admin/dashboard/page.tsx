@@ -665,8 +665,13 @@ export default function AdminDashboard() {
                   <h2 className="text-2xl font-bold text-white mb-1">MongoDB Storage Allocation</h2>
                   <p className="text-slate-400 text-sm">Real-time memory stats, collection allocations, and system index footprint.</p>
                 </div>
-                <div className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
-                  Database: {dbStats.dbName}
+                <div className="flex flex-wrap gap-2">
+                   <div className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
+                     Database: {dbStats.dbName}
+                   </div>
+                   <div className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
+                     Plan: {dbStats.plan || 'Atlas Shared (M0 Free)'}
+                   </div>
                 </div>
               </div>
 
@@ -821,8 +826,13 @@ export default function AdminDashboard() {
                   <h2 className="text-2xl font-bold text-white mb-1">Cloudinary Storage Allocation</h2>
                   <p className="text-slate-400 text-sm">Media assets storage, credit utilization, and real-time image files list.</p>
                 </div>
-                <div className="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
-                  Cloud: Active
+                <div className="flex flex-wrap gap-2">
+                   <div className="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
+                     Cloud: Active
+                   </div>
+                   <div className="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
+                     Plan: {clStats.plan || 'Free'} Plan
+                   </div>
                 </div>
               </div>
 
