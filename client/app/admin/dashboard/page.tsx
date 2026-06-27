@@ -124,7 +124,7 @@ export default function AdminDashboard() {
    const [clSortFilter, setClSortFilter] = useState<'newest' | 'oldest'>('newest');
    const [infraStats, setInfraStats] = useState<any | null>(null);
    const [infraLoading, setInfraLoading] = useState(true);
-   const [showBandwidthHelper, setShowBandwidthHelper] = useState(false);
+   const [activeHelper, setActiveHelper] = useState<'bandwidth' | 'requests' | 'cpu' | 'memory' | null>(null);
 
    // Live real-time oscilloscopes for CPU/Memory graphs
    const [vcReqHistory, setVcReqHistory] = useState<number[]>([]);
@@ -836,27 +836,36 @@ export default function AdminDashboard() {
                           </span>
                        </div>
 
-                       {/* Vercel Metrics / Observability */}
-                       <div className="grid grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-xl p-3.5">
-                          {/* Edge Requests */}
-                          <div className="space-y-1.5">
-                             <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                <span>Edge Requests</span>
-                                <span className="text-emerald-400 font-bold">{(vcReqHistory[vcReqHistory.length - 1] || 0).toFixed(1)} Req/s</span>
-                             </div>
-                             <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
-                                <Sparkline data={vcReqHistory} color="#10b981" />
-                             </div>
-                             <span className="text-[8px] text-slate-500 font-semibold block">Fast Global Routing</span>
-                          </div>
+                        {/* Vercel Metrics / Observability */}
+                        <div className="grid grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-xl p-3.5">
+                           {/* Edge Requests */}
+                           <div className="space-y-1.5">
+                              <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                 <span className="flex items-center gap-1">
+                                    Edge Requests
+                                    <button 
+                                       onClick={() => setActiveHelper(activeHelper === 'requests' ? null : 'requests')}
+                                       className="hover:text-emerald-400 transition-colors text-slate-400 focus:outline-none"
+                                       title="What is this?"
+                                    >
+                                       <HelpCircle className="w-3 h-3" />
+                                    </button>
+                                 </span>
+                                 <span className="text-emerald-400 font-bold">{(vcReqHistory[vcReqHistory.length - 1] || 0).toFixed(1)} Req/s</span>
+                              </div>
+                              <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                 <Sparkline data={vcReqHistory} color="#10b981" />
+                              </div>
+                              <span className="text-[8px] text-slate-500 font-semibold block">Fast Global Routing</span>
+                           </div>
 
-                          {/* Data Transfer */}
+                           {/* Data Transfer */}
                            <div className="space-y-1.5">
                               <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                                  <span className="flex items-center gap-1">
                                     Data Transfer
                                     <button 
-                                       onClick={() => setShowBandwidthHelper(!showBandwidthHelper)}
+                                       onClick={() => setActiveHelper(activeHelper === 'bandwidth' ? null : 'bandwidth')}
                                        className="hover:text-emerald-400 transition-colors text-slate-400 focus:outline-none"
                                        title="What is this?"
                                     >
@@ -872,7 +881,7 @@ export default function AdminDashboard() {
                            </div>
                         </div>
 
-                        {showBandwidthHelper && (
+                        {activeHelper === 'bandwidth' && (
                            <motion.div
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: 'auto' }}
@@ -920,7 +929,57 @@ export default function AdminDashboard() {
                               </div>
 
                               <button 
-                                 onClick={() => setShowBandwidthHelper(false)}
+                                 onClick={() => setActiveHelper(null)}
+                                 className="text-[9px] text-[#10b981] hover:underline font-bold uppercase tracking-widest block text-right w-full pt-1 focus:outline-none relative z-10"
+                              >
+                                 Got it, close explanation
+                              </button>
+                           </motion.div>
+                        )}
+
+                        {activeHelper === 'requests' && (
+                           <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              className="bg-slate-950/60 border border-[#10b981]/20 rounded-2xl p-4 space-y-4 relative overflow-hidden"
+                           >
+                              <div className="absolute top-[-20%] right-[-10%] w-[30%] h-[150%] bg-[#10b981]/5 blur-[40px] rounded-full pointer-events-none" />
+                              
+                              <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-white/5 pb-3 relative z-10">
+                                 {/* Animated browser package pulses */}
+                                 <div className="relative w-16 h-16 bg-slate-900 border border-white/10 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+                                    <motion.div 
+                                       animate={{ x: [-20, 20], opacity: [0, 1, 0] }}
+                                       transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                                       className="w-2.5 h-2.5 bg-[#10b981] rounded-full absolute"
+                                    />
+                                    <div className="w-4 h-4 bg-white/10 rounded border border-white/20 absolute left-2" />
+                                    <div className="w-4 h-4 bg-emerald-500/20 rounded border border-emerald-500/40 absolute right-2" />
+                                 </div>
+                                 <div className="space-y-1 text-xs">
+                                    <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-[#10b981]">⚡ Edge Requests (User Clicks)</span>
+                                    <p className="text-slate-400 text-[10px] leading-relaxed">
+                                       Currently averaging **{(vcReqHistory[vcReqHistory.length - 1] || 0).toFixed(1)} requests/sec**. Every click, page load, or database fetch makes a request to Vercel's global edge servers.
+                                    </p>
+                                 </div>
+                              </div>
+
+                              <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10">
+                                 {/* Limit display */}
+                                 <div className="relative w-16 h-16 bg-slate-900 border border-white/10 rounded-xl overflow-hidden flex flex-col justify-end shrink-0">
+                                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-[#10b981]/30">10M</div>
+                                    <span className="text-[6px] text-slate-500 font-bold uppercase tracking-widest absolute top-2 left-3">LIMIT</span>
+                                 </div>
+                                 <div className="space-y-1 text-xs">
+                                    <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-[#10b981]">📈 10 Million Monthly Limit</span>
+                                    <p className="text-slate-400 text-[10px] leading-relaxed">
+                                       Vercel's free Hobby plan offers **10 Million requests** per month. Since browser caching prevents downloading files repeatedly, you use requests very sparingly!
+                                    </p>
+                                 </div>
+                              </div>
+
+                              <button 
+                                 onClick={() => setActiveHelper(null)}
                                  className="text-[9px] text-[#10b981] hover:underline font-bold uppercase tracking-widest block text-right w-full pt-1 focus:outline-none relative z-10"
                               >
                                  Got it, close explanation
@@ -1002,58 +1061,179 @@ export default function AdminDashboard() {
                                     const currentCpu = rwCpuHistory[rwCpuHistory.length - 1] || service.cpu || 0;
 
                                     return (
-                                       <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-slate-950/20 border border-white/5 rounded-xl my-2">
-                                          {/* Memory Donut Chart */}
-                                          <div className="relative w-20 h-20 rounded-full flex items-center justify-center border border-white/5 shadow-inner shrink-0"
-                                               style={{
-                                                  background: `conic-gradient(#a855f7 0% ${memUsedPct.toFixed(4)}%, #1e293b ${memUsedPct.toFixed(4)}% 100%)`
-                                               }}
-                                          >
-                                             {/* Donut Center */}
-                                             <div className="absolute w-15 h-15 rounded-full bg-[#0f0f13] flex flex-col items-center justify-center border border-white/5">
-                                                <span className="text-white font-black text-[10px]">{memUsedPct.toFixed(2)}%</span>
-                                                <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider">RAM Used</span>
-                                             </div>
-                                          </div>
-
-                                          {/* Resource Stats */}
-                                          <div className="flex-1 w-full space-y-3">
-                                             {/* CPU Usage */}
-                                             <div className="space-y-1">
-                                                <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                                   <span>CPU Usage</span>
-                                                   <span className="text-white">{currentCpu.toFixed(3)} vCPU</span>
-                                                </div>
-                                                {rwCpuHistory.length > 0 && (
-                                                   <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
-                                                      <Sparkline data={rwCpuHistory} color="#3b82f6" />
-                                                   </div>
-                                                )}
-                                                <div className="flex justify-between text-[8px] text-slate-500 font-bold">
-                                                   <span>0%</span>
-                                                   <span>Limit: 8 vCPUs (Hobby Plan)</span>
-                                                   <span>100%</span>
+                                       <div className="space-y-3 my-2">
+                                          <div className="flex flex-col sm:flex-row items-center gap-6 p-4 bg-slate-950/20 border border-white/5 rounded-xl">
+                                             {/* Memory Donut Chart */}
+                                             <div className="relative w-20 h-20 rounded-full flex items-center justify-center border border-white/5 shadow-inner shrink-0"
+                                                  style={{
+                                                     background: `conic-gradient(#a855f7 0% ${memUsedPct.toFixed(4)}%, #1e293b ${memUsedPct.toFixed(4)}% 100%)`
+                                                  }}
+                                             >
+                                                {/* Donut Center */}
+                                                <div className="absolute w-15 h-15 rounded-full bg-[#0f0f13] flex flex-col items-center justify-center border border-white/5">
+                                                   <span className="text-white font-black text-[10px]">{memUsedPct.toFixed(2)}%</span>
+                                                   <span className="text-[6px] text-slate-500 font-bold uppercase tracking-wider">RAM Used</span>
                                                 </div>
                                              </div>
 
-                                             {/* Memory Usage */}
-                                             <div className="space-y-1">
-                                                <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                                   <span>Memory</span>
-                                                   <span className="text-white">{formatBytes(currentMem)}</span>
-                                                </div>
-                                                {rwMemHistory.length > 0 && (
-                                                   <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
-                                                      <Sparkline data={rwMemHistory} color="#a855f7" />
+                                             {/* Resource Stats */}
+                                             <div className="flex-1 w-full space-y-3">
+                                                {/* CPU Usage */}
+                                                <div className="space-y-1">
+                                                   <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                      <span className="flex items-center gap-1">
+                                                         CPU Usage
+                                                         <button 
+                                                            onClick={() => setActiveHelper(activeHelper === 'cpu' ? null : 'cpu')}
+                                                            className="hover:text-blue-400 transition-colors text-slate-500 focus:outline-none"
+                                                            title="What is this?"
+                                                         >
+                                                            <HelpCircle className="w-3 h-3" />
+                                                         </button>
+                                                      </span>
+                                                      <span className="text-white">{currentCpu.toFixed(3)} vCPU</span>
                                                    </div>
-                                                )}
-                                                <div className="flex justify-between text-[8px] text-slate-500 font-bold">
-                                                   <span>0 MB</span>
-                                                   <span>Limit: 8 GB RAM (Hobby Plan)</span>
-                                                   <span>8 GB</span>
+                                                   {rwCpuHistory.length > 0 && (
+                                                      <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                                         <Sparkline data={rwCpuHistory} color="#3b82f6" />
+                                                      </div>
+                                                   )}
+                                                   <div className="flex justify-between text-[8px] text-slate-500 font-bold">
+                                                      <span>0%</span>
+                                                      <span>Limit: 8 vCPUs (Hobby Plan)</span>
+                                                      <span>100%</span>
+                                                   </div>
+                                                </div>
+
+                                                {/* Memory Usage */}
+                                                <div className="space-y-1">
+                                                   <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                                      <span className="flex items-center gap-1">
+                                                         Memory (RAM)
+                                                         <button 
+                                                            onClick={() => setActiveHelper(activeHelper === 'memory' ? null : 'memory')}
+                                                            className="hover:text-purple-400 transition-colors text-slate-500 focus:outline-none"
+                                                            title="What is this?"
+                                                         >
+                                                            <HelpCircle className="w-3 h-3" />
+                                                         </button>
+                                                      </span>
+                                                      <span className="text-white">{formatBytes(currentMem)}</span>
+                                                   </div>
+                                                   {rwMemHistory.length > 0 && (
+                                                      <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                                         <Sparkline data={rwMemHistory} color="#a855f7" />
+                                                      </div>
+                                                   )}
+                                                   <div className="flex justify-between text-[8px] text-slate-500 font-bold">
+                                                      <span>0 MB</span>
+                                                      <span>Limit: 8 GB RAM (Hobby Plan)</span>
+                                                      <span>8 GB</span>
+                                                   </div>
                                                 </div>
                                              </div>
                                           </div>
+
+                                          {/* CPU Explanation Card */}
+                                          {activeHelper === 'cpu' && (
+                                             <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="bg-slate-950/60 border border-blue-500/20 rounded-2xl p-4 space-y-4 relative overflow-hidden"
+                                             >
+                                                <div className="absolute top-[-20%] right-[-10%] w-[30%] h-[150%] bg-blue-500/5 blur-[40px] rounded-full pointer-events-none" />
+                                                
+                                                <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-white/5 pb-3 relative z-10">
+                                                   {/* Animated CPU Processor Core */}
+                                                   <div className="relative w-16 h-16 bg-slate-900 border border-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                                      <motion.div 
+                                                         animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
+                                                         transition={{ repeat: Infinity, duration: 1.5 }}
+                                                         className="w-8 h-8 bg-blue-500/10 rounded-lg border-2 border-blue-500 flex items-center justify-center"
+                                                      >
+                                                         <div className="w-3 h-3 bg-blue-400 rounded-sm" />
+                                                      </motion.div>
+                                                   </div>
+                                                   <div className="space-y-1 text-xs">
+                                                      <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-blue-400">⚙️ CPU Utilization (Brain Power)</span>
+                                                      <p className="text-slate-400 text-[10px] leading-relaxed">
+                                                         Your server currently uses **{currentCpu.toFixed(3)} vCPU**. CPU is the processor horsepower needed to run logic, verify passwords, filter properties, and generate blog articles.
+                                                      </p>
+                                                   </div>
+                                                </div>
+
+                                                <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10">
+                                                   {/* Limit indicator */}
+                                                   <div className="relative w-16 h-16 bg-slate-900 border border-white/10 rounded-xl overflow-hidden flex flex-col justify-end shrink-0">
+                                                      <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-blue-400/30">8 Cores</div>
+                                                      <span className="text-[6px] text-slate-500 font-bold uppercase tracking-widest absolute top-2 left-3">LIMIT</span>
+                                                   </div>
+                                                   <div className="space-y-1 text-xs">
+                                                      <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-blue-400">🚀 Up to 8 vCPUs (Hobby Plan)</span>
+                                                      <p className="text-slate-400 text-[10px] leading-relaxed">
+                                                         Railway allows your app to scale to **8 virtual processor cores** instantly. This means your backend can process multiple user searches simultaneously without slowing down!
+                                                      </p>
+                                                   </div>
+                                                </div>
+
+                                                <button 
+                                                   onClick={() => setActiveHelper(null)}
+                                                   className="text-[9px] text-blue-400 hover:underline font-bold uppercase tracking-widest block text-right w-full pt-1 focus:outline-none relative z-10"
+                                                >
+                                                   Got it, close explanation
+                                                </button>
+                                             </motion.div>
+                                          )}
+
+                                          {/* Memory Explanation Card */}
+                                          {activeHelper === 'memory' && (
+                                             <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="bg-slate-950/60 border border-purple-500/20 rounded-2xl p-4 space-y-4 relative overflow-hidden"
+                                             >
+                                                <div className="absolute top-[-20%] right-[-10%] w-[30%] h-[150%] bg-purple-500/5 blur-[40px] rounded-full pointer-events-none" />
+                                                
+                                                <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-white/5 pb-3 relative z-10">
+                                                   {/* Animated Memory Storage fill */}
+                                                   <div className="relative w-16 h-16 bg-slate-900 border border-white/10 rounded-xl overflow-hidden flex flex-col justify-end shrink-0">
+                                                      <motion.div 
+                                                         animate={{ height: ['15%', '25%', '15%'] }}
+                                                         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                                                         className="w-full bg-purple-500/20 border-t border-purple-400/40"
+                                                      />
+                                                      <span className="text-[7px] text-slate-500 font-bold uppercase tracking-widest absolute top-2 left-3">RAM</span>
+                                                   </div>
+                                                   <div className="space-y-1 text-xs">
+                                                      <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-purple-400">🧠 RAM Memory (Temporary Scratchpad)</span>
+                                                      <p className="text-slate-400 text-[10px] leading-relaxed">
+                                                         Currently utilizing **{formatBytes(currentMem)}**. RAM holds active sessions, temporary data variables, and blog categories in direct processor reach for instant responses.
+                                                      </p>
+                                                   </div>
+                                                </div>
+
+                                                <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10">
+                                                   {/* Limit indicator */}
+                                                   <div className="relative w-16 h-16 bg-slate-900 border border-white/10 rounded-xl overflow-hidden flex flex-col justify-end shrink-0">
+                                                      <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-purple-400/30">8 GB</div>
+                                                      <span className="text-[6px] text-slate-500 font-bold uppercase tracking-widest absolute top-2 left-3">LIMIT</span>
+                                                   </div>
+                                                   <div className="space-y-1 text-xs">
+                                                      <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-purple-400">💾 8 GB Capacity limit</span>
+                                                      <p className="text-slate-400 text-[10px] leading-relaxed">
+                                                         Homyvo backend is highly efficient, using less than **80 MB** (under **1%** of your total 8 GB quota). You have plenty of space to load millions of properties without crashing!
+                                                      </p>
+                                                   </div>
+                                                </div>
+
+                                                <button 
+                                                   onClick={() => setActiveHelper(null)}
+                                                   className="text-[9px] text-purple-400 hover:underline font-bold uppercase tracking-widest block text-right w-full pt-1 focus:outline-none relative z-10"
+                                                >
+                                                   Got it, close explanation
+                                                </button>
+                                             </motion.div>
+                                          )}
                                        </div>
                                     );
                                  })()}
