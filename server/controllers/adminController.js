@@ -426,6 +426,14 @@ exports.getInfraStats = async (req, res) => {
                 node {
                   id
                   name
+                  environments {
+                    edges {
+                      node {
+                        id
+                        name
+                      }
+                    }
+                  }
                   services {
                     edges {
                       node {
@@ -458,18 +466,69 @@ exports.getInfraStats = async (req, res) => {
           const projectEdge = res.data.data.projects.edges[0];
           if (projectEdge) {
             const node = projectEdge.node;
-            const services = (node.services?.edges || []).map(se => {
+            const envId = node.environments?.edges?.[0]?.node?.id;
+
+            const services = await Promise.all((node.services?.edges || []).map(async se => {
               const sNode = se.node;
+              let cpu = 0;
+              let memoryBytes = 0;
+
+              if (envId && sNode.id) {
+                try {
+                  const startDate = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+                  const metricsQuery = `
+                    query {
+                      metrics(
+                        environmentId: "${envId}"
+                        serviceId: "${sNode.id}"
+                        measurements: [CPU_USAGE, MEMORY_USAGE_GB]
+                        startDate: "${startDate}"
+                      ) {
+                        measurement
+                        values {
+                          ts
+                          value
+                        }
+                      }
+                    }
+                  `;
+                  const mRes = await axios.post('https://backboard.railway.app/graphql/v2', { query: metricsQuery }, {
+                    headers: { 
+                      Authorization: `Bearer ${RAILWAY_API_TOKEN}`,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  if (mRes.data && mRes.data.data && mRes.data.data.metrics) {
+                    const metrics = mRes.data.data.metrics;
+                    const cpuMetric = metrics.find(m => m.measurement === 'CPU_USAGE');
+                    if (cpuMetric && cpuMetric.values && cpuMetric.values.length > 0) {
+                      const lastVal = cpuMetric.values[cpuMetric.values.length - 1];
+                      cpu = lastVal ? lastVal.value : 0;
+                    }
+                    const memMetric = metrics.find(m => m.measurement === 'MEMORY_USAGE_GB');
+                    if (memMetric && memMetric.values && memMetric.values.length > 0) {
+                      const lastVal = memMetric.values[memMetric.values.length - 1];
+                      memoryBytes = lastVal ? lastVal.value * 1024 * 1024 * 1024 : 0;
+                    }
+                  }
+                } catch (mErr) {
+                  console.error("Failed to fetch metrics for service:", sNode.name, mErr.message);
+                }
+              }
+
               return {
                 id: sNode.id,
                 name: sNode.name,
+                cpu,
+                memoryBytes,
                 deployments: (sNode.deployments?.edges || []).map(de => ({
                   id: de.node.id,
                   status: de.node.status,
                   createdAt: de.node.createdAt
                 })).slice(0, 5)
               };
-            });
+            }));
+
             railwayData = {
               projectName: node.name,
               projectId: node.id,

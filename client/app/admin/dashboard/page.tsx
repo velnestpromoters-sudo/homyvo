@@ -727,8 +727,31 @@ export default function AdminDashboard() {
                              </div>
                           </div>
                           <span className="bg-pink-500/10 text-pink-400 border border-pink-500/20 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider">
-                             Plan: {infraStats.vercel.plan}
+                             Plan: {infraStats.vercel.plan === 'hobby' ? 'Hobby' : infraStats.vercel.plan}
                           </span>
+                       </div>
+
+                       {/* Vercel Metrics / Observability */}
+                       <div className="grid grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-xl p-3.5">
+                          {/* Edge Requests */}
+                          <div className="space-y-1">
+                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Edge Requests</span>
+                             <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                <span className="text-xs font-black text-white">Active</span>
+                             </div>
+                             <span className="text-[9px] text-slate-500 font-semibold">Fast Global Routing</span>
+                          </div>
+
+                          {/* Data Transfer */}
+                          <div className="space-y-1">
+                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Data Transfer</span>
+                             <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                <span className="text-xs font-black text-white">100 GB Limit</span>
+                             </div>
+                             <span className="text-[9px] text-slate-500 font-semibold">Free Hobby Quota</span>
+                          </div>
                        </div>
 
                        <div className="space-y-3">
@@ -786,16 +809,49 @@ export default function AdminDashboard() {
                              </div>
                           </div>
                           <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider">
-                             Plan: Developer
+                             Plan: Hobby
                           </span>
                        </div>
 
-                       <div className="space-y-3">
+                       <div className="space-y-4">
                           <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Services</h4>
                           {(infraStats.railway.services || []).map((service: any) => (
-                             <div key={service.id} className="space-y-2">
+                             <div key={service.id} className="space-y-3 border-b border-white/5 pb-3 last:border-none last:pb-0">
                                 <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider px-1">
                                    <span>Service: {service.name}</span>
+                                </div>
+
+                                {/* Service Metrics (CPU & RAM) */}
+                                <div className="grid grid-cols-2 gap-4 bg-slate-950/40 border border-white/5 rounded-xl p-3.5 my-2">
+                                   {/* CPU Usage */}
+                                   <div className="space-y-1">
+                                      <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                         <span>CPU Usage</span>
+                                         <span className="text-white">{(service.cpu || 0).toFixed(3)} vCPU</span>
+                                      </div>
+                                      <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                                         <div 
+                                            style={{ width: `${Math.max(1, Math.min(100, (service.cpu / 8) * 100))}%` }} 
+                                            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all" 
+                                         />
+                                      </div>
+                                      <div className="text-[9px] text-slate-500 font-semibold">Limit: 8 vCPUs</div>
+                                   </div>
+
+                                   {/* Memory Usage */}
+                                   <div className="space-y-1">
+                                      <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                         <span>Memory</span>
+                                         <span className="text-white">{formatBytes(service.memoryBytes || 0)}</span>
+                                      </div>
+                                      <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                                         <div 
+                                            style={{ width: `${Math.max(1, Math.min(100, (service.memoryBytes / (8 * 1024 * 1024 * 1024)) * 100))}%` }} 
+                                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all" 
+                                         />
+                                      </div>
+                                      <div className="text-[9px] text-slate-500 font-semibold">Limit: 8 GB RAM</div>
+                                   </div>
                                 </div>
                                 
                                 {service.deployments.length === 0 ? (
