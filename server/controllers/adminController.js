@@ -223,9 +223,11 @@ exports.getCloudinaryStats = async (req, res) => {
     res.json({
       success: true,
       data: {
-        storageLimit: usage.storage.limit, // bytes
         storageUsed: usage.storage.usage, // bytes
-        usedPercent: usage.storage.used_percent,
+        storageLimit: (usage.credits.limit || 25) * 1024 * 1024 * 1024, // bytes (max storage capacity)
+        impressions: usage.impressions.usage,
+        transformations: usage.transformations.usage,
+        bandwidthUsed: usage.bandwidth.usage, // bytes
         creditsLimit: usage.credits.limit,
         creditsUsed: usage.credits.usage,
         creditsUsedPercent: usage.credits.used_percent,

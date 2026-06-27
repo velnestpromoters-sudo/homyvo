@@ -828,6 +828,25 @@ export default function AdminDashboard() {
                           <span>100%</span>
                        </div>
                     </div>
+
+                    {/* Media Usage Overview */}
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Media Usage Overview</h3>
+                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Image Impressions</span>
+                             <span className="text-base font-black text-white">{(clStats.impressions || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="bg-pink-500/10 p-4 rounded-xl border border-pink-500/20">
+                             <span className="text-[10px] text-pink-400 font-bold uppercase tracking-wider block mb-1">Transformations</span>
+                             <span className="text-base font-black text-white">{(clStats.transformations || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20">
+                             <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider block mb-1">Bandwidth Used</span>
+                             <span className="text-base font-black text-white">{formatBytes(clStats.bandwidthUsed || 0)}</span>
+                          </div>
+                       </div>
+                    </div>
                  </div>
               </div>
 
