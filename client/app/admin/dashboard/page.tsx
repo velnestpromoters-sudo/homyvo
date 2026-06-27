@@ -205,22 +205,13 @@ export default function AdminDashboard() {
     }
   };
 
-  const clOwnersList = useMemo(() => {
-    if (!clStats || !clStats.resources) return [];
-    const owners = new Set<string>();
-    clStats.resources.forEach((r: any) => {
-      if (r.ownerName) owners.add(r.ownerName);
-    });
-    return Array.from(owners);
-  }, [clStats]);
-
   const filteredClResources = useMemo(() => {
     if (!clStats || !clStats.resources) return [];
     let list = [...clStats.resources];
 
-    // Filter by owner name
+    // Filter by owner name (case-insensitive partial matching)
     if (clOwnerQuery) {
-       list = list.filter(r => r.ownerName === clOwnerQuery);
+       list = list.filter(r => r.ownerName && r.ownerName.toLowerCase().includes(clOwnerQuery.toLowerCase()));
     }
 
     // Sort
@@ -916,19 +907,25 @@ export default function AdminDashboard() {
                   {!cloudinaryCollapsed && (
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                        {/* Owner Search Filter */}
-                       <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Owner:</span>
-                          <select
-                            value={clOwnerQuery}
-                            onChange={(e) => setClOwnerQuery(e.target.value)}
-                            className="bg-slate-950/80 border border-white/5 text-[10px] font-bold text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-pink-500 transition-colors w-full sm:w-[160px]"
-                          >
-                            <option value="">All Owners / Listings</option>
-                            {clOwnersList.map(owner => (
-                               <option key={owner} value={owner}>{owner}</option>
-                            ))}
-                          </select>
-                       </div>
+                        <div className="flex items-center gap-2 relative">
+                           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Owner:</span>
+                           <input
+                             type="text"
+                             value={clOwnerQuery}
+                             onChange={(e) => setClOwnerQuery(e.target.value)}
+                             placeholder="Type owner's name..."
+                             className="bg-slate-950/80 border border-white/5 text-[10px] font-bold text-slate-300 rounded-lg pl-3 pr-7 py-2 outline-none focus:border-pink-500 transition-colors w-full sm:w-[180px]"
+                           />
+                           {clOwnerQuery && (
+                              <button
+                                 type="button"
+                                 onClick={() => setClOwnerQuery('')}
+                                 className="absolute right-2 text-slate-500 hover:text-white text-[10px] p-1 rounded-full hover:bg-white/5 transition"
+                              >
+                                 ✕
+                              </button>
+                           )}
+                        </div>
 
                        {/* Sort filter */}
                        <div className="flex items-center gap-2">
