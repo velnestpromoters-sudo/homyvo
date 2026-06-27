@@ -1162,7 +1162,14 @@ export default function HomeListPage() {
         <FAQ />
 
         {/* SEO BRAND SIGNAL */}
-        <div className="py-6 flex justify-center text-center">
+        <div className="py-6 flex items-center justify-center gap-4 text-center">
+            <button 
+              onClick={() => router.push('/blog')}
+              className="text-xs font-black text-[#801786] bg-purple-50 hover:bg-purple-100 px-3.5 py-1.5 rounded-full transition active:scale-95 border border-purple-100"
+            >
+              Blogs
+            </button>
+            <span className="h-3 w-px bg-slate-200"></span>
             <span className="text-xs font-medium text-gray-400">
                 <span 
                   onClick={() => router.push('/about')}

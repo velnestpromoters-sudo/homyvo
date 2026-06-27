@@ -99,5 +99,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...categoryUrls,
     ...cityUrls,
     ...propertyUrls,
+    ...[
+      {
+        url: 'https://www.homyvo.com/blog',
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.8,
+      },
+      {
+        url: 'https://www.homyvo.com/blog/rental-agreement-tamil-nadu',
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      },
+      {
+        url: 'https://www.homyvo.com/blog/real-estate-seo-keywords-intent',
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      },
+      {
+        url: 'https://www.homyvo.com/blog/broker-free-rentals-coimbatore',
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      },
+    ],
   ];
 }
