@@ -68,6 +68,16 @@ export default function AdminDashboard() {
      imageColor: 'from-[#801786] to-[#ec38b7]'
   });
 
+   // MongoDB storage explorer states
+   const [dbStats, setDbStats] = useState<any | null>(null);
+   const [dbLoading, setDbLoading] = useState(true);
+   const [activeCollection, setActiveCollection] = useState<string | null>(null);
+   const [collectionDocs, setCollectionDocs] = useState<any[]>([]);
+   const [collectionPage, setCollectionPage] = useState(1);
+   const [collectionTotal, setCollectionTotal] = useState(0);
+   const [collLoading, setCollLoading] = useState(false);
+   const [selectedDocJSON, setSelectedDocJSON] = useState<any | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -121,6 +131,53 @@ export default function AdminDashboard() {
     });
     return Array.from(categoriesSet);
   }, [blogsList]);
+
+  // Format bytes helper
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const fetchDbStats = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await api.get('/admin/db-stats', { headers });
+      if (res.data.success) {
+        setDbStats(res.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch db stats:", err);
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
+  const fetchCollectionData = async (name: string, pageNum: number = 1) => {
+    setCollLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await api.get(`/admin/db-collection/${name}?page=${pageNum}&limit=10`, { headers });
+      if (res.data.success) {
+        setCollectionDocs(res.data.data.documents);
+        setCollectionTotal(res.data.data.total);
+        setCollectionPage(pageNum);
+        setActiveCollection(name);
+      }
+    } catch (err) {
+      console.error("Failed to fetch collection data:", err);
+    } finally {
+      setCollLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token && user?.role === 'admin' && activeTab === 'metrics') {
+      fetchDbStats();
+    }
+  }, [token, user, activeTab]);
 
   useEffect(() => {
     if (token && user?.role === 'admin' && activeTab === 'blogs') {
@@ -519,6 +576,115 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         </div>
+
+        {/* MongoDB Storage Section */}
+        {dbStats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 mt-6 relative overflow-hidden"
+          >
+            <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[200%] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">MongoDB Storage Allocation</h2>
+                  <p className="text-slate-400 text-sm">Real-time memory stats, collection allocations, and system index footprint.</p>
+                </div>
+                <div className="bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider">
+                  Database: {dbStats.dbName}
+                </div>
+              </div>
+
+              {/* Progress and allocation breakdown */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 bg-slate-950/40 border border-white/5 p-6 rounded-2xl">
+                <div className="flex flex-col">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Total Data Size</span>
+                  <span className="text-2xl font-black text-white">{formatBytes(dbStats.dataSize)}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Disk Storage Size</span>
+                  <span className="text-2xl font-black text-white">{formatBytes(dbStats.storageSize)}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Index Footprint</span>
+                  <span className="text-2xl font-black text-white">{formatBytes(dbStats.indexSize)}</span>
+                </div>
+              </div>
+
+              {/* Stacked Chart representing storage allocation among tables */}
+              <div className="mb-8">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Storage Allocation Bar Chart</h3>
+                <div className="h-4 w-full bg-slate-950 rounded-full flex overflow-hidden border border-white/5 p-0.5">
+                  {dbStats.collections.map((col: any, idx: number) => {
+                    const pct = dbStats.dataSize > 0 ? (col.size / dbStats.dataSize) * 100 : 0;
+                    if (pct < 1) return null;
+                    const colors = [
+                      'bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 
+                      'bg-amber-500', 'bg-rose-500', 'bg-indigo-500', 'bg-fuchsia-500'
+                    ];
+                    const colorClass = colors[idx % colors.length];
+                    return (
+                      <div 
+                        key={col.name} 
+                        style={{ width: `${pct}%` }} 
+                        className={`${colorClass} h-full transition-all`}
+                        title={`${col.name}: ${pct.toFixed(1)}%`}
+                      />
+                    );
+                  })}
+                </div>
+                {/* Labels legend */}
+                <div className="flex flex-wrap gap-4 mt-3">
+                  {dbStats.collections.slice(0, 7).map((col: any, idx: number) => {
+                    const colors = [
+                      'bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 
+                      'bg-amber-500', 'bg-rose-500', 'bg-indigo-500', 'bg-fuchsia-500'
+                    ];
+                    const colorClass = colors[idx % colors.length];
+                    const pct = dbStats.dataSize > 0 ? (col.size / dbStats.dataSize) * 100 : 0;
+                    return (
+                      <div key={col.name} className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <span className={`w-2.5 h-2.5 rounded-full ${colorClass}`} />
+                        <span className="font-bold text-slate-300">{col.name}</span>
+                        <span>({pct.toFixed(1)}%)</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Collection / Tables List */}
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Database Collections (Tables)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {dbStats.collections.map((col: any) => (
+                    <div
+                      key={col.name}
+                      onClick={() => fetchCollectionData(col.name, 1)}
+                      className="bg-slate-950/30 hover:bg-slate-950/60 border border-white/5 hover:border-emerald-500/20 p-5 rounded-2xl cursor-pointer flex items-center justify-between transition group"
+                    >
+                      <div>
+                        <div className="text-white font-bold text-sm group-hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          {col.name}
+                        </div>
+                        <div className="text-slate-400 text-xs mt-1 font-medium">{col.count.toLocaleString()} rows (documents)</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-slate-300 font-bold text-xs">{formatBytes(col.size)}</div>
+                        <div className="text-slate-500 text-[10px] mt-0.5 font-medium">Index: {formatBytes(col.totalIndexSize)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
         </>
         )}
 
@@ -839,6 +1005,153 @@ export default function AdminDashboard() {
                 </div>
 
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Database Collection Explorer Modal */}
+        {activeCollection && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-[#0f0f13] border border-white/10 rounded-3xl max-w-5xl w-full flex flex-col shadow-2xl overflow-hidden my-8 max-h-[90vh]"
+            >
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-950/20">
+                <div>
+                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Collection: {activeCollection}
+                   </h2>
+                   <p className="text-slate-500 text-xs mt-0.5">Showing latest documents first ({collectionTotal} total records)</p>
+                </div>
+                <button 
+                  onClick={() => {
+                     setActiveCollection(null);
+                     setCollectionDocs([]);
+                  }} 
+                  className="text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-white/5 rounded-full"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Table Data list view */}
+              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                {collLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3">
+                    <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+                    <p className="text-slate-500 text-xs font-medium">Querying documents...</p>
+                  </div>
+                ) : collectionDocs.length === 0 ? (
+                  <div className="text-center py-20 text-slate-500">
+                    No documents found in this collection.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                     <div className="overflow-x-auto rounded-xl border border-white/5 bg-slate-950/20">
+                        <table className="w-full text-left border-collapse text-xs">
+                           <thead>
+                              <tr className="border-b border-white/5 bg-slate-950/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                 <th className="p-4 w-28">ID</th>
+                                 {/* Display first 4 keys dynamically based on document data */}
+                                 {Object.keys(collectionDocs[0] || {})
+                                   .filter(k => k !== '_id' && k !== '__v' && typeof (collectionDocs[0] || {})[k] !== 'object')
+                                   .slice(0, 4)
+                                   .map(key => (
+                                     <th key={key} className="p-4">{key}</th>
+                                   ))
+                                 }
+                                 <th className="p-4 text-right">Details</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-white/5 text-slate-300">
+                              {collectionDocs.map((doc) => (
+                                 <tr key={doc._id} className="hover:bg-white/[0.01] transition-colors">
+                                    <td className="p-4 font-mono text-slate-500 font-bold select-all">{doc._id}</td>
+                                    {Object.keys(collectionDocs[0] || {})
+                                      .filter(k => k !== '_id' && k !== '__v' && typeof (collectionDocs[0] || {})[k] !== 'object')
+                                      .slice(0, 4)
+                                      .map(key => {
+                                        const val = doc[key];
+                                        let text = '';
+                                        if (val === true) text = 'true';
+                                        else if (val === false) text = 'false';
+                                        else if (val === null || val === undefined) text = 'null';
+                                        else text = String(val);
+                                        return (
+                                          <td key={key} className="p-4 truncate max-w-[180px] font-medium" title={text}>
+                                            {text}
+                                          </td>
+                                        );
+                                      })
+                                    }
+                                    <td className="p-4 text-right">
+                                       <button
+                                          type="button"
+                                          onClick={() => setSelectedDocJSON(doc)}
+                                          className="text-emerald-400 hover:text-emerald-300 font-bold text-[10px] bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1.5 rounded-lg transition"
+                                       >
+                                          View JSON
+                                       </button>
+                                    </td>
+                                 </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
+
+                     {/* Pagination footer */}
+                     <div className="flex items-center justify-between pt-4">
+                        <span className="text-slate-500 text-xs">
+                           Page {collectionPage} of {Math.ceil(collectionTotal / 10)}
+                        </span>
+                        <div className="flex gap-2">
+                           <button
+                              disabled={collectionPage === 1 || collLoading}
+                              onClick={() => fetchCollectionData(activeCollection, collectionPage - 1)}
+                              className="px-4 py-2 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition"
+                           >
+                              Previous
+                           </button>
+                           <button
+                              disabled={collectionPage >= Math.ceil(collectionTotal / 10) || collLoading}
+                              onClick={() => fetchCollectionData(activeCollection, collectionPage + 1)}
+                              className="px-4 py-2 bg-white/5 border border-white/5 rounded-xl text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition"
+                           >
+                              Next
+                           </button>
+                        </div>
+                     </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Nested JSON Document Viewer Modal */}
+        {selectedDocJSON && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-[#0b0b0e] border border-white/10 rounded-3xl max-w-2xl w-full flex flex-col shadow-2xl overflow-hidden max-h-[80vh]"
+            >
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-950/20">
+                <h3 className="text-lg font-bold text-white font-mono">Document: {selectedDocJSON._id}</h3>
+                <button 
+                  onClick={() => setSelectedDocJSON(null)} 
+                  className="text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-white/5 rounded-full"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar bg-slate-950/40 p-4 rounded-b-3xl">
+                <pre className="text-xs text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap select-all leading-relaxed">
+                   {JSON.stringify(selectedDocJSON, null, 3)}
+                </pre>
+              </div>
             </motion.div>
           </div>
         )}

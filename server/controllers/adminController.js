@@ -107,3 +107,101 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to aggregate admin metrics' });
   }
 };
+
+exports.getDatabaseStats = async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const db = mongoose.connection.db;
+
+    // Get database wide stats
+    const dbStats = await db.stats();
+    
+    // Get list of collections
+    const collections = await db.listCollections().toArray();
+    
+    // Get stats for each collection
+    const collectionDetails = await Promise.all(collections.map(async (col) => {
+      try {
+        const stats = await db.command({ collStats: col.name });
+        return {
+          name: col.name,
+          count: stats.count,
+          size: stats.size, // bytes
+          storageSize: stats.storageSize, // bytes
+          nindexes: stats.nindexes,
+          totalIndexSize: stats.totalIndexSize
+        };
+      } catch (e) {
+        // Fallback for system collections if stats command fails
+        return {
+          name: col.name,
+          count: 0,
+          size: 0,
+          storageSize: 0,
+          nindexes: 0,
+          totalIndexSize: 0
+        };
+      }
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        dbName: dbStats.db,
+        collectionsCount: dbStats.collections,
+        documentsCount: dbStats.objects,
+        dataSize: dbStats.dataSize, // bytes
+        storageSize: dbStats.storageSize, // bytes
+        indexSize: dbStats.indexSize, // bytes
+        collections: collectionDetails.sort((a, b) => b.size - a.size) // sort by size desc
+      }
+    });
+  } catch (err) {
+    console.error("Database Stats Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve database stats' });
+  }
+};
+
+exports.getCollectionData = async (req, res) => {
+  try {
+    const { name } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const mongoose = require('mongoose');
+    const db = mongoose.connection.db;
+
+    // Check if collection exists
+    const collections = await db.listCollections({ name }).toArray();
+    if (collections.length === 0) {
+      return res.status(404).json({ success: false, message: `Collection '${name}' not found` });
+    }
+
+    // Get total count
+    const totalDocs = await db.collection(name).countDocuments();
+
+    // Fetch documents
+    const documents = await db.collection(name)
+      .find({})
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    res.json({
+      success: true,
+      data: {
+        name,
+        total: totalDocs,
+        page,
+        limit,
+        totalPages: Math.ceil(totalDocs / limit),
+        documents
+      }
+    });
+  } catch (err) {
+    console.error("Collection Data Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to retrieve collection data' });
+  }
+};
