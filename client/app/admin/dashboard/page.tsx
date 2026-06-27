@@ -141,6 +141,11 @@ export default function AdminDashboard() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const totalLimit = 512 * 1024 * 1024; // 512 MB
+  const spaceCovered = dbStats ? dbStats.storageSize : 0;
+  const balanceSpace = dbStats ? Math.max(0, totalLimit - spaceCovered) : 0;
+  const usedPct = dbStats ? (spaceCovered / totalLimit) * 100 : 0;
+
   const fetchDbStats = async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
@@ -612,6 +617,53 @@ export default function AdminDashboard() {
                   <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Index Footprint</span>
                   <span className="text-2xl font-black text-white">{formatBytes(dbStats.indexSize)}</span>
                 </div>
+              </div>
+
+              {/* Pie/Donut Storage Balance Chart */}
+              <div className="flex flex-col md:flex-row items-center gap-8 mb-8 p-6 bg-slate-950/20 border border-white/5 rounded-2xl animate-fade-in">
+                 {/* Donut Chart */}
+                 <div className="relative w-32 h-32 rounded-full flex items-center justify-center border border-white/5 shadow-inner shrink-0"
+                      style={{
+                         background: `conic-gradient(#801786 0% ${usedPct.toFixed(4)}%, #ec38b7 ${usedPct.toFixed(4)}% ${(usedPct * 1.5).toFixed(4)}%, #1e293b ${(usedPct * 1.5).toFixed(4)}% 100%)`
+                      }}
+                 >
+                    {/* Donut Center Cutout */}
+                    <div className="absolute w-24 h-24 rounded-full bg-[#0f0f13] flex flex-col items-center justify-center shadow-lg border border-white/5">
+                       <span className="text-white font-black text-sm">{usedPct.toFixed(3)}%</span>
+                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Used</span>
+                    </div>
+                 </div>
+                 
+                 {/* Storage Balance Details */}
+                 <div className="flex-1 w-full space-y-4">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Storage Space Balance (Atlas Free Tier)</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                       <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5">
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Total Space</span>
+                          <span className="text-base font-black text-white">512.00 MB</span>
+                       </div>
+                       <div className="bg-[#801786]/10 p-4 rounded-xl border border-[#801786]/20">
+                          <span className="text-[10px] text-[#ec38b7] font-bold uppercase tracking-wider block mb-1">Space Covered</span>
+                          <span className="text-base font-black text-white">{formatBytes(spaceCovered)}</span>
+                       </div>
+                       <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                          <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mb-1">Balance Space</span>
+                          <span className="text-base font-black text-white">{formatBytes(balanceSpace)}</span>
+                       </div>
+                    </div>
+                    
+                    {/* Linear representation bar */}
+                    <div className="space-y-1.5">
+                       <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                          <div style={{ width: `${Math.max(0.5, usedPct)}%` }} className="bg-gradient-to-r from-[#801786] to-[#ec38b7] h-full rounded-full transition-all" />
+                       </div>
+                       <div className="flex justify-between text-[10px] text-slate-500 font-bold">
+                          <span>0%</span>
+                          <span>Remaining Balance: {(100 - usedPct).toFixed(3)}% Free</span>
+                          <span>100%</span>
+                       </div>
+                    </div>
+                 </div>
               </div>
 
               {/* Stacked Chart representing storage allocation among tables */}
