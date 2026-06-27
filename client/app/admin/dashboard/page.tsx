@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import Image from 'next/image';
-import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail, BookOpen, PlusCircle, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail, BookOpen, PlusCircle, Trash2, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 
 interface AdminUser {
   _id: string;
@@ -124,6 +124,7 @@ export default function AdminDashboard() {
    const [clSortFilter, setClSortFilter] = useState<'newest' | 'oldest'>('newest');
    const [infraStats, setInfraStats] = useState<any | null>(null);
    const [infraLoading, setInfraLoading] = useState(true);
+   const [showBandwidthHelper, setShowBandwidthHelper] = useState(false);
 
    // Live real-time oscilloscopes for CPU/Memory graphs
    const [vcReqHistory, setVcReqHistory] = useState<number[]>([]);
@@ -850,17 +851,82 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Data Transfer */}
-                          <div className="space-y-1.5">
-                             <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                                <span>Data Transfer</span>
-                                <span className="text-white font-bold">{(vcBandwidthHistory[vcBandwidthHistory.length - 1] || 0).toFixed(1)} MB</span>
-                             </div>
-                             <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
-                                <Sparkline data={vcBandwidthHistory} color="#3b82f6" />
-                             </div>
-                             <span className="text-[8px] text-slate-500 font-semibold block">Free Hobby Quota (100 GB)</span>
-                          </div>
-                       </div>
+                           <div className="space-y-1.5">
+                              <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                 <span className="flex items-center gap-1">
+                                    Data Transfer
+                                    <button 
+                                       onClick={() => setShowBandwidthHelper(!showBandwidthHelper)}
+                                       className="hover:text-emerald-400 transition-colors text-slate-400 focus:outline-none"
+                                       title="What is this?"
+                                    >
+                                       <HelpCircle className="w-3 h-3" />
+                                    </button>
+                                 </span>
+                                 <span className="text-white font-bold">{(vcBandwidthHistory[vcBandwidthHistory.length - 1] || 0).toFixed(1)} MB</span>
+                              </div>
+                              <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
+                                 <Sparkline data={vcBandwidthHistory} color="#3b82f6" />
+                              </div>
+                              <span className="text-[8px] text-slate-500 font-semibold block">Free Hobby Quota (100 GB)</span>
+                           </div>
+                        </div>
+
+                        {showBandwidthHelper && (
+                           <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              className="bg-slate-950/60 border border-[#10b981]/20 rounded-2xl p-4 space-y-4 relative overflow-hidden"
+                           >
+                              <div className="absolute top-[-20%] right-[-10%] w-[30%] h-[150%] bg-[#10b981]/5 blur-[40px] rounded-full pointer-events-none" />
+                              
+                              <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-white/5 pb-3 relative z-10">
+                                 {/* Animated Speedometer Dial */}
+                                 <div className="relative w-16 h-16 rounded-full border border-white/10 bg-slate-900 flex items-center justify-center shrink-0">
+                                    <div className="absolute w-12 h-12 rounded-full border border-dashed border-[#10b981]/30" />
+                                    <motion.div 
+                                       animate={{ rotate: [45, 110, 65, 135, 80, 45] }}
+                                       transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                                       className="absolute w-0.5 h-7 bg-[#10b981] origin-bottom bottom-8 rounded-full"
+                                    />
+                                    <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest absolute bottom-2">SPEED</span>
+                                 </div>
+                                 <div className="space-y-1 text-xs">
+                                    <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-[#10b981]">🚦 Speedometer (Live Activity)</span>
+                                    <p className="text-slate-400 text-[10px] leading-relaxed">
+                                       The shifting **{(vcBandwidthHistory[vcBandwidthHistory.length - 1] || 0).toFixed(1)} MB** represents your current network traffic speed. It does **not** count up your quota; it just shows activity speed at this exact instant!
+                                    </p>
+                                 </div>
+                              </div>
+
+                              <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10">
+                                 {/* Animated Water Tank level */}
+                                 <div className="relative w-16 h-16 bg-slate-900 border border-white/10 rounded-xl overflow-hidden flex flex-col justify-end shrink-0">
+                                    <motion.div 
+                                       animate={{ height: ['90%', '85%', '90%'] }}
+                                       transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                                       className="w-full bg-blue-500/20 border-t border-blue-400/40 relative"
+                                    >
+                                       <div className="absolute top-1 left-2 text-[7px] font-bold text-blue-300">100 GB</div>
+                                    </motion.div>
+                                    <span className="text-[6px] text-slate-500 font-bold uppercase tracking-widest absolute top-2 left-3">LIMIT</span>
+                                 </div>
+                                 <div className="space-y-1 text-xs">
+                                    <span className="font-bold text-white uppercase tracking-wider block text-[10px] text-blue-400">💧 Water Tank (Monthly Limit)</span>
+                                    <p className="text-slate-400 text-[10px] leading-relaxed">
+                                       Your actual monthly quota is 100 GB. Since your listing images are hosted separately on **Cloudinary**, Homyvo uses almost no Vercel data. This tank resets to full monthly!
+                                    </p>
+                                 </div>
+                              </div>
+
+                              <button 
+                                 onClick={() => setShowBandwidthHelper(false)}
+                                 className="text-[9px] text-[#10b981] hover:underline font-bold uppercase tracking-widest block text-right w-full pt-1 focus:outline-none relative z-10"
+                              >
+                                 Got it, close explanation
+                              </button>
+                           </motion.div>
+                        )}
 
                        <div className="space-y-3">
                           <h4 className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Recent Deployments</h4>
