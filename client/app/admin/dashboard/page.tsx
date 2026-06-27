@@ -853,7 +853,7 @@ export default function AdminDashboard() {
                           <div className="space-y-1.5">
                              <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                                 <span>Data Transfer</span>
-                                <span className="text-white font-bold">{(vcBandwidthHistory[vcBandwidthHistory.length - 1] || 0).toFixed(1)} MB/s</span>
+                                <span className="text-white font-bold">{(vcBandwidthHistory[vcBandwidthHistory.length - 1] || 0).toFixed(1)} MB</span>
                              </div>
                              <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5">
                                 <Sparkline data={vcBandwidthHistory} color="#3b82f6" />
