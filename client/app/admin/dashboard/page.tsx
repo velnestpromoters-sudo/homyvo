@@ -667,7 +667,33 @@ export default function AdminDashboard() {
         </div>
 
         {/* Vercel & Railway Cloud Deployments Section */}
-        {infraStats && (
+        {infraLoading ? (
+           <div className="flex items-center justify-center p-8 bg-slate-900/40 border border-white/5 rounded-3xl mt-6">
+              <Loader2 className="w-6 h-6 text-pink-500 animate-spin" />
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider ml-3">Loading Cloud Infrastructure...</span>
+           </div>
+        ) : !infraStats || (!infraStats.vercel && !infraStats.railway) ? (
+           <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 mt-6 relative overflow-hidden">
+              <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[200%] bg-amber-500/5 blur-[120px] rounded-full pointer-events-none" />
+              <div className="relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-4 space-y-4">
+                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                    <Activity className="w-6 h-6 text-amber-400 animate-pulse" />
+                 </div>
+                 <div className="space-y-1">
+                    <h3 className="text-base font-bold text-white uppercase tracking-wider">Cloud Connection Pending</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed">
+                       Vercel & Railway stats are not loading or connection tokens are not active.
+                    </p>
+                 </div>
+                 <div className="bg-slate-950/60 border border-white/5 rounded-xl p-3.5 w-full text-left space-y-2">
+                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest block">Action Required</span>
+                    <p className="text-[10px] text-slate-400 leading-normal">
+                       Please make sure to **restart your backend node server** (stop the terminal running `node server.js` or `npm run start` and start it again) so the application can load the new environment variables from `.env`.
+                    </p>
+                 </div>
+              </div>
+           </div>
+        ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
