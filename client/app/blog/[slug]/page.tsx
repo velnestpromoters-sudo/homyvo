@@ -1,5 +1,6 @@
 "use client";
 
+import api from '@/lib/api';
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, Clock, User, Calendar, Tag, AlertCircle, Share2, CheckCircle } from 'lucide-react';
@@ -11,9 +12,29 @@ export default function BlogArticle() {
   const slug = params.slug as string;
   const [scrollProgress, setScrollProgress] = useState(0);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [post, setPost] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Find the post
-  const post = BLOG_POSTS.find(p => p.slug === slug);
+  // Fetch article dynamically from database on mount
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        const res = await api.get(`/blogs/${slug}`);
+        if (res.data.success) {
+          setPost(res.data.data);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch blog dynamically, falling back to local static lookup:", err);
+        const local = BLOG_POSTS.find(p => p.slug === slug);
+        if (local) {
+          setPost(local);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPost();
+  }, [slug]);
 
   // Calculate read/scroll progress
   useEffect(() => {
@@ -26,6 +47,17 @@ export default function BlogArticle() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-4 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-4 border-[#801786] border-t-transparent animate-spin" />
+          <p className="text-xs text-slate-400 font-bold">Loading article...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
@@ -301,6 +333,9 @@ export default function BlogArticle() {
                 <li><strong>Agreement Terms:</strong> Coimbatore landlords typically expect a 5-6 month security deposit. Always get this in writing using an official 11-month contract.</li>
               </ul>
             </>
+          )}
+          {!['rental-agreement-tamil-nadu', 'real-estate-seo-keywords-intent', 'broker-free-rentals-coimbatore'].includes(slug) && (
+            <div dangerouslySetInnerHTML={{ __html: post.content }} />
           )}
         </article>
 

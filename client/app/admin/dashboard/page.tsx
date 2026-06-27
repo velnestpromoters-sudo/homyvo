@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import Image from 'next/image';
-import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail } from 'lucide-react';
+import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail, BookOpen, PlusCircle } from 'lucide-react';
 
 interface AdminUser {
   _id: string;
@@ -47,6 +47,24 @@ export default function AdminDashboard() {
   const [modalData, setModalData] = useState<{ title: string, users: AdminUser[] } | null>(null);
 
   const [mounted, setMounted] = useState(false);
+  
+  // Tab controller
+  const [activeTab, setActiveTab] = useState<'metrics' | 'blogs'>('metrics');
+  
+  // Blog publishing states
+  const [blogsList, setBlogsList] = useState<any[]>([]);
+  const [showBlogFormModal, setShowBlogFormModal] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<any | null>(null);
+  const [blogError, setBlogError] = useState('');
+  const [blogForm, setBlogForm] = useState({
+     title: '',
+     slug: '',
+     excerpt: '',
+     content: '',
+     category: 'Renting Guides' as 'Renting Guides' | 'SEO & Marketing' | 'Tenant Rights',
+     author: 'Velnest Admin',
+     imageColor: 'from-[#801786] to-[#ec38b7]'
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -79,6 +97,77 @@ export default function AdminDashboard() {
 
     fetchStats();
   }, [token, user, router, logout, mounted]);
+
+  // Fetch blogs from API
+  const fetchBlogs = async () => {
+    try {
+      const res = await api.get('/blogs');
+      if (res.data.success) {
+        setBlogsList(res.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching blogs in admin:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (token && user?.role === 'admin' && activeTab === 'blogs') {
+      fetchBlogs();
+    }
+  }, [token, user, activeTab]);
+
+  // Handle slug auto-generation from title
+  const handleTitleChange = (val: string) => {
+    const generatedSlug = val
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // remove special chars
+      .replace(/[\s_-]+/g, '-') // replace spaces/dashes with a single dash
+      .replace(/^-+|-+$/g, ''); // trim leading/trailing dashes
+    
+    setBlogForm(prev => ({
+      ...prev,
+      title: val,
+      slug: generatedSlug
+    }));
+  };
+
+  // Submit Blog Form (Create or Update)
+  const handleBlogSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBlogError('');
+    try {
+      let res;
+      const headers = { Authorization: `Bearer ${token}` };
+      if (editingBlog) {
+        res = await api.put(`/blogs/${editingBlog._id}`, blogForm, { headers });
+      } else {
+        res = await api.post('/blogs', blogForm, { headers });
+      }
+      
+      if (res.data.success) {
+        setShowBlogFormModal(false);
+        setEditingBlog(null);
+        fetchBlogs();
+      }
+    } catch (err: any) {
+      setBlogError(err.response?.data?.message || 'Failed to submit article');
+    }
+  };
+
+  // Delete Blog Post
+  const handleDeleteBlog = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this article? This action cannot be undone.')) return;
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await api.delete(`/blogs/${id}`, { headers });
+      if (res.data.success) {
+        fetchBlogs();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete article');
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -162,8 +251,30 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <Image src="/logo.svg" alt="Homyvo" width={100} height={100} className="object-contain drop-shadow-lg" />
-              <span className="text-white font-bold text-lg tracking-tight">Homyvo Admin</span>
+              <Image src="/logo.svg" alt="Homyvo" width={100} height={100} className="object-contain drop-shadow-md" />
+              <span className="text-white font-bold text-lg tracking-tight mr-6">Homyvo Admin</span>
+              
+              {/* Desktop Tab Selector */}
+              <div className="hidden md:flex items-center gap-1 bg-white/5 border border-white/5 rounded-xl p-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('metrics')}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === 'metrics' ? 'bg-[#801786] text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Metrics
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('blogs')}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === 'blogs' ? 'bg-[#801786] text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Blogs
+                </button>
+              </div>
             </div>
             <button
               onClick={handleLogout}
@@ -179,14 +290,38 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
-        >
-          <h1 className="text-3xl font-bold text-white mb-2">Platform Overview</h1>
-          <p className="text-slate-400">Live metrics and growth vectors from the Homyvo engine.</p>
-        </motion.div>
+        {/* Mobile Tab Selector */}
+        <div className="flex md:hidden items-center gap-1 bg-white/5 border border-white/5 rounded-2xl p-1 mb-8">
+          <button
+            type="button"
+            onClick={() => setActiveTab('metrics')}
+            className={`flex-1 py-3 rounded-xl text-xs font-bold text-center transition-all ${
+              activeTab === 'metrics' ? 'bg-[#801786] text-white' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Metrics
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('blogs')}
+            className={`flex-1 py-3 rounded-xl text-xs font-bold text-center transition-all ${
+              activeTab === 'blogs' ? 'bg-[#801786] text-white' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Blogs
+          </button>
+        </div>
+
+        {activeTab === 'metrics' && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-10"
+            >
+              <h1 className="text-3xl font-bold text-white mb-2">Platform Overview</h1>
+              <p className="text-slate-400">Live metrics and growth vectors from the Homyvo engine.</p>
+            </motion.div>
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-10">
@@ -362,6 +497,108 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         </div>
+        </>
+        )}
+
+        {activeTab === 'blogs' && (
+           <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                 <div>
+                    <h2 className="text-2xl font-bold text-white mb-1">SEO Blog Management</h2>
+                    <p className="text-slate-400 text-sm">Create, edit, and delete published articles on Homyvo.</p>
+                 </div>
+                 <button
+                    type="button"
+                    onClick={() => {
+                       setEditingBlog(null);
+                       setBlogForm({
+                          title: '',
+                          slug: '',
+                          excerpt: '',
+                          content: '',
+                          category: 'Renting Guides',
+                          author: 'Velnest Admin',
+                          imageColor: 'from-[#801786] to-[#ec38b7]'
+                       });
+                       setBlogError('');
+                       setShowBlogFormModal(true);
+                    }}
+                    className="bg-[#801786] hover:bg-[#a61c92] text-white text-xs font-black uppercase tracking-wider px-5 py-3.5 rounded-xl flex items-center justify-center gap-2 transition active:scale-95 shadow-lg shadow-purple-900/20"
+                 >
+                    <PlusCircle className="w-4 h-4" />
+                    Write Article
+                 </button>
+              </div>
+
+              {/* Blogs list table */}
+              <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden shadow-xl">
+                 {blogsList.length === 0 ? (
+                    <div className="text-center py-20">
+                       <BookOpen className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+                       <h3 className="text-slate-400 font-bold">No articles published yet</h3>
+                       <p className="text-slate-500 text-xs mt-1">Click the button above to publish your first article.</p>
+                    </div>
+                 ) : (
+                    <div className="overflow-x-auto">
+                       <table className="w-full text-left border-collapse">
+                          <thead>
+                             <tr className="border-b border-white/5 bg-slate-950/20 text-xs font-semibold text-slate-400 uppercase tracking-widest">
+                                <th className="p-5">Title</th>
+                                <th className="p-5">Category</th>
+                                <th className="p-5">Author</th>
+                                <th className="p-5">Date</th>
+                                <th className="p-5 text-right">Actions</th>
+                             </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5 text-sm">
+                             {blogsList.map((b) => (
+                                <tr key={b._id} className="hover:bg-white/[0.02] transition-colors">
+                                   <td className="p-5 font-bold text-white max-w-xs truncate">{b.title}</td>
+                                   <td className="p-5">
+                                      <span className="bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-xs font-semibold text-slate-300">
+                                         {b.category}
+                                      </span>
+                                   </td>
+                                   <td className="p-5 text-slate-300">{b.author}</td>
+                                   <td className="p-5 text-slate-400">{b.date}</td>
+                                   <td className="p-5 text-right space-x-2 whitespace-nowrap">
+                                      <button
+                                         type="button"
+                                         onClick={() => {
+                                            setEditingBlog(b);
+                                            setBlogForm({
+                                               title: b.title,
+                                               slug: b.slug,
+                                               excerpt: b.excerpt,
+                                               content: b.content,
+                                               category: b.category,
+                                               author: b.author,
+                                               imageColor: b.imageColor || 'from-[#801786] to-[#ec38b7]'
+                                            });
+                                            setBlogError('');
+                                            setShowBlogFormModal(true);
+                                         }}
+                                         className="text-indigo-400 hover:text-indigo-300 font-bold text-xs bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg transition"
+                                      >
+                                         Edit
+                                      </button>
+                                      <button
+                                         type="button"
+                                         onClick={() => handleDeleteBlog(b._id)}
+                                         className="text-rose-400 hover:text-rose-300 font-bold text-xs bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 rounded-lg transition"
+                                      >
+                                         Delete
+                                      </button>
+                                   </td>
+                                </tr>
+                             ))}
+                          </tbody>
+                       </table>
+                    </div>
+                 )}
+              </div>
+           </div>
+        )}
 
         {/* User Modal Viewer */}
         {modalData && (
@@ -397,6 +634,165 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Blog Form Modal (Create or Edit) */}
+        {showBlogFormModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-[#0f0f13] border border-white/10 rounded-3xl max-w-2xl w-full flex flex-col shadow-2xl overflow-hidden my-8"
+            >
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-950/20">
+                <h2 className="text-xl font-bold text-white">
+                   {editingBlog ? 'Edit Blog Article' : 'Publish New Blog Article'}
+                </h2>
+                <button 
+                  onClick={() => {
+                     setShowBlogFormModal(false);
+                     setEditingBlog(null);
+                  }} 
+                  className="text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-white/5 rounded-full"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleBlogSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                
+                {blogError && (
+                  <div className="bg-rose-500/10 border border-rose-500/20 p-3.5 rounded-xl text-rose-400 text-xs font-bold leading-relaxed">
+                     {blogError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                         Article Title *
+                      </label>
+                      <input
+                         type="text"
+                         required
+                         value={blogForm.title}
+                         onChange={(e) => handleTitleChange(e.target.value)}
+                         placeholder="e.g. Tenant Rights in Chennai"
+                         className="w-full bg-slate-950/50 border border-white/5 focus:border-[#801786] rounded-xl px-4 py-3.5 text-sm text-white outline-none transition-colors"
+                      />
+                   </div>
+
+                   <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                         URL Slug *
+                      </label>
+                      <input
+                         type="text"
+                         required
+                         value={blogForm.slug}
+                         onChange={(e) => setBlogForm(prev => ({ ...prev, slug: e.target.value }))}
+                         placeholder="e.g. tenant-rights-chennai"
+                         className="w-full bg-slate-950/50 border border-white/5 focus:border-[#801786] rounded-xl px-4 py-3.5 text-sm text-white outline-none transition-colors"
+                      />
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                         Category *
+                      </label>
+                      <select
+                         value={blogForm.category}
+                         onChange={(e: any) => setBlogForm(prev => ({ ...prev, category: e.target.value }))}
+                         className="w-full bg-slate-950/90 border border-white/5 focus:border-[#801786] rounded-xl px-4 py-3.5 text-sm text-white outline-none transition-colors"
+                      >
+                         <option value="Renting Guides">Renting Guides</option>
+                         <option value="SEO & Marketing">SEO & Marketing</option>
+                         <option value="Tenant Rights">Tenant Rights</option>
+                      </select>
+                   </div>
+
+                   <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                         Author *
+                      </label>
+                      <input
+                         type="text"
+                         required
+                         value={blogForm.author}
+                         onChange={(e) => setBlogForm(prev => ({ ...prev, author: e.target.value }))}
+                         placeholder="Velnest Admin"
+                         className="w-full bg-slate-950/50 border border-white/5 focus:border-[#801786] rounded-xl px-4 py-3.5 text-sm text-white outline-none transition-colors"
+                      />
+                   </div>
+                </div>
+
+                <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Card Theme Gradient *
+                   </label>
+                   <select
+                      value={blogForm.imageColor}
+                      onChange={(e) => setBlogForm(prev => ({ ...prev, imageColor: e.target.value }))}
+                      className="w-full bg-slate-950/90 border border-white/5 focus:border-[#801786] rounded-xl px-4 py-3.5 text-sm text-white outline-none transition-colors"
+                   >
+                      <option value="from-[#801786] to-[#ec38b7]">Purple/Pink Gradient (Primary)</option>
+                      <option value="from-[#2563eb] to-[#3b82f6]">Blue Gradient (SEO)</option>
+                      <option value="from-[#059669] to-[#10b981]">Emerald Green Gradient (Guides)</option>
+                   </select>
+                </div>
+
+                <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Excerpt / Summary (1-2 sentences) *
+                   </label>
+                   <textarea
+                      required
+                      rows={2}
+                      value={blogForm.excerpt}
+                      onChange={(e) => setBlogForm(prev => ({ ...prev, excerpt: e.target.value }))}
+                      placeholder="Write a compelling brief summary to attract Google search snippet clicks..."
+                      className="w-full bg-slate-950/50 border border-white/5 focus:border-[#801786] rounded-xl p-4 text-sm text-white outline-none transition-colors resize-none"
+                   />
+                </div>
+
+                <div>
+                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Article Content (HTML/Markdown support) *
+                   </label>
+                   <textarea
+                      required
+                      rows={6}
+                      value={blogForm.content}
+                      onChange={(e) => setBlogForm(prev => ({ ...prev, content: e.target.value }))}
+                      placeholder="Write full article body. Use HTML tags like <h2>, <p>, <ul>, <li> for formatting..."
+                      className="w-full bg-slate-950/50 border border-white/5 focus:border-[#801786] rounded-xl p-4 text-sm text-white outline-none transition-colors"
+                   />
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex gap-3">
+                   <button
+                      type="button"
+                      onClick={() => {
+                         setShowBlogFormModal(false);
+                         setEditingBlog(null);
+                      }}
+                      className="flex-1 py-3.5 border border-white/10 hover:bg-white/5 text-slate-300 font-bold text-sm rounded-xl transition active:scale-95"
+                   >
+                      Cancel
+                   </button>
+                   <button
+                      type="submit"
+                      className="flex-1 py-3.5 bg-[#801786] hover:bg-[#a61c92] text-white font-bold text-sm rounded-xl transition active:scale-95 shadow-md shadow-purple-900/10"
+                   >
+                      {editingBlog ? 'Save Changes' : 'Publish Article'}
+                   </button>
+                </div>
+
+              </form>
             </motion.div>
           </div>
         )}

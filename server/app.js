@@ -29,6 +29,9 @@ app.use('/api/admin', adminRoutes);
 const chatbotRoutes = require('./routes/chatbotRoutes');
 app.use('/api/chatbot', chatbotRoutes);
 
+const blogRoutes = require('./routes/blogRoutes');
+app.use('/api/blogs', blogRoutes);
+
 // Error Handling Middleware
 app.use(errorHandler);
 

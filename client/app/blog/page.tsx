@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import api from '@/lib/api';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Search, BookOpen, Clock, User, Tag, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export interface BlogPost {
+  _id?: string;
   slug: string;
   title: string;
   excerpt: string;
@@ -51,23 +53,45 @@ export const BLOG_POSTS: BlogPost[] = [
 
 export default function BlogHome() {
   const router = useRouter();
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
 
   const categories = ['All', 'Renting Guides', 'SEO & Marketing', 'Tenant Rights'];
 
+  // Fetch blogs dynamically on mount
+  useEffect(() => {
+    const loadBlogs = async () => {
+      try {
+        const res = await api.get('/blogs');
+        if (res.data.success && res.data.data.length > 0) {
+          setBlogs(res.data.data);
+        } else {
+          setBlogs(BLOG_POSTS);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch dynamic blogs, falling back to static seeds:", err);
+        setBlogs(BLOG_POSTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadBlogs();
+  }, []);
+
   // Filter posts based on search query and category tab
   const filteredPosts = useMemo(() => {
-    return BLOG_POSTS.filter(post => {
+    return blogs.filter(post => {
       const matchesCategory = activeCategory === 'All' || post.category === activeCategory;
       const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             post.category.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, activeCategory]);
+  }, [blogs, searchQuery, activeCategory]);
 
-  const featuredPost = BLOG_POSTS[0];
+  const featuredPost = blogs[0] || BLOG_POSTS[0];
 
   return (
     <div className="min-h-screen bg-[#fafbfc] text-[#1f2937] font-sans pb-16">
