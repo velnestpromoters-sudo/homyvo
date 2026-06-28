@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import Image from 'next/image';
-import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail, BookOpen, PlusCircle, Trash2, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { Users, Home, Key, TrendingUp, TrendingDown, LogOut, Loader2, ShieldCheck, UserCircle2, Cpu, Zap, Activity, Mail, BookOpen, PlusCircle, Trash2, ChevronDown, ChevronUp, HelpCircle, CheckCircle2, ChevronRight, AlertTriangle } from 'lucide-react';
 
 interface AdminUser {
   _id: string;
@@ -137,6 +137,16 @@ export default function AdminDashboard() {
     });
     const [gscTab, setGscTab] = useState<'queries' | 'pages' | 'countries' | 'devices'>('queries');
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    // GSC Indexing Coverage states
+    const [indexingCoverageData, setIndexingCoverageData] = useState<any | null>(null);
+    const [visibleIndexingMetrics, setVisibleIndexingMetrics] = useState({
+      indexed: true,
+      notIndexed: true,
+      impressions: true
+    });
+    const [gscSection, setGscSection] = useState<'performance' | 'indexing'>('performance');
+    const [hoveredIndexingIndex, setHoveredIndexingIndex] = useState<number | null>(null);
 
    // Live real-time oscilloscopes for CPU/Memory graphs
    const [vcReqHistory, setVcReqHistory] = useState<number[]>([]);
@@ -319,15 +329,19 @@ export default function AdminDashboard() {
   const fetchAnalyticsData = async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [scRes, ptRes] = await Promise.all([
+      const [scRes, ptRes, idxRes] = await Promise.all([
         api.get('/analytics/search-console', { headers }),
-        api.get('/analytics/page-times', { headers })
+        api.get('/analytics/page-times', { headers }),
+        api.get('/analytics/indexing-coverage', { headers })
       ]);
       if (scRes.data.success) {
         setSearchConsoleData(scRes.data);
       }
       if (ptRes.data.success) {
         setPageTimes(ptRes.data.data);
+      }
+      if (idxRes.data.success) {
+        setIndexingCoverageData(idxRes.data);
       }
     } catch (err) {
       console.error("Failed to fetch analytics / search console stats:", err);
@@ -1674,358 +1688,770 @@ export default function AdminDashboard() {
                 <p className="text-slate-400 text-sm">Performance metrics, search query click-through rates, and average SERP rankings.</p>
               </div>
 
-              {/* Metric Summary Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Clicks Card */}
-                <div 
-                  onClick={() => setVisibleMetrics(prev => ({ ...prev, clicks: !prev.clicks }))}
-                  className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
-                    visibleMetrics.clicks 
-                      ? 'bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/5' 
-                      : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                    <span className="flex items-center gap-1.5">
-                      <input 
-                        type="checkbox" 
-                        checked={visibleMetrics.clicks}
-                        onChange={() => {}} // handled by parent onClick
-                        className="rounded border-slate-600 bg-slate-950 text-blue-500 focus:ring-blue-500/40 w-3.5 h-3.5"
-                      />
-                      Total clicks
-                    </span>
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
-                  </div>
-                  <div className="text-3xl font-black text-white">{searchConsoleData.summary.clicks}</div>
-                </div>
-
-                {/* Impressions Card */}
-                <div 
-                  onClick={() => setVisibleMetrics(prev => ({ ...prev, impressions: !prev.impressions }))}
-                  className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
-                    visibleMetrics.impressions 
-                      ? 'bg-purple-500/10 border-purple-500/40 shadow-lg shadow-purple-500/5' 
-                      : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                    <span className="flex items-center gap-1.5">
-                      <input 
-                        type="checkbox" 
-                        checked={visibleMetrics.impressions}
-                        onChange={() => {}}
-                        className="rounded border-slate-600 bg-slate-950 text-purple-500 focus:ring-purple-500/40 w-3.5 h-3.5"
-                      />
-                      Total impressions
-                    </span>
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
-                  </div>
-                  <div className="text-3xl font-black text-white">{searchConsoleData.summary.impressions}</div>
-                </div>
-
-                {/* CTR Card */}
-                <div 
-                  onClick={() => setVisibleMetrics(prev => ({ ...prev, ctr: !prev.ctr }))}
-                  className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
-                    visibleMetrics.ctr 
-                      ? 'bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5' 
-                      : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                    <span className="flex items-center gap-1.5">
-                      <input 
-                        type="checkbox" 
-                        checked={visibleMetrics.ctr}
-                        onChange={() => {}}
-                        className="rounded border-slate-600 bg-slate-950 text-emerald-500 focus:ring-emerald-500/40 w-3.5 h-3.5"
-                      />
-                      Average CTR
-                    </span>
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
-                  </div>
-                  <div className="text-3xl font-black text-white">{searchConsoleData.summary.ctr}%</div>
-                </div>
-
-                {/* Position Card */}
-                <div 
-                  onClick={() => setVisibleMetrics(prev => ({ ...prev, position: !prev.position }))}
-                  className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
-                    visibleMetrics.position 
-                      ? 'bg-orange-500/10 border-orange-500/40 shadow-lg shadow-orange-500/5' 
-                      : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
-                    <span className="flex items-center gap-1.5">
-                      <input 
-                        type="checkbox" 
-                        checked={visibleMetrics.position}
-                        onChange={() => {}}
-                        className="rounded border-slate-600 bg-slate-950 text-orange-500 focus:ring-orange-500/40 w-3.5 h-3.5"
-                      />
-                      Average position
-                    </span>
-                    <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
-                  </div>
-                  <div className="text-3xl font-black text-white">{searchConsoleData.summary.position}</div>
-                </div>
+              {/* Performance vs Indexing Sub-tab selector */}
+              <div className="flex gap-2 border-b border-white/5 pb-4">
+                 <button
+                    type="button"
+                    onClick={() => setGscSection('performance')}
+                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+                       gscSection === 'performance' ? 'bg-[#801786] text-white shadow-md' : 'bg-white/5 text-slate-400 hover:text-slate-200'
+                    }`}
+                 >
+                    Performance
+                 </button>
+                 <button
+                    type="button"
+                    onClick={() => setGscSection('indexing')}
+                    className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+                       gscSection === 'indexing' ? 'bg-[#801786] text-white shadow-md' : 'bg-white/5 text-slate-400 hover:text-slate-200'
+                    }`}
+                 >
+                    Indexing
+                 </button>
               </div>
 
-              {/* Timeline Graph */}
-              <div className="bg-slate-950/40 border border-white/5 rounded-3xl p-6 relative">
-                 {(() => {
-                    const timeline = searchConsoleData.timeline || [];
-                    const width = 1000;
-                    const height = 240;
-                    const paddingX = 40;
-                    const paddingY = 30;
-                    const chartWidth = width - paddingX * 2;
-                    const chartHeight = height - paddingY * 2;
+              {gscSection === 'performance' && (
+                 <div className="space-y-6">
+                    {/* Metric Summary Cards Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Clicks Card */}
+                      <div 
+                        onClick={() => setVisibleMetrics(prev => ({ ...prev, clicks: !prev.clicks }))}
+                        className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
+                          visibleMetrics.clicks 
+                            ? 'bg-blue-500/10 border-blue-500/40 shadow-lg shadow-blue-500/5' 
+                            : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                          <span className="flex items-center gap-1.5">
+                            <input 
+                              type="checkbox" 
+                              checked={visibleMetrics.clicks}
+                              onChange={() => {}} // handled by parent onClick
+                              className="rounded border-slate-600 bg-slate-950 text-blue-500 focus:ring-blue-500/40 w-3.5 h-3.5"
+                            />
+                            Total clicks
+                          </span>
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
+                        </div>
+                        <div className="text-3xl font-black text-white">{searchConsoleData.summary.clicks}</div>
+                      </div>
 
-                    if (timeline.length === 0) return <div className="text-center py-20 text-slate-500">No timeline data available.</div>;
+                      {/* Impressions Card */}
+                      <div 
+                        onClick={() => setVisibleMetrics(prev => ({ ...prev, impressions: !prev.impressions }))}
+                        className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
+                          visibleMetrics.impressions 
+                            ? 'bg-purple-500/10 border-purple-500/40 shadow-lg shadow-purple-500/5' 
+                            : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                          <span className="flex items-center gap-1.5">
+                            <input 
+                              type="checkbox" 
+                              checked={visibleMetrics.impressions}
+                              onChange={() => {}}
+                              className="rounded border-slate-600 bg-slate-950 text-purple-500 focus:ring-purple-500/40 w-3.5 h-3.5"
+                            />
+                            Total impressions
+                          </span>
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
+                        </div>
+                        <div className="text-3xl font-black text-white">{searchConsoleData.summary.impressions}</div>
+                      </div>
 
-                    // Normalize clicks/impressions to a shared scale
-                    const maxClicksVal = Math.max(...timeline.map((t: any) => t.clicks), 1);
-                    const maxImpsVal = Math.max(...timeline.map((t: any) => t.impressions), 1);
-                    const maxScale = Math.max(maxClicksVal, maxImpsVal);
+                      {/* CTR Card */}
+                      <div 
+                        onClick={() => setVisibleMetrics(prev => ({ ...prev, ctr: !prev.ctr }))}
+                        className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
+                          visibleMetrics.ctr 
+                            ? 'bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5' 
+                            : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                          <span className="flex items-center gap-1.5">
+                            <input 
+                              type="checkbox" 
+                              checked={visibleMetrics.ctr}
+                              onChange={() => {}}
+                              className="rounded border-slate-600 bg-slate-950 text-emerald-500 focus:ring-emerald-500/40 w-3.5 h-3.5"
+                            />
+                            Average CTR
+                          </span>
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
+                        </div>
+                        <div className="text-3xl font-black text-white">{searchConsoleData.summary.ctr}%</div>
+                      </div>
 
-                    const getX = (index: number) => {
-                       return paddingX + (index / (timeline.length - 1)) * chartWidth;
-                    };
+                      {/* Position Card */}
+                      <div 
+                        onClick={() => setVisibleMetrics(prev => ({ ...prev, position: !prev.position }))}
+                        className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
+                          visibleMetrics.position 
+                            ? 'bg-orange-500/10 border-orange-500/40 shadow-lg shadow-orange-500/5' 
+                            : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                          <span className="flex items-center gap-1.5">
+                            <input 
+                              type="checkbox" 
+                              checked={visibleMetrics.position}
+                              onChange={() => {}}
+                              className="rounded border-slate-600 bg-slate-950 text-orange-500 focus:ring-orange-500/40 w-3.5 h-3.5"
+                            />
+                            Average position
+                          </span>
+                          <HelpCircle className="w-3.5 h-3.5 text-slate-600" />
+                        </div>
+                        <div className="text-3xl font-black text-white">{searchConsoleData.summary.position}</div>
+                      </div>
+                    </div>
 
-                    const getClicksY = (val: number) => {
-                       return height - paddingY - (val / maxScale) * chartHeight;
-                    };
+                    {/* Timeline Graph */}
+                    <div className="bg-slate-950/40 border border-white/5 rounded-3xl p-6 relative">
+                       {(() => {
+                          const timeline = searchConsoleData.timeline || [];
+                          const width = 1000;
+                          const height = 240;
+                          const paddingX = 40;
+                          const paddingY = 30;
+                          const chartWidth = width - paddingX * 2;
+                          const chartHeight = height - paddingY * 2;
 
-                    const getCtrY = (val: number) => {
-                       return height - paddingY - (val / 100) * chartHeight;
-                    };
+                          if (timeline.length === 0) return <div className="text-center py-20 text-slate-500">No timeline data available.</div>;
 
-                    const getPositionY = (val: number) => {
-                       // Position 1.0 is at the top, position 10.0 is at the bottom
-                       const normalized = Math.max(1, Math.min(10, val));
-                       return paddingY + ((normalized - 1) / 9) * chartHeight;
-                    };
+                          // Normalize clicks/impressions to a shared scale
+                          const maxClicksVal = Math.max(...timeline.map((t: any) => t.clicks), 1);
+                          const maxImpsVal = Math.max(...timeline.map((t: any) => t.impressions), 1);
+                          const maxScale = Math.max(maxClicksVal, maxImpsVal);
 
-                    // Draw paths
-                    const clicksPoints = timeline.map((t: any, i: number) => `${getX(i)},${getClicksY(t.clicks)}`).join(' ');
-                    const impsPoints = timeline.map((t: any, i: number) => `${getX(i)},${getClicksY(t.impressions)}`).join(' ');
-                    const ctrPoints = timeline.map((t: any, i: number) => `${getX(i)},${getCtrY(t.ctr)}`).join(' ');
-                    const posPoints = timeline.map((t: any, i: number) => `${getX(i)},${getPositionY(t.position)}`).join(' ');
+                          const getX = (index: number) => {
+                             return paddingX + (index / (timeline.length - 1)) * chartWidth;
+                          };
 
-                    const hoveredPoint = hoveredIndex !== null ? timeline[hoveredIndex] : null;
+                          const getClicksY = (val: number) => {
+                             return height - paddingY - (val / maxScale) * chartHeight;
+                          };
 
-                    return (
-                       <div className="relative w-full overflow-x-auto select-none">
-                          <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[800px] h-auto overflow-visible">
-                             {/* Grid Lines */}
-                             <line x1={paddingX} y1={paddingY} x2={width - paddingX} y2={paddingY} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
-                             <line x1={paddingX} y1={paddingY + chartHeight * 0.25} x2={width - paddingX} y2={paddingY + chartHeight * 0.25} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
-                             <line x1={paddingX} y1={paddingY + chartHeight * 0.5} x2={width - paddingX} y2={paddingY + chartHeight * 0.5} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
-                             <line x1={paddingX} y1={paddingY + chartHeight * 0.75} x2={width - paddingX} y2={paddingY + chartHeight * 0.75} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
-                             <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
+                          const getCtrY = (val: number) => {
+                             return height - paddingY - (val / 100) * chartHeight;
+                          };
 
-                             {/* Horizontal Axis Date Labels */}
-                             {timeline.map((t: any, i: number) => {
-                                if (i % 8 === 0 || i === timeline.length - 1) {
-                                   const dateObj = new Date(t.date);
-                                   const day = String(dateObj.getDate()).padStart(2, '0');
-                                   const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                                   const year = dateObj.getFullYear();
-                                   return (
-                                      <g key={i}>
-                                         <text 
-                                            x={getX(i)} 
-                                            y={height - 8} 
-                                            fill="#475569" 
-                                            fontSize="9" 
-                                            fontWeight="bold"
-                                            textAnchor="middle"
-                                         >
-                                            {`${day}/${month}/${year}`}
-                                         </text>
-                                      </g>
-                                   );
-                                }
-                                return null;
-                             })}
+                          const getPositionY = (val: number) => {
+                             const normalized = Math.max(1, Math.min(10, val));
+                             return paddingY + ((normalized - 1) / 9) * chartHeight;
+                          };
 
-                             {/* Lines */}
-                             {visibleMetrics.impressions && (
-                                <polyline fill="none" stroke="#a855f7" strokeWidth="2.5" points={impsPoints} strokeLinecap="round" strokeLinejoin="round" />
-                             )}
-                             {visibleMetrics.clicks && (
-                                <polyline fill="none" stroke="#3b82f6" strokeWidth="2.5" points={clicksPoints} strokeLinecap="round" strokeLinejoin="round" />
-                             )}
-                             {visibleMetrics.ctr && (
-                                <polyline fill="none" stroke="#10b981" strokeWidth="2" points={ctrPoints} strokeLinecap="round" strokeLinejoin="round" />
-                             )}
-                             {visibleMetrics.position && (
-                                <polyline fill="none" stroke="#f97316" strokeWidth="2" points={posPoints} strokeLinecap="round" strokeLinejoin="round" />
-                             )}
+                          // Draw paths
+                          const clicksPoints = timeline.map((t: any, i: number) => `${getX(i)},${getClicksY(t.clicks)}`).join(' ');
+                          const impsPoints = timeline.map((t: any, i: number) => `${getX(i)},${getClicksY(t.impressions)}`).join(' ');
+                          const ctrPoints = timeline.map((t: any, i: number) => `${getX(i)},${getCtrY(t.ctr)}`).join(' ');
+                          const posPoints = timeline.map((t: any, i: number) => `${getX(i)},${getPositionY(t.position)}`).join(' ');
 
-                             {/* Hover Tracking Line & Overlay */}
-                             {hoveredIndex !== null && hoveredPoint && (
-                                <>
-                                   <line 
-                                      x1={getX(hoveredIndex)} 
-                                      y1={paddingY} 
-                                      x2={getX(hoveredIndex)} 
-                                      y2={height - paddingY} 
-                                      stroke="#475569" 
-                                      strokeWidth="1.5" 
-                                      strokeDasharray="3,3" 
-                                   />
-                                   {/* Hover Dots */}
-                                   {visibleMetrics.clicks && (
-                                      <circle cx={getX(hoveredIndex)} cy={getClicksY(hoveredPoint.clicks)} r="5" fill="#3b82f6" stroke="#000" strokeWidth="1.5" />
-                                   )}
+                          const hoveredPoint = hoveredIndex !== null ? timeline[hoveredIndex] : null;
+
+                          return (
+                             <div className="relative w-full overflow-x-auto select-none">
+                                <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[800px] h-auto overflow-visible">
+                                   {/* Grid Lines */}
+                                   <line x1={paddingX} y1={paddingY} x2={width - paddingX} y2={paddingY} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
+                                   <line x1={paddingX} y1={paddingY + chartHeight * 0.25} x2={width - paddingX} y2={paddingY + chartHeight * 0.25} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
+                                   <line x1={paddingX} y1={paddingY + chartHeight * 0.5} x2={width - paddingX} y2={paddingY + chartHeight * 0.5} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
+                                   <line x1={paddingX} y1={paddingY + chartHeight * 0.75} x2={width - paddingX} y2={paddingY + chartHeight * 0.75} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
+                                   <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
+
+                                   {/* Horizontal Axis Date Labels */}
+                                   {timeline.map((t: any, i: number) => {
+                                      if (i % 8 === 0 || i === timeline.length - 1) {
+                                         const dateObj = new Date(t.date);
+                                         const day = String(dateObj.getDate()).padStart(2, '0');
+                                         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                         const year = dateObj.getFullYear();
+                                         return (
+                                            <g key={i}>
+                                               <text 
+                                                  x={getX(i)} 
+                                                  y={height - 8} 
+                                                  fill="#475569" 
+                                                  fontSize="9" 
+                                                  fontWeight="bold"
+                                                  textAnchor="middle"
+                                               >
+                                                  {`${day}/${month}/${year}`}
+                                               </text>
+                                            </g>
+                                         );
+                                      }
+                                      return null;
+                                   })}
+
+                                   {/* Lines */}
                                    {visibleMetrics.impressions && (
-                                      <circle cx={getX(hoveredIndex)} cy={getClicksY(hoveredPoint.impressions)} r="5" fill="#a855f7" stroke="#000" strokeWidth="1.5" />
+                                      <polyline fill="none" stroke="#a855f7" strokeWidth="2.5" points={impsPoints} strokeLinecap="round" strokeLinejoin="round" />
+                                   )}
+                                   {visibleMetrics.clicks && (
+                                      <polyline fill="none" stroke="#3b82f6" strokeWidth="2.5" points={clicksPoints} strokeLinecap="round" strokeLinejoin="round" />
                                    )}
                                    {visibleMetrics.ctr && (
-                                      <circle cx={getX(hoveredIndex)} cy={getCtrY(hoveredPoint.ctr)} r="5" fill="#10b981" stroke="#000" strokeWidth="1.5" />
+                                      <polyline fill="none" stroke="#10b981" strokeWidth="2" points={ctrPoints} strokeLinecap="round" strokeLinejoin="round" />
                                    )}
                                    {visibleMetrics.position && (
-                                      <circle cx={getX(hoveredIndex)} cy={getPositionY(hoveredPoint.position)} r="5" fill="#f97316" stroke="#000" strokeWidth="1.5" />
+                                      <polyline fill="none" stroke="#f97316" strokeWidth="2" points={posPoints} strokeLinecap="round" strokeLinejoin="round" />
                                    )}
-                                </>
-                             )}
 
-                             {/* Tracking overlay rect */}
-                             <rect 
-                                x={paddingX} 
-                                y={paddingY} 
-                                width={chartWidth} 
-                                height={chartHeight} 
-                                fill="transparent" 
-                                className="cursor-crosshair"
-                                onMouseMove={(e) => {
-                                   const rect = e.currentTarget.getBoundingClientRect();
-                                   const x = e.clientX - rect.left;
-                                   const pct = x / rect.width;
-                                   const index = Math.round(pct * (timeline.length - 1));
-                                   setHoveredIndex(Math.max(0, Math.min(timeline.length - 1, index)));
-                                }}
-                                onMouseLeave={() => setHoveredIndex(null)}
-                             />
-                          </svg>
+                                   {/* Hover Tracking Line & Overlay */}
+                                   {hoveredIndex !== null && hoveredPoint && (
+                                      <>
+                                         <line 
+                                            x1={getX(hoveredIndex)} 
+                                            y1={paddingY} 
+                                            x2={getX(hoveredIndex)} 
+                                            y2={height - paddingY} 
+                                            stroke="#475569" 
+                                            strokeWidth="1.5" 
+                                            strokeDasharray="3,3" 
+                                         />
+                                         {/* Hover Dots */}
+                                         {visibleMetrics.clicks && (
+                                            <circle cx={getX(hoveredIndex)} cy={getClicksY(hoveredPoint.clicks)} r="5" fill="#3b82f6" stroke="#000" strokeWidth="1.5" />
+                                         )}
+                                         {visibleMetrics.impressions && (
+                                            <circle cx={getX(hoveredIndex)} cy={getClicksY(hoveredPoint.impressions)} r="5" fill="#a855f7" stroke="#000" strokeWidth="1.5" />
+                                         )}
+                                         {visibleMetrics.ctr && (
+                                            <circle cx={getX(hoveredIndex)} cy={getCtrY(hoveredPoint.ctr)} r="5" fill="#10b981" stroke="#000" strokeWidth="1.5" />
+                                         )}
+                                         {visibleMetrics.position && (
+                                            <circle cx={getX(hoveredIndex)} cy={getPositionY(hoveredPoint.position)} r="5" fill="#f97316" stroke="#000" strokeWidth="1.5" />
+                                         )}
+                                      </>
+                                   )}
 
-                          {/* Hover Tooltip Card Popover */}
-                          {hoveredIndex !== null && hoveredPoint && (
-                             <div 
-                                className="absolute bg-[#12121a] border border-white/10 rounded-xl p-3 text-xs space-y-2 pointer-events-none shadow-2xl z-20 min-w-[160px]"
-                                style={{
-                                   left: `${Math.max(10, Math.min(chartWidth - 160, getX(hoveredIndex) - 80))}px`,
-                                   top: '20px'
-                                }}
-                             >
-                                <div className="font-bold text-slate-300 border-b border-white/5 pb-1">
-                                   {new Date(hoveredPoint.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
-                                </div>
-                                <div className="space-y-1">
-                                   <div className="flex justify-between items-center gap-4">
-                                      <span className="flex items-center gap-1.5 text-slate-400">
-                                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                         Clicks
-                                      </span>
-                                      <span className="font-bold text-white">{hoveredPoint.clicks}</span>
+                                   {/* Tracking overlay rect */}
+                                   <rect 
+                                      x={paddingX} 
+                                      y={paddingY} 
+                                      width={chartWidth} 
+                                      height={chartHeight} 
+                                      fill="transparent" 
+                                      className="cursor-crosshair"
+                                      onMouseMove={(e) => {
+                                         const rect = e.currentTarget.getBoundingClientRect();
+                                         const x = e.clientX - rect.left;
+                                         const pct = x / rect.width;
+                                         const index = Math.round(pct * (timeline.length - 1));
+                                         setHoveredIndex(Math.max(0, Math.min(timeline.length - 1, index)));
+                                      }}
+                                      onMouseLeave={() => setHoveredIndex(null)}
+                                   />
+                                </svg>
+
+                                {/* Hover Tooltip Card Popover */}
+                                {hoveredIndex !== null && hoveredPoint && (
+                                   <div 
+                                      className="absolute bg-[#12121a] border border-white/10 rounded-xl p-3 text-xs space-y-2 pointer-events-none shadow-2xl z-20 min-w-[160px]"
+                                      style={{
+                                         left: `${Math.max(10, Math.min(chartWidth - 160, getX(hoveredIndex) - 80))}px`,
+                                         top: '20px'
+                                      }}
+                                   >
+                                      <div className="font-bold text-slate-300 border-b border-white/5 pb-1">
+                                         {new Date(hoveredPoint.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
+                                      </div>
+                                      <div className="space-y-1">
+                                         <div className="flex justify-between items-center gap-4">
+                                            <span className="flex items-center gap-1.5 text-slate-400">
+                                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                               Clicks
+                                            </span>
+                                            <span className="font-bold text-white">{hoveredPoint.clicks}</span>
+                                         </div>
+                                         <div className="flex justify-between items-center gap-4">
+                                            <span className="flex items-center gap-1.5 text-slate-400">
+                                               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                               Impressions
+                                            </span>
+                                            <span className="font-bold text-white">{hoveredPoint.impressions}</span>
+                                         </div>
+                                         <div className="flex justify-between items-center gap-4">
+                                            <span className="flex items-center gap-1.5 text-slate-400">
+                                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                               CTR
+                                            </span>
+                                            <span className="font-bold text-white">
+                                               {hoveredPoint.impressions > 0 ? `${hoveredPoint.ctr}%` : '-'}
+                                            </span>
+                                         </div>
+                                         <div className="flex justify-between items-center gap-4">
+                                            <span className="flex items-center gap-1.5 text-slate-400">
+                                               <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                                               Position
+                                            </span>
+                                            <span className="font-bold text-white">
+                                               {hoveredPoint.impressions > 0 ? hoveredPoint.position : '-'}
+                                            </span>
+                                         </div>
+                                      </div>
                                    </div>
-                                   <div className="flex justify-between items-center gap-4">
-                                      <span className="flex items-center gap-1.5 text-slate-400">
-                                         <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                                         Impressions
-                                      </span>
-                                      <span className="font-bold text-white">{hoveredPoint.impressions}</span>
-                                   </div>
-                                   <div className="flex justify-between items-center gap-4">
-                                      <span className="flex items-center gap-1.5 text-slate-400">
-                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                         CTR
-                                      </span>
-                                      <span className="font-bold text-white">
-                                         {hoveredPoint.impressions > 0 ? `${hoveredPoint.ctr}%` : '-'}
-                                      </span>
-                                   </div>
-                                   <div className="flex justify-between items-center gap-4">
-                                      <span className="flex items-center gap-1.5 text-slate-400">
-                                         <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                         Position
-                                      </span>
-                                      <span className="font-bold text-white">
-                                         {hoveredPoint.impressions > 0 ? hoveredPoint.position : '-'}
-                                      </span>
-                                   </div>
-                                </div>
+                                )}
                              </div>
-                          )}
-                       </div>
-                    );
-                 })()}
-              </div>
+                          );
+                       })()}
+                    </div>
 
-              {/* Bottom detail tabs */}
-              <div className="space-y-4">
-                 <div className="flex flex-wrap gap-1 bg-white/5 border border-white/5 rounded-xl p-1 w-full max-w-lg">
-                    {(['queries', 'pages', 'countries', 'devices'] as const).map((tab) => (
-                       <button
-                          key={tab}
-                          type="button"
-                          onClick={() => setGscTab(tab)}
-                          className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-center transition-all ${
-                             gscTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+                    {/* Bottom detail tabs */}
+                    <div className="space-y-4">
+                       <div className="flex flex-wrap gap-1 bg-white/5 border border-white/5 rounded-xl p-1 w-full max-w-lg">
+                          {(['queries', 'pages', 'countries', 'devices'] as const).map((tab) => (
+                             <button
+                                key={tab}
+                                type="button"
+                                onClick={() => setGscTab(tab)}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-center transition-all ${
+                                   gscTab === tab ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                             >
+                                {tab}
+                             </button>
+                          ))}
+                       </div>
+
+                       {/* Detail Table */}
+                       <div className="bg-slate-950/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                          <div className="overflow-x-auto">
+                             <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                   <tr className="border-b border-white/5 bg-slate-950/20 font-bold text-slate-400 uppercase tracking-widest text-[10px]">
+                                      <th className="p-4">{gscTab.slice(0, -1).toUpperCase()}</th>
+                                      <th className="p-4 text-right">CLICKS</th>
+                                      <th className="p-4 text-right">IMPRESSIONS</th>
+                                      <th className="p-4 text-right">CTR</th>
+                                      <th className="p-4 text-right">POSITION</th>
+                                   </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5 text-xs">
+                                   {((searchConsoleData[gscTab] || []) as any[]).map((row, idx) => (
+                                      <tr key={idx} className="hover:bg-white/[0.01] transition-colors text-slate-300">
+                                         <td className="p-4 font-bold text-white">
+                                            {gscTab === 'pages' ? (
+                                               <a 
+                                                  href={row.key} 
+                                                  target="_blank" 
+                                                  rel="noreferrer" 
+                                                  className="hover:underline hover:text-blue-400 font-semibold"
+                                               >
+                                                  {row.key}
+                                               </a>
+                                            ) : (
+                                               row.key
+                                            )}
+                                         </td>
+                                         <td className="p-4 text-right font-semibold text-blue-400">{row.clicks}</td>
+                                         <td className="p-4 text-right font-semibold text-purple-400">{row.impressions}</td>
+                                         <td className="p-4 text-right font-semibold text-emerald-400">{row.ctr}%</td>
+                                         <td className="p-4 text-right font-semibold text-orange-400">{row.position}</td>
+                                      </tr>
+                                   ))}
+                                </tbody>
+                             </table>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              )}
+
+              {gscSection === 'indexing' && indexingCoverageData && (
+                 <div className="space-y-6">
+                    {/* Indexing Summary cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       {/* Not Indexed Card */}
+                       <div 
+                          onClick={() => setVisibleIndexingMetrics(prev => ({ ...prev, notIndexed: !prev.notIndexed }))}
+                          className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
+                             visibleIndexingMetrics.notIndexed 
+                               ? 'bg-slate-500/10 border-slate-500/40 shadow-lg shadow-slate-500/5' 
+                               : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
                           }`}
                        >
-                          {tab}
-                       </button>
-                    ))}
-                 </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                             <input 
+                                type="checkbox" 
+                                checked={visibleIndexingMetrics.notIndexed}
+                                onChange={() => {}} 
+                                className="rounded border-slate-600 bg-slate-950 text-slate-400 focus:ring-slate-500/40 w-3.5 h-3.5"
+                             />
+                             Not indexed
+                          </div>
+                          <div className="text-3xl font-black text-white">
+                             {indexingCoverageData.summary.notIndexed}
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">
+                             {indexingCoverageData.summary.reasonsCount} reasons
+                          </div>
+                       </div>
 
-                 {/* Detail Table */}
-                 <div className="bg-slate-950/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                    <div className="overflow-x-auto">
-                       <table className="w-full text-left border-collapse text-xs">
-                          <thead>
-                             <tr className="border-b border-white/5 bg-slate-950/20 font-bold text-slate-400 uppercase tracking-widest text-[10px]">
-                                <th className="p-4">{gscTab.slice(0, -1).toUpperCase()}</th>
-                                <th className="p-4 text-right">CLICKS</th>
-                                <th className="p-4 text-right">IMPRESSIONS</th>
-                                <th className="p-4 text-right">CTR</th>
-                                <th className="p-4 text-right">POSITION</th>
-                             </tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/5 text-xs">
-                             {((searchConsoleData[gscTab] || []) as any[]).map((row, idx) => (
-                                <tr key={idx} className="hover:bg-white/[0.01] transition-colors text-slate-300">
-                                   <td className="p-4 font-bold text-white">
-                                      {gscTab === 'pages' ? (
-                                         <a 
-                                            href={row.key} 
-                                            target="_blank" 
-                                            rel="noreferrer" 
-                                            className="hover:underline hover:text-blue-400 font-semibold"
-                                         >
-                                            {row.key}
-                                         </a>
-                                      ) : (
-                                         row.key
-                                      )}
-                                   </td>
-                                   <td className="p-4 text-right font-semibold text-blue-400">{row.clicks}</td>
-                                   <td className="p-4 text-right font-semibold text-purple-400">{row.impressions}</td>
-                                   <td className="p-4 text-right font-semibold text-emerald-400">{row.ctr}%</td>
-                                   <td className="p-4 text-right font-semibold text-orange-400">{row.position}</td>
-                                </tr>
-                             ))}
-                          </tbody>
-                       </table>
+                       {/* Indexed Card */}
+                       <div 
+                          onClick={() => setVisibleIndexingMetrics(prev => ({ ...prev, indexed: !prev.indexed }))}
+                          className={`cursor-pointer select-none border rounded-2xl p-4 transition-all duration-200 ${
+                             visibleIndexingMetrics.indexed 
+                               ? 'bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5' 
+                               : 'bg-slate-950/20 border-white/5 opacity-50 hover:opacity-75'
+                          }`}
+                       >
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                             <input 
+                                type="checkbox" 
+                                checked={visibleIndexingMetrics.indexed}
+                                onChange={() => {}} 
+                                className="rounded border-slate-600 bg-slate-950 text-emerald-500 focus:ring-emerald-500/40 w-3.5 h-3.5"
+                             />
+                             Indexed
+                          </div>
+                          <div className="text-3xl font-black text-white">
+                             {indexingCoverageData.summary.indexed}
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Impressions line toggle */}
+                    <div className="flex items-center gap-2">
+                       <label className="flex items-center gap-2 text-xs font-bold text-slate-400 cursor-pointer select-none">
+                          <input 
+                             type="checkbox" 
+                             checked={visibleIndexingMetrics.impressions}
+                             onChange={() => setVisibleIndexingMetrics(prev => ({ ...prev, impressions: !prev.impressions }))}
+                             className="rounded border-slate-600 bg-slate-950 text-blue-500 focus:ring-blue-500/40 w-3.5 h-3.5"
+                          />
+                          Impressions
+                       </label>
+                    </div>
+
+                    {/* Stacked Bars + Line Chart */}
+                    <div className="bg-slate-950/40 border border-white/5 rounded-3xl p-6 relative">
+                       {(() => {
+                          const timeline = indexingCoverageData.timeline || [];
+                          const width = 1000;
+                          const height = 240;
+                          const paddingX = 40;
+                          const paddingY = 35;
+                          const chartWidth = width - paddingX * 2;
+                          const chartHeight = height - paddingY * 2;
+
+                          if (timeline.length === 0) return <div className="text-center py-20 text-slate-500">No indexing timeline stats available.</div>;
+
+                          // Left-axis maximum represents 9 pages
+                          // Right-axis maximum represents 9 impressions
+                          const maxScale = 9;
+
+                          const getX = (index: number) => {
+                             return paddingX + (index / (timeline.length - 1)) * chartWidth;
+                          };
+
+                          const getY = (val: number) => {
+                             return height - paddingY - (val / maxScale) * chartHeight;
+                          };
+
+                          // Draw impressions line
+                          const impressionsPoints = timeline.map((t: any, i: number) => `${getX(i)},${getY(t.impressions)}`).join(' ');
+
+                          const hoveredPoint = hoveredIndexingIndex !== null ? timeline[hoveredIndexingIndex] : null;
+
+                          // Event circular badge coordinates (matching specific dates: May 2, May 5, May 12)
+                          const eventBadges = timeline.map((t: any, i: number) => {
+                             const dateStr = new Date(t.date).toISOString().split('T')[0];
+                             if (dateStr === '2026-05-02' || dateStr === '2026-05-05' || dateStr === '2026-05-12') {
+                                return { index: i, dateStr };
+                             }
+                             return null;
+                          }).filter(Boolean) as { index: number, dateStr: string }[];
+
+                          return (
+                             <div className="relative w-full overflow-x-auto select-none">
+                                <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[800px] h-auto overflow-visible">
+                                   {/* Grid Lines */}
+                                   <line x1={paddingX} y1={paddingY} x2={width - paddingX} y2={paddingY} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
+                                   <line x1={paddingX} y1={paddingY + chartHeight * 0.33} x2={width - paddingX} y2={paddingY + chartHeight * 0.33} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
+                                   <line x1={paddingX} y1={paddingY + chartHeight * 0.66} x2={width - paddingX} y2={paddingY + chartHeight * 0.66} stroke="rgba(255,255,255,0.03)" strokeWidth={1} />
+                                   <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
+
+                                   {/* Axis Labels (Pages Left, Impressions Right) */}
+                                   <text x={10} y={paddingY + 4} fill="#475569" fontSize="9" fontWeight="bold">Pages</text>
+                                   <text x={10} y={paddingY + 4} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="start">9</text>
+                                   <text x={10} y={paddingY + chartHeight * 0.33 + 4} fill="#475569" fontSize="9" fontWeight="bold">6</text>
+                                   <text x={10} y={paddingY + chartHeight * 0.66 + 4} fill="#475569" fontSize="9" fontWeight="bold">3</text>
+                                   <text x={10} y={height - paddingY + 4} fill="#475569" fontSize="9" fontWeight="bold">0</text>
+
+                                   <text x={width - 30} y={paddingY + 4} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="end">Impressions</text>
+                                   <text x={width - 10} y={paddingY + 4} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="end">9</text>
+                                   <text x={width - 10} y={paddingY + chartHeight * 0.33 + 4} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="end">6</text>
+                                   <text x={width - 10} y={paddingY + chartHeight * 0.66 + 4} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="end">3</text>
+                                   <text x={width - 10} y={height - paddingY + 4} fill="#475569" fontSize="9" fontWeight="bold" textAnchor="end">0</text>
+
+                                   {/* Axis Dates */}
+                                   {timeline.map((t: any, i: number) => {
+                                      if (i % 10 === 0 || i === timeline.length - 1) {
+                                         const dateObj = new Date(t.date);
+                                         const day = String(dateObj.getDate()).padStart(2, '0');
+                                         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                         const year = dateObj.getFullYear();
+                                         return (
+                                            <g key={i}>
+                                               <text 
+                                                  x={getX(i)} 
+                                                  y={height - 8} 
+                                                  fill="#475569" 
+                                                  fontSize="9" 
+                                                  fontWeight="bold"
+                                                  textAnchor="middle"
+                                               >
+                                                  {`${day}/${month}/${year}`}
+                                               </text>
+                                            </g>
+                                         );
+                                      }
+                                      return null;
+                                   })}
+
+                                   {/* Stacked bars rendering */}
+                                   {timeline.map((t: any, i: number) => {
+                                      const notIndexedVal = visibleIndexingMetrics.notIndexed ? t.notIndexed : 0;
+                                      const indexedVal = visibleIndexingMetrics.indexed ? t.indexed : 0;
+
+                                      const barWidth = Math.max(3, (chartWidth / timeline.length) * 0.6);
+                                      const x = getX(i);
+
+                                      // Heights
+                                      const notIndexedHeight = (notIndexedVal / maxScale) * chartHeight;
+                                      const indexedHeight = (indexedVal / maxScale) * chartHeight;
+
+                                      return (
+                                         <g key={i}>
+                                            {/* Not Indexed Bar (Bottom Stack) */}
+                                            {notIndexedHeight > 0 && (
+                                               <rect 
+                                                  x={x - barWidth / 2} 
+                                                  y={height - paddingY - notIndexedHeight} 
+                                                  width={barWidth} 
+                                                  height={notIndexedHeight} 
+                                                  fill="#475569" 
+                                                  opacity="0.8"
+                                                  rx="1"
+                                               />
+                                            )}
+                                            {/* Indexed Bar (Top Stack) */}
+                                            {indexedHeight > 0 && (
+                                               <rect 
+                                                  x={x - barWidth / 2} 
+                                                  y={height - paddingY - notIndexedHeight - indexedHeight} 
+                                                  width={barWidth} 
+                                                  height={indexedHeight} 
+                                                  fill="#10b981" 
+                                                  opacity="0.8"
+                                                  rx="1"
+                                               />
+                                            )}
+                                         </g>
+                                      );
+                                   })}
+
+                                   {/* Event circular badges */}
+                                   {eventBadges.map((badge, idx) => {
+                                      const x = getX(badge.index);
+                                      return (
+                                         <g key={idx}>
+                                            <circle 
+                                               cx={x} 
+                                               cy={height - paddingY + 14} 
+                                               r="7" 
+                                               fill="#334155" 
+                                               stroke="rgba(255,255,255,0.15)" 
+                                               strokeWidth="1.5" 
+                                            />
+                                            <text 
+                                               x={x} 
+                                               y={height - paddingY + 17} 
+                                               fill="#94a3b8" 
+                                               fontSize="8" 
+                                               fontWeight="black" 
+                                               textAnchor="middle"
+                                            >
+                                               2
+                                            </text>
+                                         </g>
+                                      );
+                                   })}
+
+                                   {/* Impressions blue line */}
+                                   {visibleIndexingMetrics.impressions && (
+                                      <polyline fill="none" stroke="#2563eb" strokeWidth="2.5" points={impressionsPoints} strokeLinecap="round" strokeLinejoin="round" />
+                                   )}
+
+                                   {/* Hover line */}
+                                   {hoveredIndexingIndex !== null && hoveredPoint && (
+                                      <>
+                                         <line 
+                                            x1={getX(hoveredIndexingIndex)} 
+                                            y1={paddingY} 
+                                            x2={getX(hoveredIndexingIndex)} 
+                                            y2={height - paddingY} 
+                                            stroke="#64748b" 
+                                            strokeWidth="1.5" 
+                                            strokeDasharray="3,3" 
+                                         />
+                                         {visibleIndexingMetrics.impressions && (
+                                            <circle cx={getX(hoveredIndexingIndex)} cy={getY(hoveredPoint.impressions)} r="5" fill="#2563eb" stroke="#000" strokeWidth="1.5" />
+                                         )}
+                                      </>
+                                   )}
+
+                                   {/* Hover Tracking Rect */}
+                                   <rect 
+                                      x={paddingX} 
+                                      y={paddingY} 
+                                      width={chartWidth} 
+                                      height={chartHeight} 
+                                      fill="transparent" 
+                                      className="cursor-crosshair"
+                                      onMouseMove={(e) => {
+                                         const rect = e.currentTarget.getBoundingClientRect();
+                                         const x = e.clientX - rect.left;
+                                         const pct = x / rect.width;
+                                         const index = Math.round(pct * (timeline.length - 1));
+                                         setHoveredIndexingIndex(Math.max(0, Math.min(timeline.length - 1, index)));
+                                      }}
+                                      onMouseLeave={() => setHoveredIndexingIndex(null)}
+                                   />
+                                </svg>
+
+                                {/* Hover tooltip card */}
+                                {hoveredIndexingIndex !== null && hoveredPoint && (
+                                   <div 
+                                      className="absolute bg-[#12121a] border border-white/10 rounded-xl p-3 text-xs space-y-2 pointer-events-none shadow-2xl z-20 min-w-[160px]"
+                                      style={{
+                                         left: `${Math.max(10, Math.min(chartWidth - 160, getX(hoveredIndexingIndex) - 80))}px`,
+                                         top: '20px'
+                                      }}
+                                   >
+                                      <div className="font-bold text-slate-300 border-b border-white/5 pb-1">
+                                         {new Date(hoveredPoint.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
+                                      </div>
+                                      <div className="space-y-1">
+                                         <div className="flex justify-between items-center gap-4">
+                                            <span className="flex items-center gap-1.5 text-slate-400">
+                                               <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                               Not indexed
+                                            </span>
+                                            <span className="font-bold text-white">{hoveredPoint.notIndexed}</span>
+                                         </div>
+                                         <div className="flex justify-between items-center gap-4">
+                                            <span className="flex items-center gap-1.5 text-slate-400">
+                                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                               Indexed
+                                            </span>
+                                            <span className="font-bold text-white">{hoveredPoint.indexed}</span>
+                                         </div>
+                                         <div className="flex justify-between items-center gap-4">
+                                            <span className="flex items-center gap-1.5 text-slate-400">
+                                               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                               Impressions
+                                            </span>
+                                            <span className="font-bold text-white">{hoveredPoint.impressions}</span>
+                                         </div>
+                                      </div>
+                                   </div>
+                                )}
+                             </div>
+                          );
+                       })()}
+                    </div>
+
+                    {/* View data about indexed pages button */}
+                    <div className="bg-slate-950/20 border border-white/5 p-4 rounded-2xl flex items-center justify-between hover:bg-white/[0.01] transition duration-200 cursor-pointer">
+                       <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-200">View data about indexed pages</span>
+                       </div>
+                       <ChevronRight className="w-4 h-4 text-slate-500" />
+                    </div>
+
+                    {/* Table details why pages aren't indexed */}
+                    <div className="space-y-4">
+                       <div>
+                          <h3 className="text-base font-bold text-white">Why pages aren't indexed</h3>
+                          <p className="text-[11px] text-slate-500">Pages that aren't indexed can't be served on Google.</p>
+                       </div>
+
+                       <div className="bg-slate-950/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                          <div className="overflow-x-auto">
+                             <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                   <tr className="border-b border-white/5 bg-slate-950/20 font-bold text-slate-400 uppercase tracking-widest text-[10px]">
+                                      <th className="p-4">Reason</th>
+                                      <th className="p-4">Source</th>
+                                      <th className="p-4">Validation</th>
+                                      <th className="p-4 text-center">Trend</th>
+                                      <th className="p-4 text-right">Pages</th>
+                                   </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5 text-xs text-slate-300">
+                                   {((indexingCoverageData.reasons || []) as any[]).map((row, idx) => (
+                                      <tr key={idx} className="hover:bg-white/[0.01] transition-colors">
+                                         <td className="p-4 font-bold text-white max-w-xs sm:max-w-none truncate sm:whitespace-normal">
+                                            {row.reason}
+                                         </td>
+                                         <td className="p-4 text-slate-400">{row.source}</td>
+                                         <td className="p-4">
+                                            {row.validation === 'Not Started' ? (
+                                               <span className="flex items-center gap-1 text-slate-400 font-semibold bg-white/5 border border-white/5 px-2 py-0.5 rounded-full text-[10px]">
+                                                  <AlertTriangle className="w-3 h-3 text-slate-500 shrink-0" />
+                                                  Not Started
+                                               </span>
+                                            ) : (
+                                               <span className="text-slate-500 font-semibold">{row.validation}</span>
+                                            )}
+                                         </td>
+                                         <td className="p-4 text-center">
+                                            {/* Render mini SVG Sparkline Trend */}
+                                            {(() => {
+                                               const hist = row.history || [];
+                                               if (hist.length === 0) return <span className="text-slate-600">-</span>;
+                                               const points = hist.map((val: number, i: number) => {
+                                                  const x = (i / (hist.length - 1)) * 50 + 5;
+                                                  const maxVal = Math.max(...hist, 1);
+                                                  const y = 14 - (val / maxVal) * 10;
+                                                  return `${x},${y}`;
+                                               }).join(' ');
+                                               return (
+                                                  <svg width="60" height="18" className="mx-auto overflow-visible">
+                                                     <polyline 
+                                                        fill="none" 
+                                                        stroke="#64748b" 
+                                                        strokeWidth="1.5" 
+                                                        points={points} 
+                                                     />
+                                                  </svg>
+                                               );
+                                            })()}
+                                         </td>
+                                         <td className="p-4 text-right font-black text-white">{row.pagesCount}</td>
+                                      </tr>
+                                   ))}
+                                </tbody>
+                             </table>
                     </div>
                  </div>
               </div>
+           </div>
+        )}
             </div>
-          </motion.div>
+           </motion.div>
         )}
 
         {/* User Time-on-Page Analytics Table */}

@@ -1,5 +1,6 @@
 const PageTime = require('../models/PageTime');
 const SearchConsole = require('../models/SearchConsole');
+const IndexingStatus = require('../models/IndexingStatus');
 
 // Record page time duration from client heartbeat/beacon
 exports.trackPageTime = async (req, res) => {
@@ -198,6 +199,45 @@ exports.getSearchConsoleStats = async (req, res) => {
     });
   } catch (err) {
     console.error('Error fetching search console stats:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Retrieve Google Search Console indexing coverage report statistics (admin view)
+exports.getIndexingCoverageStats = async (req, res) => {
+  try {
+    const records = await IndexingStatus.find().sort({ date: 1 });
+
+    if (records.length === 0) {
+      return res.status(200).json({
+        success: true,
+        summary: { indexed: 0, notIndexed: 0, reasonsCount: 0 },
+        timeline: [],
+        reasons: []
+      });
+    }
+
+    const lastDoc = records[records.length - 1];
+
+    const timeline = records.map(r => ({
+      date: r.date,
+      indexed: r.indexedCount,
+      notIndexed: r.notIndexedCount,
+      impressions: r.impressions
+    }));
+
+    res.status(200).json({
+      success: true,
+      summary: {
+        indexed: lastDoc.indexedCount,
+        notIndexed: lastDoc.notIndexedCount,
+        reasonsCount: lastDoc.reasons.filter(r => r.pagesCount > 0).length
+      },
+      timeline,
+      reasons: lastDoc.reasons
+    });
+  } catch (err) {
+    console.error('Error fetching indexing coverage stats:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

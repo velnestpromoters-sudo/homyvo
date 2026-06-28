@@ -26,6 +26,9 @@ export const metadata: Metadata = {
   description: "Find verified PG, apartments, and rental homes in Tamil Nadu. Homyvo connects tenants with trusted property owners. Direct contacts, no hidden fees.",
   keywords: ["Homyvo", "PG in Coimbatore", "rent house Tamil Nadu", "bachelor rooms", "verified homes India", "apartments for rent", "no broker"],
   metadataBase: new URL("https://www.homyvo.com"),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: "Homyvo – Verified Homes & PG Rentals",
     description: "Find verified PG, apartments, and rental homes in Tamil Nadu. Direct contacts, no hidden fees.",
