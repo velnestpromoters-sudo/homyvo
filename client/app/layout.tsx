@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import AuthBottomSheet from '@/components/auth/AuthBottomSheet';
 import SupportBall from '@/components/common/SupportBall';
 import Script from 'next/script';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 const inter = Inter({ subsets: ['latin'] })
@@ -107,6 +108,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
+        <AnalyticsTracker />
         <AuthBottomSheet />
         <SupportBall />
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />

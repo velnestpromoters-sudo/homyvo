@@ -19,12 +19,14 @@ app.get('/', (req, res) => {
 
 const interactionRoutes = require('./routes/interactionRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/interactions', interactionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 const chatbotRoutes = require('./routes/chatbotRoutes');
 app.use('/api/chatbot', chatbotRoutes);
